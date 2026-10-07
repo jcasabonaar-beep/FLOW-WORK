@@ -4,7 +4,7 @@ Juego de preguntas tipo test para repasar Derecho Privado Patrimonial (Universid
 
 ## Cómo usarlo
 
-Abre `index.html` en el navegador. No necesita instalación ni conexión, salvo para cargar las fuentes. El progreso se guarda en el propio navegador.
+La versión publicada en claude.ai guarda el progreso en la cuenta del usuario (capacidades `db` y `user` del artifact, documento privado `data/users/<id>/progreso`), así que se sincroniza entre móvil y ordenador. Abriendo `index.html` en local, el progreso se guarda solo en el navegador.
 
 ## Qué incluye
 

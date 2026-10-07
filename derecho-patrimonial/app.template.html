@@ -427,7 +427,17 @@ const KEY = 'dpp-quiz-v1';
 const fresh = () => ({ xp: 0, levels: {}, fails: {}, stats: {}, ach: {}, day: { last: '', streak: 0 }, settings: { timer: false, sound: true, theme: 'system', unlockAll: false, goal: 30 }, fixed: 0, blitzBest: 0, games: 0, answered: 0, correct: 0, perfects: 0, today: { d: '', n: 0 } });
 let S = fresh();
 try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); S.settings = Object.assign(fresh().settings, S.settings); } catch (e) {}
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+// Guardado: siempre en este navegador y, si el visor lo permite, en la cuenta de claude.ai (privado, sincroniza móvil y ordenador).
+let cloud = null, pushT = 0, syncState = 'local';
+const pushCloud = async () => { if (!cloud) return; if (!S.updatedAt) { S.updatedAt = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} } try { await cloud.set({ json: JSON.stringify(S), updatedAt: S.updatedAt || 0 }); syncState = 'ok'; } catch (e) { syncState = 'err'; } };
+const save = () => {
+  S.updatedAt = Date.now();
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+  if (cloud) { clearTimeout(pushT); pushT = setTimeout(pushCloud, 1200); }
+};
+const flushCloud = () => { if (cloud && pushT) { clearTimeout(pushT); pushT = 0; pushCloud(); } };
+addEventListener('pagehide', flushCloud);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushCloud(); });
 const applyTheme = () => { const t = S.settings.theme; if (t === 'system') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t); };
 applyTheme();
 
@@ -678,7 +688,7 @@ V.settings = () => {
         <div class="seg">${[['system', 'Auto'], ['light', 'Claro'], ['dark', 'Oscuro']].map(([v, l]) => `<button data-th="${v}" aria-pressed="${st.theme === v}">${l}</button>`).join('')}</div></div>
     </div>
     <div class="stk panel"><h2>Datos</h2>
-      <p class="muted">Tu progreso se guarda solo en este navegador. Si borras los datos del sitio o cambias de dispositivo, empiezas de cero.</p>
+      <p class="muted">${syncState === 'ok' ? 'Tu progreso se guarda automáticamente en tu cuenta de claude.ai. Es privado y lo recuperas en el móvil o en el ordenador entrando con la misma cuenta.' : syncState === 'err' ? 'No se ha podido guardar en tu cuenta ahora mismo. Se sigue guardando en este navegador y se reintentará en la próxima respuesta.' : 'Ahora mismo se guarda en este navegador. Abre el juego desde el enlace de claude.ai con tu cuenta para guardarlo también en la nube.'}</p>
       <div class="row">${confirmReset ? '<button class="btn danger press" id="reset">Sí, borrar todo</button><button class="btn press" id="cancelReset">Cancelar</button>' : '<button class="btn danger press" id="reset">Borrar progreso</button>'}</div>
     </div>
   </div>`;
@@ -906,6 +916,34 @@ const finish = () => {
   if (stars === 3 || (blitz && newBest && g.ok > 0)) { confetti(); sWin(); } else if (stars > 0) { confetti(60); sWin(); }
   announceAch(ach);
 };
+
+// ---------- Sincronización con la cuenta ----------
+(async () => {
+  for (let i = 0; i < 20 && !(window.claude && window.claude.use); i++) await new Promise(r => setTimeout(r, 250));
+  if (!(window.claude && window.claude.use)) return;
+  try {
+    const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    if (!db || !user) return;
+    const uid = await user.id(); if (!uid) return;
+    const ref = db.doc('data/users/' + uid + '/progreso');
+    const snap = await ref.get();
+    const remote = snap.exists ? snap.data() : null;
+    cloud = ref; syncState = 'ok';
+    // Un navegador que nunca ha guardado nada (móvil recién abierto) siempre toma lo de la cuenta.
+    const localNew = !S.updatedAt && !S.answered;
+    if (remote && typeof remote.json === 'string' && (localNew || (remote.updatedAt || 0) >= (S.updatedAt || 0))) {
+      const keepTheme = S.settings.theme;
+      S = Object.assign(fresh(), JSON.parse(remote.json)); S.settings = Object.assign(fresh().settings, S.settings);
+      try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+      if (S.settings.theme !== keepTheme) applyTheme();
+      if (view === 'game' || view === 'result') header(); else render();
+      if (S.answered) toast(I.check + '<span>Progreso recuperado de tu cuenta</span>');
+    } else if (!remote || !remote.updatedAt || (remote.updatedAt || 0) < (S.updatedAt || 0)) {
+      await pushCloud();
+    }
+    if (view === 'settings') render();
+  } catch (e) { syncState = 'err'; }
+})();
 
 // ---------- Teclado ----------
 document.addEventListener('keydown', e => {
