@@ -5,7 +5,7 @@ Uso: python3 build.py [ruta_artifact.html]
 import pathlib, sys
 
 root = pathlib.Path(__file__).parent
-data = "\n".join((root / "data" / f).read_text(encoding="utf-8") for f in ["t1.js", "t2.js", "t3.js", "t4.js", "t8.js"])
+data = "\n".join((root / "data" / f).read_text(encoding="utf-8") for f in ["t1.js", "t2.js", "t3.js", "t4.js", "t8.js", "apuntes.js"])
 body = (root / "app.template.html").read_text(encoding="utf-8").replace("/*__DATA__*/", data)
 
 full = ('<!doctype html>\n<html lang="es">\n<head>\n<meta charset="utf-8">\n'
