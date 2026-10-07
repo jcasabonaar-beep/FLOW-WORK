@@ -10,17 +10,21 @@ PDF_OUT = os.path.join(BASE, f"{VIDEO}-veo.pdf")
 CHROME = sys.argv[1] if len(sys.argv) > 1 else "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
 
 CAM = ("Vertical 9:16 video, shot on an iPhone, handheld as if filmed by another person standing in front of the "
-       "character: subtle, natural hand sway, and the camera slowly and smoothly pushes in a little closer and then "
-       "gently pulls back out during the clip; no abrupt moves, no cuts, no fast zooms. Hyperrealistic. Framing "
-       "starts exactly as in the start frame.")
+       "character, holding the phone in their hands: subtle, natural hand sway and tiny organic wobbles, and during "
+       "the clip the camera slowly and smoothly moves in closer to the character and then gently moves back out "
+       "again, like the person filming leaning in and back; soft and fluid, no abrupt moves, no cuts, no fast zooms. "
+       "Hyperrealistic. Framing starts exactly as in the start frame.")
 CAM1 = ("Vertical 9:16 video, shot on an iPhone, handheld as if filmed by another person standing in front of the "
-        "character, with subtle, natural hand sway. Framing starts exactly as in the start frame. IMPORTANT: during "
+        "character, holding the phone in their hands, with subtle, natural hand sway and tiny organic wobbles. Framing starts exactly as in the start frame. IMPORTANT: during "
         "the clip the camera steadily and smoothly pushes in a LOT toward the other person's wide-open mouth in the "
         "foreground, ending in an extreme close-up where the open mouth and the bubbles fill most of the frame. The "
         "push-in is continuous and smooth, with no cuts and no sudden jumps. Hyperrealistic.")
-PERF = ("The character's performance is deliberately exaggerated and highly expressive, like a high-energy viral "
-        "content creator: big eyebrow raises, wide eyes, big beaming smiles, animated head movements and emphatic, "
-        "expressive hand gestures, while still looking like a real human with no cartoonish distortion.")
+PERF = ("IMPORTANT: the performance must be extremely eye-catching. The character's acting is deliberately "
+        "EXAGGERATED, over-the-top and highly expressive, like the most high-energy viral content creator: huge "
+        "eyebrow raises, very wide eyes, big beaming smiles alternating with dramatic shocked or disgusted faces, "
+        "animated head tilts, nods and shakes, and big, emphatic, constant hand gestures on almost every phrase; the "
+        "face is never still and every key word is punctuated with a strong expression change, while still looking "
+        "like a real human with no cartoonish distortion.")
 LIP = ("Lip sync is precise and natural. The character performs the action and speaks simultaneously, starting to "
        "speak right at the beginning of the clip.")
 LOOK = "The character looks directly into the camera while in frame."
@@ -30,8 +34,8 @@ END = "El start frame proporcionado define la apariencia del personaje, su ropa 
 
 
 def dlg(tone, text):
-    return ("Dialogue (spoken in Spanish with a neutral Latin American accent, exaggerated, extremely enthusiastic, "
-            f"{tone} tone, lively pace): \"{text}\"")
+    return ("Dialogue (spoken in Spanish with a neutral Latin American accent, exaggerated, theatrical, extremely "
+            f"enthusiastic, {tone} tone, big pitch swings and dramatic emphasis on the key words, lively pace): \"{text}\"")
 
 
 def audio(extra=""):
@@ -149,8 +153,9 @@ def prompt(c):
     if tono:
         partes += [PERF, accion, LOOK, LIP, dlg(tono, frase)]
     else:
-        partes += [("The character's relieved expression at the end is exaggerated and highly expressive, while still "
-                    "looking like a real human with no cartoonish distortion."), accion]
+        partes += [("IMPORTANT: the performance must be extremely eye-catching: the spitting is theatrical and the "
+                    "relieved expression at the end is hugely exaggerated (eyes rolling up in relief, big exhale, big "
+                    "smile), while still looking like a real human with no cartoonish distortion."), accion]
     partes += [audio(extra), NOTEXT, END]
     return "\n\n".join(partes)
 
