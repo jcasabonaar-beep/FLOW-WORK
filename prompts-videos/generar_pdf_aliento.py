@@ -13,12 +13,17 @@ CAM = ("Vertical 9:16 video, shot on an iPhone, handheld as if filmed by another
        "character: subtle, natural hand sway, and the camera slowly and smoothly pushes in a little closer and then "
        "gently pulls back out during the clip; no abrupt moves, no cuts, no fast zooms. Hyperrealistic. Framing "
        "starts exactly as in the start frame.")
+CAM1 = ("Vertical 9:16 video, shot on an iPhone, handheld as if filmed by another person standing in front of the "
+        "character, with subtle, natural hand sway. Framing starts exactly as in the start frame. IMPORTANT: during "
+        "the clip the camera steadily and smoothly pushes in a LOT toward the other person's wide-open mouth in the "
+        "foreground, ending in an extreme close-up where the open mouth and the bubbles fill most of the frame. The "
+        "push-in is continuous and smooth, with no cuts and no sudden jumps. Hyperrealistic.")
 PERF = ("The character's performance is deliberately exaggerated and highly expressive, like a high-energy viral "
         "content creator: big eyebrow raises, wide eyes, big beaming smiles, animated head movements and emphatic, "
         "expressive hand gestures, while still looking like a real human with no cartoonish distortion.")
 LIP = ("Lip sync is precise and natural. The character performs the action and speaks simultaneously, starting to "
        "speak right at the beginning of the clip.")
-LOOK = "The character looks directly into the camera throughout the clip."
+LOOK = "The character looks directly into the camera while in frame."
 AMB = "the lakeside dock (soft lapping water, a light breeze)"
 NOTEXT = "No on-screen text, no subtitles, no captions, no logos, no watermarks, no graphic overlays of any kind."
 END = "El start frame proporcionado define la apariencia del personaje, su ropa y el ambiente. Continúa desde ahí."
@@ -38,15 +43,21 @@ def audio(extra=""):
 CLIPS = [
     ("1", 1, 8,
      "El olor que viene del fondo de tu garganta no es mal aliento. Es algo que se está pudriendo dentro de ti.",
-     "Otra persona en primer plano con la boca abierta (no es el avatar).",
+     "Otra persona en primer plano con la boca abierta (no es el avatar). La cámara se acerca mucho a la boca y "
+     "salen burbujas; al final la voz sigue fuera de cuadro.",
      "Continuous background action, placed first: from the very first frame to the very last frame, without ever "
      "stopping, the other person in the foreground keeps the head tilted back and the mouth stretched wide open, "
-     "never closing it, only blinking occasionally; never pauses, never freezes. The character, leaning over that "
-     "person, keeps the small flashlight pointed into the open mouth and holds the glass of lemon water. On 'olor' "
-     "the character wrinkles the nose in exaggerated disgust; on 'garganta' moves the flashlight beam deeper into the "
-     "open mouth; on 'no es mal aliento' shakes the head emphatically; on 'pudriendo' pulls a big grimace of disgust "
-     "with wide eyes. Ends with a slow, serious nod into the camera.",
-     "dramatic, alarming", "; the faint click of the flashlight"),
+     "never closing it; never pauses, never freezes. From the very first second, small foamy bubbles keep rising up "
+     "from the back of that open throat, bubbling out continuously, popping and spilling over the yellowed teeth and "
+     "the lips, more and more bubbles as the clip goes on, about two or three new bubbles per second, never stopping. "
+     "The character, leaning over that person, keeps the small flashlight pointed into the open mouth, its beam "
+     "lighting up the bubbles, and holds the glass of lemon water. During the first seconds, while the character is "
+     "still in frame, on 'olor' the character wrinkles the nose in exaggerated disgust and on 'garganta' moves the "
+     "flashlight beam deeper into the open mouth. Then the camera pushes in toward the open mouth: as it gets closer, "
+     "the character's face leaves the top of the frame, and the character's voice keeps being heard naturally from "
+     "just above the frame, with exaggerated, disgusted emphasis on 'pudriendo'. The clip ends on an extreme close-up "
+     "of the open mouth full of bubbles.",
+     "dramatic, alarming", "; the wet, gurgling sound of the bubbles coming out of the throat and popping"),
     ("2", 2, 8,
      "La mayoría de las personas lo tienen durante años sin saberlo y siguen usando un enjuague bucal que no hace nada.",
      "",
@@ -134,7 +145,7 @@ CORRECCIONES = [
 
 def prompt(c):
     _, _, _, frase, _, accion, tono, extra = c
-    partes = [CAM]
+    partes = [CAM1 if c[0] == "1" else CAM]
     if tono:
         partes += [PERF, accion, LOOK, LIP, dlg(tono, frase)]
     else:
