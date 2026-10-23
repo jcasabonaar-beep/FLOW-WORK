@@ -1,0 +1,1649 @@
+{
+  "cuenta": "@tu.cuenta",
+  "aviso": "Cifras aproximadas · oct 2026",
+  "videos": [
+    {
+      "id": 1,
+      "slug": "sueldo-por-edad",
+      "serie": "TU EDAD",
+      "formato_usa": "Salary Transparent Street + 'salary by age'",
+      "etiqueta": "SUELDOS 2026",
+      "hook": [
+        "¿CUÁNTO COBRA",
+        "LA GENTE DE TU EDAD?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "¿Cuánto cobra la gente de tu edad? Busca tu edad y compárate."
+        },
+        {
+          "tipo": "barras",
+          "titulo": "SUELDO BRUTO MEDIO AL AÑO",
+          "items": [
+            [
+              "18-24",
+              15000,
+              "15.000 €"
+            ],
+            [
+              "25-34",
+              23000,
+              "23.000 €"
+            ],
+            [
+              "35-44",
+              28000,
+              "28.000 €"
+            ],
+            [
+              "45-54",
+              31000,
+              "31.000 €"
+            ],
+            [
+              "55+",
+              32000,
+              "32.000 €"
+            ]
+          ],
+          "resalta": 1,
+          "voz": "Entre dieciocho y veinticuatro, unos quince mil euros brutos al año. De veinticinco a treinta y cuatro, veintitrés mil. De treinta y cinco a cuarenta y cuatro, veintiocho mil. Y a partir de los cuarenta y cinco, más de treinta mil."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "OJO: ES LA MEDIA",
+            "NO LO QUE COBRA LA MAYORÍA"
+          ],
+          "resalta": 1,
+          "voz": "Pero ojo: es la media. Unos pocos sueldos muy altos la inflan, y la mayoría cobra menos."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "¿ESTÁS POR ENCIMA",
+            "O POR DEBAJO?"
+          ],
+          "voz": "¿Tú estás por encima o por debajo? Te leo en comentarios."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "slug": "1500-brutos-cuanto-llega",
+      "serie": "NÓMINA",
+      "formato_usa": "Paycheck breakdown ('I make $X, here's my take-home')",
+      "etiqueta": "NÓMINA",
+      "hook": [
+        "SI COBRAS 1.500 €,",
+        "¿CUÁNTO TE QUITAN?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Si cobras mil quinientos euros brutos, ¿cuánto te quitan de verdad?"
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "SEGURIDAD SOCIAL ≈ 6,5 %",
+            "IRPF ≈ 9 %"
+          ],
+          "voz": "Primero, la Seguridad Social: más o menos un seis y medio por ciento. Después, Hacienda: alrededor de un nueve por ciento de IRPF."
+        },
+        {
+          "tipo": "cifra",
+          "valor": 1260,
+          "sufijo": " €",
+          "texto": "NETOS AL MES (14 PAGAS)",
+          "voz": "Resultado: te llegan unos mil doscientos sesenta euros al mes, en catorce pagas."
+        },
+        {
+          "tipo": "barras",
+          "titulo": "BRUTO → NETO AL MES",
+          "items": [
+            [
+              "1.500 €",
+              1260,
+              "≈1.260 €"
+            ],
+            [
+              "2.000 €",
+              1560,
+              "≈1.560 €"
+            ],
+            [
+              "3.000 €",
+              2200,
+              "≈2.200 €"
+            ]
+          ],
+          "resalta": 0,
+          "voz": "Si cobras dos mil, te llegan unos mil quinientos sesenta. Y con tres mil, unos dos mil doscientos."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "SOLTERO, SIN HIJOS",
+            "VARÍA SEGÚN TU COMUNIDAD"
+          ],
+          "voz": "Es para alguien soltero y sin hijos; cambia un poco según tu comunidad. Guárdalo para tu próxima nómina."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "slug": "mito-tramos-irpf",
+      "serie": "RENTA",
+      "formato_usa": "Tax brackets myth ('a raise can't make you earn less')",
+      "etiqueta": "RENTA 2026",
+      "hook": [
+        "SI GANO MÁS,",
+        "¿COBRO MENOS?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Si te suben el sueldo y cambias de tramo, ¿puedes acabar cobrando menos? Spoiler: no."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "EL TRAMO SOLO AFECTA",
+            "AL DINERO QUE LO SUPERA"
+          ],
+          "resalta": 1,
+          "voz": "El IRPF va por tramos, y cada tramo solo se aplica al dinero que entra en él."
+        },
+        {
+          "tipo": "barras",
+          "titulo": "ESCALA IRPF (APROX.)",
+          "items": [
+            [
+              "Hasta 12.450 €",
+              19,
+              "19 %"
+            ],
+            [
+              "Hasta 20.200 €",
+              24,
+              "24 %"
+            ],
+            [
+              "Hasta 35.200 €",
+              30,
+              "30 %"
+            ],
+            [
+              "Hasta 60.000 €",
+              37,
+              "37 %"
+            ],
+            [
+              "Más de 60.000 €",
+              45,
+              "45 %+"
+            ]
+          ],
+          "resalta": 2,
+          "voz": "Si pasas de veinte mil doscientos a veintiún mil euros, solo esos ochocientos euros de más pagan el treinta por ciento. Todo lo de abajo sigue igual."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "UNA SUBIDA SIEMPRE",
+            "TE DEJA MÁS DINERO"
+          ],
+          "voz": "Una subida siempre te deja más dinero. Mándaselo a quien todavía se lo cree."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "slug": "un-millon-cuanto-tardas",
+      "serie": "ESCALA",
+      "formato_usa": "Visualizing wealth (Humphrey Yang, 'rice = $100k')",
+      "etiqueta": "DINERO",
+      "hook": [
+        "1 MILLÓN DE €,",
+        "¿CUÁNTO TARDAS TÚ?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Un millón de euros. ¿Cuántos años tardarías tú en ganarlo?"
+        },
+        {
+          "tipo": "barras",
+          "titulo": "AÑOS PARA GANAR 1 MILLÓN (BRUTO)",
+          "items": [
+            [
+              "SMI",
+              60,
+              "60 años"
+            ],
+            [
+              "Sueldo medio",
+              36,
+              "36 años"
+            ],
+            [
+              "3.000 €/mes",
+              24,
+              "24 años"
+            ]
+          ],
+          "resalta": 0,
+          "voz": "Con el salario mínimo, unos sesenta años. Con un sueldo medio, treinta y seis. Y cobrando tres mil euros al mes, veinticuatro."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "SIN GASTAR",
+            "NI UN SOLO EURO"
+          ],
+          "resalta": 1,
+          "voz": "Y eso en bruto y sin gastar ni un solo euro. Ni alquiler, ni comida, nada."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "POR ESO CASI NADIE",
+            "LLEGA SOLO CON SU SUELDO"
+          ],
+          "voz": "Por eso casi nadie llega al millón solo con su sueldo."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "¿CON QUÉ EDAD",
+            "LLEGARÍAS TÚ?"
+          ],
+          "voz": "Haz la cuenta: ¿con qué edad llegarías tú? Comenta."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "slug": "movil-en-horas-de-trabajo",
+      "serie": "ESCALA",
+      "formato_usa": "'How many hours of work does X cost?'",
+      "etiqueta": "DINERO",
+      "hook": [
+        "UN MÓVIL DE 1.200 €,",
+        "¿CUÁNTAS HORAS TE CUESTA?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Un móvil de mil doscientos euros. ¿Cuántas horas tienes que trabajar para pagarlo?"
+        },
+        {
+          "tipo": "cifra",
+          "valor": 9,
+          "prefijo": "≈",
+          "sufijo": " €/h",
+          "texto": "NETO POR HORA CON EL SMI",
+          "voz": "Con el salario mínimo cobras unos nueve euros netos por hora."
+        },
+        {
+          "tipo": "cifra",
+          "valor": 135,
+          "sufijo": " HORAS",
+          "texto": "≈ 17 JORNADAS ENTERAS",
+          "voz": "O sea, unas ciento treinta y cinco horas. Diecisiete días enteros de trabajo, casi un mes."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "CALCULA TU HORA:",
+            "SUELDO NETO ÷ HORAS"
+          ],
+          "resalta": 1,
+          "voz": "Calcula lo tuyo: divide tu sueldo neto entre las horas que trabajas. Y antes de comprar algo, pásalo a horas."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "¿QUÉ HAS COMPRADO",
+            "QUE NO LO VALÍA?"
+          ],
+          "voz": "¿Qué te has comprado que no valía esas horas?"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "slug": "reto-52-semanas",
+      "serie": "AHORRO",
+      "formato_usa": "Savings challenge ('Save $X with me')",
+      "etiqueta": "RETO AHORRO",
+      "hook": [
+        "RETO 52 SEMANAS,",
+        "¿CUÁNTO AHORRAS?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "El reto de las cincuenta y dos semanas. ¿Cuánto ahorras en un año?"
+        },
+        {
+          "tipo": "lista",
+          "titulo": "LAS REGLAS",
+          "items": [
+            "SEMANA 1 → 1 €",
+            "SEMANA 2 → 2 €",
+            "SEMANA 52 → 52 €"
+          ],
+          "voz": "La primera semana guardas un euro. La segunda, dos. Y así hasta la semana cincuenta y dos, que guardas cincuenta y dos."
+        },
+        {
+          "tipo": "cifra",
+          "valor": 1378,
+          "sufijo": " €",
+          "texto": "EN UN AÑO",
+          "voz": "Al final tienes mil trescientos setenta y ocho euros."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "TRUCO: HAZLO AL REVÉS",
+            "EMPIEZA POR 52 €"
+          ],
+          "resalta": 0,
+          "voz": "Truco: hazlo al revés. Empieza por cincuenta y dos, que en diciembre ya vas justo."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "¿EMPIEZAS",
+            "ESTA SEMANA?"
+          ],
+          "voz": "¿Empiezas esta semana? Escribe «dentro» y te recuerdo."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "slug": "100-euros-al-mes-desde-los-25",
+      "serie": "AHORRO",
+      "formato_usa": "Compound interest visual ('start at 25 vs 35')",
+      "etiqueta": "INTERÉS COMPUESTO",
+      "hook": [
+        "100 € AL MES DESDE LOS 25,",
+        "¿CUÁNTO A LOS 65?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Si apartas cien euros al mes desde los veinticinco, ¿cuánto tienes a los sesenta y cinco?"
+        },
+        {
+          "tipo": "vs",
+          "izq": {
+            "titulo": "DESDE LOS 25",
+            "valor": "≈152.000 €"
+          },
+          "der": {
+            "titulo": "DESDE LOS 35",
+            "valor": "≈83.000 €"
+          },
+          "voz": "Con una rentabilidad media del cinco por ciento anual, unos ciento cincuenta y dos mil euros. Si empiezas a los treinta y cinco, solo ochenta y tres mil."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "TÚ SOLO PONES 48.000 €",
+            "EL RESTO LO PONE EL TIEMPO"
+          ],
+          "resalta": 1,
+          "voz": "Y de tu bolsillo solo salen cuarenta y ocho mil. Todo lo demás lo pone el tiempo."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "EJEMPLO, NO PROMESA",
+            "NADA ESTÁ GARANTIZADO"
+          ],
+          "voz": "Es un ejemplo, no una promesa: ninguna rentabilidad está garantizada."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "MÁNDASELO A ALGUIEN",
+            "DE 25 AÑOS"
+          ],
+          "voz": "Mándaselo a alguien de veinticinco años."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "slug": "ahorros-en-el-banco-inflacion",
+      "serie": "AHORRO",
+      "formato_usa": "'Your savings account is losing money'",
+      "etiqueta": "INFLACIÓN",
+      "hook": [
+        "10.000 € EN EL BANCO,",
+        "¿CUÁNTO PIERDES?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Tienes diez mil euros quietos en el banco. ¿Cuánto estás perdiendo sin darte cuenta?"
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "EL NÚMERO NO BAJA",
+            "LO QUE COMPRA, SÍ"
+          ],
+          "resalta": 1,
+          "voz": "En la cuenta siguen poniendo diez mil. Pero con una inflación del tres por ciento, cada año compran menos."
+        },
+        {
+          "tipo": "cifra",
+          "valor": 8626,
+          "sufijo": " €",
+          "texto": "LO QUE VALDRÁN EN 5 AÑOS",
+          "voz": "En cinco años, tus diez mil euros comprarán lo mismo que ocho mil seiscientos hoy."
+        },
+        {
+          "tipo": "cifra",
+          "valor": 1374,
+          "prefijo": "−",
+          "sufijo": " €",
+          "texto": "SIN TOCAR LA CUENTA",
+          "voz": "Has perdido casi mil cuatrocientos euros sin tocar la cuenta."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "¿DÓNDE TIENES",
+            "TUS AHORROS?"
+          ],
+          "voz": "¿Tú dónde tienes tus ahorros? Comenta y hago la segunda parte."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "slug": "cafe-diario-al-ano",
+      "serie": "AHORRO",
+      "formato_usa": "Latte factor / 'little expenses add up'",
+      "etiqueta": "GASTOS HORMIGA",
+      "hook": [
+        "TU CAFÉ DIARIO,",
+        "¿CUÁNTO CUESTA AL AÑO?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Tu café de cada mañana. ¿Cuánto te cuesta al año?"
+        },
+        {
+          "tipo": "cifra",
+          "valor": 548,
+          "sufijo": " €",
+          "texto": "1,50 € × 365 DÍAS",
+          "voz": "A uno cincuenta al día, quinientos cuarenta y ocho euros al año."
+        },
+        {
+          "tipo": "barras",
+          "titulo": "AL AÑO",
+          "items": [
+            [
+              "Café diario",
+              548,
+              "548 €"
+            ],
+            [
+              "3 suscripciones",
+              432,
+              "432 €"
+            ],
+            [
+              "Pedir comida",
+              2080,
+              "2.080 €"
+            ]
+          ],
+          "resalta": 2,
+          "voz": "Tres suscripciones de doce euros, cuatrocientos treinta y dos. Y pedir comida dos veces por semana, a veinte euros, más de dos mil."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "NO ES QUITARTE EL CAFÉ",
+            "ES SABER LO QUE PAGAS"
+          ],
+          "resalta": 1,
+          "voz": "No se trata de quitarte el café, sino de saber cuánto pagas por él."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "¿CUÁL ES TU",
+            "GASTO HORMIGA?"
+          ],
+          "voz": "¿Cuál es tu gasto hormiga? Confiesa en comentarios."
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "slug": "alquiler-que-puedes-pagar",
+      "serie": "VIVIENDA",
+      "formato_usa": "'How much rent can you afford on $X?' (30% rule)",
+      "etiqueta": "ALQUILER",
+      "hook": [
+        "¿CUÁNTO ALQUILER PUEDES",
+        "PAGAR CON TU SUELDO?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "¿Cuánto alquiler puedes pagar con tu sueldo sin ahogarte?"
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "REGLA DEL 30 %",
+            "DE LO QUE COBRAS NETO"
+          ],
+          "resalta": 0,
+          "voz": "La regla más usada: como mucho, el treinta por ciento de lo que cobras neto."
+        },
+        {
+          "tipo": "barras",
+          "titulo": "ALQUILER MÁXIMO RECOMENDADO",
+          "items": [
+            [
+              "1.500 € brutos",
+              441,
+              "≈440 €"
+            ],
+            [
+              "2.000 € brutos",
+              546,
+              "≈550 €"
+            ],
+            [
+              "3.000 € brutos",
+              770,
+              "≈770 €"
+            ]
+          ],
+          "resalta": 0,
+          "voz": "Si cobras mil quinientos brutos, unos cuatrocientos cuarenta euros. Con dos mil, unos quinientos cincuenta. Con tres mil, unos setecientos setenta."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "¿EN TU CIUDAD",
+            "HAY PISOS A ESE PRECIO?"
+          ],
+          "resalta": 1,
+          "voz": "La pregunta es si en tu ciudad queda algún piso a ese precio."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "DIME TU CIUDAD",
+            "Y LO QUE PAGAS"
+          ],
+          "voz": "Dime tu ciudad y lo que pagas. Vamos a ver dónde es peor."
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "slug": "inmobiliaria-no-te-cobra",
+      "serie": "VIVIENDA",
+      "formato_usa": "'Know your rights' / 'this is illegal'",
+      "etiqueta": "ALQUILER",
+      "hook": [
+        "¿TE COBRA LA INMOBILIARIA?",
+        "NO DEBERÍA"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Vas a alquilar un piso y la inmobiliaria te pide un mes de comisión. No deberías pagarla."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "LEY DE VIVIENDA 2023",
+            "LA COMISIÓN LA PAGA EL CASERO"
+          ],
+          "resalta": 1,
+          "voz": "Desde la Ley de Vivienda de 2023, los gastos de gestión de la inmobiliaria los paga el propietario, no el inquilino."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "AUNQUE LO LLAMEN",
+            "«GESTIÓN» O «ESTUDIO»"
+          ],
+          "voz": "Da igual que lo llamen gestión, estudio de solvencia o redacción del contrato."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "SI YA PAGASTE:",
+            "PIDE FACTURA Y RECLAMA"
+          ],
+          "resalta": 0,
+          "voz": "Si ya lo has pagado, pide factura y reclama en consumo de tu comunidad."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "MÁNDASELO A QUIEN",
+            "ESTÉ BUSCANDO PISO"
+          ],
+          "voz": "Mándaselo a quien esté buscando piso. Le acabas de ahorrar un mes de alquiler."
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "slug": "fianza-4-meses-legal",
+      "serie": "VIVIENDA",
+      "formato_usa": "'Is this legal?' tenant rights",
+      "etiqueta": "ALQUILER",
+      "hook": [
+        "¿4 MESES DE FIANZA?",
+        "¿ES LEGAL?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Te piden cuatro meses por adelantado para alquilar un piso. ¿Es legal?"
+        },
+        {
+          "tipo": "lista",
+          "titulo": "LO MÁXIMO QUE TE PUEDEN PEDIR",
+          "items": [
+            "FIANZA → 1 MES",
+            "GARANTÍA EXTRA → MÁX. 2 MESES",
+            "+ EL PRIMER MES DE RENTA"
+          ],
+          "voz": "Por ley, la fianza de vivienda es un mes. Además te pueden pedir una garantía extra, pero como máximo dos meses más. Y el primer mes de alquiler, claro."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "MÁS DE ESO",
+            "NO ES LEGAL"
+          ],
+          "resalta": 0,
+          "voz": "Si te piden más que eso en garantías, no es legal en un alquiler de vivienda normal."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "LA FIANZA SE DEPOSITA",
+            "EN TU COMUNIDAD"
+          ],
+          "voz": "Y la fianza no se la queda el casero: tiene que depositarla en el organismo de tu comunidad."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "¿CUÁNTO",
+            "TE PIDIERON A TI?"
+          ],
+          "voz": "¿Cuánto te pidieron a ti?"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "slug": "casero-no-devuelve-fianza",
+      "serie": "VIVIENDA",
+      "formato_usa": "'Landlord won't return deposit' rights",
+      "etiqueta": "ALQUILER",
+      "hook": [
+        "¿NO TE DEVUELVEN",
+        "LA FIANZA?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Te vas del piso y el casero no te devuelve la fianza. Esto es lo que dice la ley."
+        },
+        {
+          "tipo": "cifra",
+          "valor": 1,
+          "sufijo": " MES",
+          "texto": "PLAZO PARA DEVOLVERLA",
+          "voz": "Tiene un mes desde que le das las llaves para devolvértela."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "SI SE RETRASA,",
+            "TE DEBE INTERESES"
+          ],
+          "resalta": 1,
+          "voz": "Si se retrasa, además te debe intereses."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "SOLO PUEDE DESCONTAR",
+            "DAÑOS O DEUDAS REALES"
+          ],
+          "voz": "Solo puede quedarse con algo si hay daños reales o deudas, y tiene que justificarlo. El desgaste normal no cuenta."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "TRUCO: FOTOS Y VÍDEO",
+            "EL DÍA QUE ENTRAS"
+          ],
+          "resalta": 0,
+          "voz": "Truco: haz fotos y vídeo del piso el día que entras y el día que te vas."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "GUÁRDALO PARA",
+            "CUANDO TE MUDES"
+          ],
+          "voz": "Guárdalo para cuando te mudes."
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "slug": "bono-alquiler-joven",
+      "serie": "AYUDAS",
+      "formato_usa": "'Free money you're not claiming'",
+      "etiqueta": "AYUDAS",
+      "hook": [
+        "TIENES MENOS DE 35,",
+        "¿TE DAN 250 € AL MES?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Si tienes menos de treinta y cinco años y vives de alquiler, puede que te den doscientos cincuenta euros al mes."
+        },
+        {
+          "tipo": "lista",
+          "titulo": "BONO ALQUILER JOVEN",
+          "items": [
+            "DE 18 A 35 AÑOS",
+            "TENER INGRESOS PROPIOS",
+            "MENOS DE ≈25.000 € AL AÑO"
+          ],
+          "voz": "Es el Bono Alquiler Joven. Tienes que tener entre dieciocho y treinta y cinco años, ingresos propios y no superar unos veinticinco mil euros al año."
+        },
+        {
+          "tipo": "cifra",
+          "valor": 3000,
+          "sufijo": " €",
+          "texto": "HASTA 250 € × 12 MESES",
+          "voz": "Son hasta tres mil euros al año."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "LO PIDES EN",
+            "TU COMUNIDAD"
+          ],
+          "resalta": 1,
+          "voz": "Se pide en tu comunidad autónoma y cada una tiene sus plazos y límites de alquiler. Mira la convocatoria."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "ETIQUETA A QUIEN",
+            "VIVA DE ALQUILER"
+          ],
+          "voz": "Etiqueta a quien viva de alquiler."
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "slug": "te-despiden-cuanto-te-toca",
+      "serie": "TRABAJO",
+      "formato_usa": "'You got fired, here's what you're owed'",
+      "etiqueta": "DESPIDO",
+      "hook": [
+        "TE DESPIDEN,",
+        "¿CUÁNTO TE TOCA?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Te despiden después de cinco años. ¿Cuánto dinero te toca?"
+        },
+        {
+          "tipo": "vs",
+          "izq": {
+            "titulo": "OBJETIVO",
+            "valor": "20 DÍAS/AÑO"
+          },
+          "der": {
+            "titulo": "IMPROCEDENTE",
+            "valor": "33 DÍAS/AÑO"
+          },
+          "voz": "Depende del tipo de despido. Objetivo: veinte días de sueldo por año trabajado. Improcedente: treinta y tres."
+        },
+        {
+          "tipo": "barras",
+          "titulo": "5 AÑOS · 1.800 € BRUTOS × 14",
+          "items": [
+            [
+              "Objetivo",
+              6900,
+              "≈6.900 €"
+            ],
+            [
+              "Improcedente",
+              11400,
+              "≈11.400 €"
+            ]
+          ],
+          "resalta": 1,
+          "voz": "Con mil ochocientos euros brutos en catorce pagas y cinco años en la empresa: unos seis mil novecientos euros si es objetivo, y unos once mil cuatrocientos si es improcedente."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "NO FIRMES «CONFORME»",
+            "FIRMA «NO CONFORME»"
+          ],
+          "resalta": 1,
+          "voz": "Y nunca firmes conforme sin leer: firma no conforme y consulta."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "GUÁRDALO",
+            "POR SI ACASO"
+          ],
+          "voz": "Guárdalo, por si acaso."
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "slug": "paro-cuanto-cobras",
+      "serie": "TRABAJO",
+      "formato_usa": "'How much unemployment will you get?'",
+      "etiqueta": "PARO",
+      "hook": [
+        "TE QUEDAS EN PARO,",
+        "¿CUÁNTO COBRAS?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Te quedas en paro. ¿Cuánto vas a cobrar cada mes?"
+        },
+        {
+          "tipo": "vs",
+          "izq": {
+            "titulo": "PRIMEROS 6 MESES",
+            "valor": "70 %"
+          },
+          "der": {
+            "titulo": "DESPUÉS",
+            "valor": "50 %"
+          },
+          "voz": "Los primeros seis meses cobras el setenta por ciento de tu base. A partir del séptimo, el cincuenta."
+        },
+        {
+          "tipo": "barras",
+          "titulo": "SI TU BASE ERA 1.500 €",
+          "items": [
+            [
+              "Meses 1-6",
+              1050,
+              "1.050 €"
+            ],
+            [
+              "Desde el 7º",
+              750,
+              "750 €"
+            ]
+          ],
+          "resalta": 0,
+          "voz": "Si tu base era de mil quinientos euros, mil cincuenta al mes al principio, y setecientos cincuenta después."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "CON 1 AÑO COTIZADO",
+            "≈ 4 MESES DE PARO"
+          ],
+          "resalta": 0,
+          "voz": "Necesitas haber cotizado al menos un año, y te dan unos cuatro meses de paro por cada año cotizado, hasta un máximo de dos años."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "¿SABÍAS LO",
+            "DEL 50 %?"
+          ],
+          "voz": "¿Sabías lo del cincuenta por ciento? Comenta."
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "slug": "finiquito-que-te-deben",
+      "serie": "TRABAJO",
+      "formato_usa": "'Your final paycheck checklist'",
+      "etiqueta": "FINIQUITO",
+      "hook": [
+        "TE VAS DE LA EMPRESA,",
+        "¿QUÉ TE DEBEN?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Dejas la empresa. ¿Qué dinero te tienen que pagar sí o sí?"
+        },
+        {
+          "tipo": "lista",
+          "titulo": "TU FINIQUITO INCLUYE",
+          "items": [
+            "DÍAS TRABAJADOS DEL MES",
+            "VACACIONES NO DISFRUTADAS",
+            "PARTE DE LAS PAGAS EXTRA"
+          ],
+          "voz": "El finiquito siempre incluye tres cosas: los días trabajados de ese mes, las vacaciones que no hayas disfrutado y la parte proporcional de las pagas extra."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "FINIQUITO ≠",
+            "INDEMNIZACIÓN"
+          ],
+          "resalta": 1,
+          "voz": "Ojo, el finiquito no es la indemnización. Te lo pagan siempre, aunque te vayas tú."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "SI TE VAS TÚ:",
+            "SIN PARO NI INDEMNIZACIÓN"
+          ],
+          "resalta": 0,
+          "voz": "Si te vas por voluntad propia, normalmente no tienes ni paro ni indemnización. Y avisa con el preaviso de tu convenio, o te lo descuentan."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "REVISA EL TUYO",
+            "ANTES DE FIRMAR"
+          ],
+          "voz": "Revisa el tuyo antes de firmar."
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "slug": "12-o-14-pagas",
+      "serie": "NÓMINA",
+      "formato_usa": "Myth-busting ('this money myth is wrong')",
+      "etiqueta": "NÓMINA",
+      "hook": [
+        "12 O 14 PAGAS,",
+        "¿CUÁL COBRA MÁS?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Doce o catorce pagas: ¿con cuál cobras más?"
+        },
+        {
+          "tipo": "vs",
+          "izq": {
+            "titulo": "14 PAGAS",
+            "valor": "1.500 €"
+          },
+          "der": {
+            "titulo": "12 PAGAS",
+            "valor": "1.750 €"
+          },
+          "voz": "Mil quinientos en catorce pagas o mil setecientos cincuenta en doce."
+        },
+        {
+          "tipo": "cifra",
+          "valor": 21000,
+          "sufijo": " €",
+          "texto": "AL AÑO EN LOS DOS CASOS",
+          "voz": "Al año son veintiún mil euros en los dos casos. Exactamente lo mismo, y Hacienda te quita lo mismo."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "SOLO CAMBIA",
+            "CUÁNDO TE LLEGA"
+          ],
+          "resalta": 1,
+          "voz": "Lo único que cambia es cuándo te llega el dinero: prorrateado cada mes o con dos extras en verano y Navidad."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "¿TÚ CUÁL",
+            "PREFIERES?"
+          ],
+          "voz": "¿Tú cuál prefieres? Equipo doce o equipo catorce."
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "slug": "horas-extra",
+      "serie": "TRABAJO",
+      "formato_usa": "'Your boss doesn't want you to know this'",
+      "etiqueta": "TRABAJO",
+      "hook": [
+        "¿TE PAGAN",
+        "LAS HORAS EXTRA?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Te quedas más tarde casi cada día. ¿Te están pagando esas horas?"
+        },
+        {
+          "tipo": "cifra",
+          "valor": 80,
+          "sufijo": " HORAS",
+          "texto": "MÁXIMO DE HORAS EXTRA AL AÑO",
+          "voz": "Por ley, el máximo son ochenta horas extra al año."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "SE PAGAN O SE",
+            "COMPENSAN CON DESCANSO"
+          ],
+          "resalta": 1,
+          "voz": "Y se pagan, como mínimo, como una hora normal, o se compensan con descanso. Gratis, no."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "TU EMPRESA DEBE",
+            "REGISTRAR TU JORNADA"
+          ],
+          "voz": "Tu empresa está obligada a registrar tu jornada cada día. Pide ese registro."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "¿CUÁNTAS HORAS",
+            "REGALAS A LA SEMANA?"
+          ],
+          "voz": "¿Cuántas horas regalas tú a la semana?"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "slug": "vacaciones-30-dias",
+      "serie": "TRABAJO",
+      "formato_usa": "'Know your rights' PTO edition",
+      "etiqueta": "VACACIONES",
+      "hook": [
+        "30 DÍAS DE VACACIONES,",
+        "¿TE LOS DAN?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Treinta días de vacaciones al año. ¿Te los están dando enteros?"
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "MÍNIMO 30 DÍAS",
+            "NATURALES AL AÑO"
+          ],
+          "resalta": 0,
+          "voz": "La ley dice mínimo treinta días naturales al año. Tu convenio puede darte más, nunca menos."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "NO SE PUEDEN",
+            "CAMBIAR POR DINERO"
+          ],
+          "resalta": 1,
+          "voz": "No te los pueden cambiar por dinero, salvo si dejas la empresa: entonces van al finiquito."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "¿TE PONES MALO?",
+            "LOS RECUPERAS"
+          ],
+          "resalta": 1,
+          "voz": "Y si te pones de baja durante tus vacaciones, esos días los recuperas después."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "¿CUÁNTOS DÍAS",
+            "TIENES TÚ?"
+          ],
+          "voz": "¿Cuántos días tienes tú? Comenta."
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "slug": "tienes-que-hacer-la-renta",
+      "serie": "RENTA",
+      "formato_usa": "'Do you even need to file?'",
+      "etiqueta": "RENTA 2026",
+      "hook": [
+        "¿TIENES QUE",
+        "HACER LA RENTA?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "¿Tienes que hacer la renta este año? Depende de una cifra."
+        },
+        {
+          "tipo": "cifra",
+          "valor": 22000,
+          "sufijo": " €",
+          "texto": "CON UN SOLO PAGADOR",
+          "voz": "Si has tenido un solo pagador, no estás obligado hasta veintidós mil euros brutos al año."
+        },
+        {
+          "tipo": "cifra",
+          "valor": 15876,
+          "sufijo": " €",
+          "texto": "CON DOS PAGADORES*",
+          "voz": "Pero si has tenido dos pagadores y el segundo te pagó más de mil quinientos euros, el límite baja a quince mil ochocientos setenta y seis."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "AUNQUE NO ESTÉS OBLIGADO,",
+            "PUEDE QUE TE DEVUELVAN"
+          ],
+          "resalta": 1,
+          "voz": "Y aunque no estés obligado, hazla igual: muchas veces te devuelven dinero."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "¿TE SALIÓ A PAGAR",
+            "O A DEVOLVER?"
+          ],
+          "voz": "¿El año pasado te salió a pagar o a devolver?"
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "slug": "errores-renta",
+      "serie": "RENTA",
+      "formato_usa": "'5 tax mistakes costing you money'",
+      "etiqueta": "RENTA 2026",
+      "hook": [
+        "5 ERRORES EN LA RENTA",
+        "QUE TE CUESTAN DINERO"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Cinco errores en la renta que te están costando dinero."
+        },
+        {
+          "tipo": "lista",
+          "titulo": "ERRORES",
+          "items": [
+            "1. CONFIRMAR SIN MIRAR",
+            "2. OLVIDAR TU COMUNIDAD",
+            "3. OLVIDAR EL SINDICATO"
+          ],
+          "voz": "Uno: confirmar el borrador sin mirarlo. Dos: olvidar las deducciones de tu comunidad, como la de alquiler para jóvenes. Tres: no meter las cuotas del sindicato o del colegio profesional."
+        },
+        {
+          "tipo": "lista",
+          "titulo": "ERRORES",
+          "items": [
+            "4. NO PROBAR CONJUNTA",
+            "5. OLVIDAR DONATIVOS"
+          ],
+          "voz": "Cuatro: no comparar la declaración conjunta con la individual. Y cinco: olvidar los donativos. De los primeros doscientos cincuenta euros, te devuelven el ochenta por ciento."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "GUÁRDALO PARA",
+            "ABRIL"
+          ],
+          "voz": "Guárdalo para abril, que se te olvida."
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "slug": "por-que-hacienda-devuelve",
+      "serie": "RENTA",
+      "formato_usa": "'Your tax refund isn't a gift'",
+      "etiqueta": "RENTA 2026",
+      "hook": [
+        "HACIENDA TE DEVUELVE,",
+        "¿ES UN REGALO?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Hacienda te devuelve trescientos euros y lo celebras. ¿Es un regalo?"
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "NO: ES TU DINERO",
+            "QUE YA HABÍAS PAGADO"
+          ],
+          "resalta": 0,
+          "voz": "No. Es dinero tuyo que ya habías pagado de más durante el año."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "CADA MES TE RETIENEN",
+            "UN % A CUENTA"
+          ],
+          "voz": "Cada mes tu empresa te retiene un porcentaje de la nómina a cuenta. En la renta se hace la cuenta final."
+        },
+        {
+          "tipo": "vs",
+          "izq": {
+            "titulo": "RETIENEN DE MÁS",
+            "valor": "COBRAS"
+          },
+          "der": {
+            "titulo": "RETIENEN DE MENOS",
+            "valor": "PAGAS"
+          },
+          "voz": "Si te retuvieron de más, te devuelven. Si te retuvieron de menos, te toca pagar."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "MÁNDASELO A QUIEN",
+            "LO CELEBRA CADA AÑO"
+          ],
+          "voz": "Mándaselo a quien lo celebra cada año."
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "slug": "plan-de-pensiones-ahorro-fiscal",
+      "serie": "RENTA",
+      "formato_usa": "'Tax hack: retirement account'",
+      "etiqueta": "RENTA 2026",
+      "hook": [
+        "PLAN DE PENSIONES,",
+        "¿TE AHORRA IMPUESTOS?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Un plan de pensiones, ¿de verdad te ahorra impuestos?"
+        },
+        {
+          "tipo": "cifra",
+          "valor": 1500,
+          "sufijo": " €",
+          "texto": "MÁXIMO QUE PUEDES RESTARTE AL AÑO",
+          "voz": "Puedes restar de tu base hasta mil quinientos euros al año que metas en tu plan individual."
+        },
+        {
+          "tipo": "cifra",
+          "valor": 450,
+          "sufijo": " €",
+          "texto": "MENOS EN LA RENTA (TRAMO DEL 30 %)",
+          "voz": "Si estás en el tramo del treinta por ciento, eso son unos cuatrocientos cincuenta euros menos en la renta."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "PERO AL SACARLO",
+            "PAGAS IMPUESTOS"
+          ],
+          "resalta": 1,
+          "voz": "Pero ojo: cuando lo rescates, tributa como si fuera sueldo. No es un regalo, es retrasar el pago."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "¿TIENES PLAN",
+            "DE PENSIONES?"
+          ],
+          "voz": "¿Tienes plan de pensiones? Sí o no en comentarios."
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "slug": "naciste-en-los-90-jubilacion",
+      "serie": "PENSIONES",
+      "formato_usa": "Generation hook ('If you were born in the 90s…')",
+      "etiqueta": "PENSIONES",
+      "hook": [
+        "NACISTE EN LOS 90,",
+        "¿CUÁNDO TE JUBILAS?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Si naciste en los noventa, ¿a qué edad te vas a jubilar?"
+        },
+        {
+          "tipo": "cifra",
+          "valor": 67,
+          "sufijo": " AÑOS",
+          "texto": "EDAD ORDINARIA DESDE 2027",
+          "voz": "Con la ley actual, desde dos mil veintisiete la edad ordinaria es de sesenta y siete años."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "O A LOS 65 SI COTIZASTE",
+            "38 AÑOS Y 6 MESES"
+          ],
+          "resalta": 0,
+          "voz": "Te puedes jubilar a los sesenta y cinco si has cotizado treinta y ocho años y seis meses."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "EMPIEZAS A COTIZAR A LOS 25",
+            "LOS 38,5 AÑOS LLEGAN A LOS 63,5"
+          ],
+          "resalta": 1,
+          "voz": "Si empezaste a cotizar a los veinticinco sin parones, cumplirías esos treinta y ocho años y medio a los sesenta y tres y medio, y podrías jubilarte a los sesenta y cinco. Pero casi nadie cotiza sin parones."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "¿CON QUÉ EDAD",
+            "EMPEZASTE A COTIZAR?"
+          ],
+          "voz": "¿Con qué edad empezaste a cotizar tú?"
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "slug": "cotizar-15-vs-37",
+      "serie": "PENSIONES",
+      "formato_usa": "Side-by-side comparison",
+      "etiqueta": "PENSIONES",
+      "hook": [
+        "COTIZAR 15 AÑOS vs 37,",
+        "¿QUÉ CAMBIA?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Cotizar quince años o treinta y siete. ¿Cuánto cambia tu pensión?"
+        },
+        {
+          "tipo": "vs",
+          "izq": {
+            "titulo": "15 AÑOS",
+            "valor": "50 %"
+          },
+          "der": {
+            "titulo": "37 AÑOS",
+            "valor": "100 %"
+          },
+          "voz": "Con quince años cotizados, el mínimo, cobras el cincuenta por ciento de tu base reguladora. Para el cien por cien necesitas treinta y siete años."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "MENOS DE 15 AÑOS",
+            "→ SIN PENSIÓN CONTRIBUTIVA"
+          ],
+          "resalta": 1,
+          "voz": "Con menos de quince, no tienes pensión contributiva."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "MIRA TU VIDA LABORAL",
+            "EN 2 MINUTOS"
+          ],
+          "resalta": 0,
+          "voz": "Mira cuántos años llevas: el informe de vida laboral se saca gratis en la web de la Seguridad Social en dos minutos."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "¿CUÁNTOS AÑOS",
+            "LLEVAS COTIZADOS?"
+          ],
+          "voz": "¿Cuántos años llevas cotizados? Comenta."
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "slug": "bajar-potencia-luz",
+      "serie": "LUZ",
+      "formato_usa": "'Bill hack' ('call and lower this')",
+      "etiqueta": "FACTURA LUZ",
+      "hook": [
+        "BAJA LA POTENCIA,",
+        "¿CUÁNTO AHORRAS?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Hay una línea de tu factura de la luz que pagas aunque no enciendas nada."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "TÉRMINO DE POTENCIA",
+            "= LO QUE PAGAS FIJO"
+          ],
+          "resalta": 0,
+          "voz": "Es el término de potencia: lo que pagas cada día por los kilovatios que tienes contratados."
+        },
+        {
+          "tipo": "cifra",
+          "valor": 40,
+          "prefijo": "≈",
+          "sufijo": " €/AÑO",
+          "texto": "POR CADA kW QUE BAJAS",
+          "voz": "Por cada kilovatio que bajas, te ahorras unos cuarenta euros al año, aproximadamente."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "SI NUNCA SALTA,",
+            "PROBABLEMENTE TE SOBRA"
+          ],
+          "resalta": 1,
+          "voz": "Si nunca te salta el automático, probablemente tienes más de la que necesitas. Puedes bajarla pidiéndoselo a tu distribuidora."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "¿CUÁNTOS kW",
+            "TIENES CONTRATADOS?"
+          ],
+          "voz": "¿Cuántos kilovatios tienes? Míralo en tu factura y comenta."
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "slug": "standby-cuanto-cuesta",
+      "serie": "LUZ",
+      "formato_usa": "'Phantom energy is costing you'",
+      "etiqueta": "FACTURA LUZ",
+      "hook": [
+        "TU TELE «APAGADA»,",
+        "¿CUÁNTO TE CUESTA?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Tu tele, el router, el microondas. Apagados, pero siguen gastando. ¿Cuánto te cuesta?"
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "LA LUCECITA ROJA",
+            "TAMBIÉN CONSUME"
+          ],
+          "resalta": 1,
+          "voz": "Todo lo que tiene una lucecita encendida está consumiendo."
+        },
+        {
+          "tipo": "cifra",
+          "valor": 40,
+          "prefijo": "≈",
+          "sufijo": " €/AÑO",
+          "texto": "EN UNA CASA NORMAL",
+          "voz": "En una casa normal, el stand-by puede suponer unos cuarenta euros al año, más o menos."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "SOLUCIÓN: REGLETA",
+            "CON INTERRUPTOR"
+          ],
+          "resalta": 0,
+          "voz": "La solución cuesta menos de diez euros: una regleta con interruptor y apagarla por la noche."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "¿CUÁNTAS LUCECITAS",
+            "TIENES AHORA?"
+          ],
+          "voz": "Cuenta cuántas lucecitas tienes encendidas ahora mismo."
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "slug": "garantia-3-anos",
+      "serie": "CONSUMO",
+      "formato_usa": "'Never buy the extended warranty'",
+      "etiqueta": "CONSUMO",
+      "hook": [
+        "¿GARANTÍA EXTRA?",
+        "YA TIENES 3 AÑOS"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Vas a comprar un portátil y te ofrecen la garantía ampliada. Antes de pagarla, mira esto."
+        },
+        {
+          "tipo": "cifra",
+          "valor": 3,
+          "sufijo": " AÑOS",
+          "texto": "DE GARANTÍA LEGAL",
+          "voz": "Desde dos mil veintidós, en España todo producto nuevo tiene tres años de garantía por ley. Gratis."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "ANTES ERAN 2",
+            "AHORA SON 3"
+          ],
+          "resalta": 1,
+          "voz": "Antes eran dos años, ahora son tres. Y muchos vendedores no te lo dicen."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "GUARDA EL TICKET",
+            "O LA FACTURA"
+          ],
+          "resalta": 0,
+          "voz": "Lo único que necesitas es guardar el ticket o la factura."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "¿TE HAN INTENTADO",
+            "VENDER LA AMPLIADA?"
+          ],
+          "voz": "¿Te han intentado vender la ampliada alguna vez?"
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "slug": "devolver-compra-online-14-dias",
+      "serie": "CONSUMO",
+      "formato_usa": "'Return policy rights' consumer hack",
+      "etiqueta": "CONSUMO",
+      "hook": [
+        "COMPRASTE ONLINE,",
+        "¿PUEDES DEVOLVERLO?"
+      ],
+      "escenas": [
+        {
+          "tipo": "hook",
+          "voz": "Compraste algo por internet y no te convence. ¿Puedes devolverlo aunque no esté roto?"
+        },
+        {
+          "tipo": "cifra",
+          "valor": 14,
+          "sufijo": " DÍAS",
+          "texto": "SIN DAR EXPLICACIONES",
+          "voz": "Sí. Tienes catorce días naturales desde que lo recibes para devolverlo, sin dar explicaciones."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "TE DEVUELVEN EL DINERO",
+            "EN MÁXIMO 14 DÍAS"
+          ],
+          "resalta": 0,
+          "voz": "Y la tienda tiene que devolverte el dinero en catorce días como máximo."
+        },
+        {
+          "tipo": "texto",
+          "lineas": [
+            "EXCEPCIONES: PERSONALIZADOS,",
+            "COMIDA, HIGIENE ABIERTA"
+          ],
+          "resalta": 1,
+          "voz": "Hay excepciones: cosas personalizadas, comida, o productos de higiene que hayas abierto. Y el envío de vuelta puede tocarte pagarlo a ti."
+        },
+        {
+          "tipo": "cta",
+          "lineas": [
+            "GUÁRDALO PARA",
+            "TU PRÓXIMA COMPRA"
+          ],
+          "voz": "Guárdalo para tu próxima compra."
+        }
+      ]
+    }
+  ]
+}
