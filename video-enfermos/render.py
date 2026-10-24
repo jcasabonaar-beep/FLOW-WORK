@@ -52,8 +52,12 @@ def guion():
         lines.append(f'| {i + 1} | {tc(acc)} – {tc(acc + D)} | {sc["text"]} |')
         acc += D
     lines += ['', f'**Duración total:** {tc(acc)}', '', '---', '', '## Texto corrido (para leer de corrido)', '']
-    lines += [' '.join(sc['text'] for sc in SC[a:b]) + '\n' for a, b in
-              ((0, 6), (6, 13), (13, 23), (23, 26), (26, 27), (27, 36), (36, 48), (48, 52), (52, 55))]
+    cortes = ('h01', 's07', 's14', 's24', 's27', 's28', 's37', 's49', 's53')
+    par = []
+    for sc in SC:
+        if sc['name'].startswith(cortes) and par: lines.append(' '.join(par) + '\n'); par = []
+        par.append(sc['text'])
+    lines.append(' '.join(par) + '\n')
     open(os.path.join(HERE, 'GUION.md'), 'w').write('\n'.join(lines))
     return acc
 

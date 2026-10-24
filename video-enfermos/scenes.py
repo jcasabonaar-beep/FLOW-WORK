@@ -1,6 +1,6 @@
 """Escenas del video '¿Qué hacían los humanos antiguos cuando se enfermaban?'.
 Cada escena lleva su texto de narración; la duración sale del número de palabras."""
-import math
+import math, json, os
 from engine import *
 from chars import person, ape, skeleton
 
@@ -14,8 +14,19 @@ def scene(text, mind=3.0, extra=0.8):
     return deco
 
 
+RATE = 2.8   # palabras por segundo de narración (el gancho va más rápido: 3.2)
+
+
+_VL = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'salida', 'duraciones.json')
+VLEN = json.load(open(_VL)) if os.path.exists(_VL) else {}
+
+
 def dur(sc):
-    return round(max(sc['mind'], len(sc['text'].split()) / 2.5 + sc['extra']), 2)
+    if sc['name'] in VLEN:  # la escena dura lo que dura su frase + un respiro corto
+        pad = 0.3 if sc['name'].startswith('h') else 0.5
+        return round(max(sc['mind'] if sc['mind'] >= 5 else 1.6, VLEN[sc['name']] + 0.15 + pad), 2)
+    rate = 3.2 if sc['name'].startswith('h') else RATE
+    return round(max(sc['mind'], len(sc['text'].split()) / rate + sc['extra']), 2)
 
 
 def shake(t, t0, d=0.4, a=8):
@@ -28,87 +39,183 @@ def banner(txt, t, t0, y=140, size=110, col=YEL):
     text(txt, 960, y, size, col, INK, sc=pop(t, t0))
 
 
-# =============== HOOK ===============
-@scene("Imagina que tienes fiebre. Te duele todo.")
-def s01_fiebre(t, D):
-    z = lerp(1.0, 1.7, ease(t / D))
-    cam(z, 960, lerp(540, 380, ease(t / D)))
+# =============== HOOK (rápido: ~3 palabras/s, cortes cada 1-3 s) ===============
+def flash(t, t0, d=0.12, col=WHITE):
+    if t0 <= t < t0 + d:
+        rect_raw(-400, -400, 2400, 1500, col)
+
+
+def syringe(x, y, s=1.0, ang=-0.6):
+    c, sn = math.cos(ang), math.sin(ang)
+    P = lambda px, py: (x + (px * c - py * sn) * s, y + (px * sn + py * c) * s)
+    poly([P(-90, -22), P(60, -22), P(60, 22), P(-90, 22)], (220, 240, 250), INK, 6 * s)
+    poly([P(-60, -18), P(30, -18), P(30, 18), P(-60, 18)], (120, 200, 240), None, 0)
+    line([P(60, 0), P(150, 0)], 6 * s)
+    line([P(-90, 0), P(-140, 0)], 10 * s)
+    line([P(-140, -30), P(-140, 30)], 10 * s)
+
+
+def tomb(x, y, s=1.0):
+    pts = [(x - 120 * s, y), (x - 120 * s, y - 200 * s)] + \
+          [(x + math.cos(math.radians(a)) * 120 * s, y - 200 * s + math.sin(math.radians(a)) * 110 * s) for a in range(180, 361, 20)] + \
+          [(x + 120 * s, y)]
+    poly(pts, (160, 160, 168), INK, 7 * s)
+    text('R.I.P.', x, y - 190 * s, 70 * s, (90, 90, 96), None)
+
+
+@scene("Hace treinta y un mil años, alguien le cortó la pierna a otra persona... con una piedra.", mind=4.5, extra=0.5)
+def h01_corte(t, D):
+    hit = D * 0.72
+    z = lerp(1.45, 1.0, ease(t / 0.9)) + (0.15 if hit <= t < hit + 0.25 else 0)
+    cam(z, 960 + shake(t, hit, 0.45, 25), 560)
     bg_cave_night()
-    glow(1300, 860, 380, 60, (110, 80, 50))
-    fire(1300, 860, 1.0, t)
-    cough = (t % 1.6) < 0.5
-    dx = math.sin(t * 50) * 6 if cough else 0
-    person(860, 860, 1.0, face=1, mood='sick', arms=('down', 'face') if cough else ('down', 'down'), t=t,
-           head_dx=dx, extras=('sweat',))
-    if cough:
-        text('COF\nCOF', 1040, 360, 60, WHITE, INK, sc=pop(t % 1.6, 0, 0.2))
-
-
-@scene("Y el hospital más cercano está a treinta mil años de distancia.")
-def s02_hospital(t, D):
-    cam(1.0, lerp(900, 1020, t / D), 540)
-    bg_plain()
-    person(330, 860, 0.8, mood='sick', t=t)
-    hospital(1650, 860, 1.0)
-    k = prog(t, 0.6, D * 0.5)
-    dotted(480, 700, lerp(480, 1540, k), 700, n=max(1, int(30 * k)), r=5)
-    yrs = int(30000 * k)
-    text(f"{yrs:,}".replace(',', '.') + " AÑOS", 1010, 600, 90, YEL, INK, sc=pop(t, 0.6))
-    if t > D * 0.75: text('?', 330, 380, 110, WHITE, INK, sc=pop(t, D * 0.75))
-
-
-@scene("No hay pastillas. No hay doctores. Ni siquiera existe la palabra bacteria.")
-def s03_nohay(t, D):
-    bg_plain()
-    person(300, 860, 0.85, mood='worried', arms=('shrug', 'shrug'), t=t)
-    ts = [0.2, D * 0.3, D * 0.58]
-    k = pop(t, ts[0]);
-    if k: pill(800, 450, 1.1 * k);
-    if t > ts[0] + 0.5: cross(800, 450, 1.2)
-    k = pop(t, ts[1])
-    if k: person(1180, 700, 0.55 * k, mood='happy', outfit='coat', hair='none', t=t)
-    if t > ts[1] + 0.5: cross(1180, 480, 1.6)
-    k = pop(t, ts[2])
-    if k: text('BACTERIA', 1600, 450, 80, (120, 200, 120), INK, sc=k)
-    if t > ts[2] + 0.5: cross(1600, 450, 1.8)
-    if t > D - 1.0:
-        text('cri... cri...', 300, 380, 46, INK, None, font='hand', sc=pop(t, D - 1.0))
-
-
-@scene("Y aun así, hace más de treinta mil años, alguien le cortó una pierna a otra persona.")
-def s04_cuchillo(t, D):
-    bg_cave_night()
-    glow(960, 860, 300, 50, (110, 80, 50))
-    fire(960, 860, 0.8, t)
-    t_in = D * 0.25
-    scared = t > t_in + 1.2
-    person(520, 860, 0.95, mood='shock' if scared else 'sick', t=t, look=(1, 0), extras=('sweat',) if scared else ())
-    x2 = lerp(2100, 1420, prog(t, t_in, 1.4))
-    walking = t_in < t < t_in + 1.4
-    p = person(x2, 860, 0.95, face=-1, mood='grin', arms=('down', 'hold'), legs='walk' if walking else 'stand',
-               walk=t * 9, t=t, seed=2)
+    glow(1450, 860, 260, 50, (110, 80, 50))
+    fire(1450, 860, 0.8, t)
+    person(700, 860, 0.95, mood='shock' if t > 0.6 else 'worried', legs='sit', t=t, look=(1, -1),
+           arms=('down', 'front'), extras=('sweat',))
+    swing = prog(t, hit - 0.15, 0.15)
+    ra = lerp(170, 60, swing)
+    p = person(1060, 860, 1.0, face=-1, mood='grin', arms=('down', (ra, ra + 20)), t=t, seed=3, extras=('brow',))
     h = p['hands'][1]
-    stone_knife(h[0], h[1] - 30, 1.2, 0.2 + math.sin(t * 3) * 0.1)
-    if t > t_in + 1.6:
-        text('!', 640, 440, 140, RED, INK, sc=pop(t, t_in + 1.6))
+    stone_knife(h[0], h[1], 1.4, math.radians(lerp(-20, -140, swing)))
+    cam(1, 960, 540)
+    text('31.000 AÑOS', 960, 120, 110, YEL, INK, sc=pop(t, 0.15))
+    flash(t, hit)
+    if t > hit:
+        text('¡CHAS!', 1250, 420, 170, RED, INK, sw=14, sc=pop(t, hit, 0.18))
 
 
-@scene("Y esa persona... sobrevivió.", mind=3.2)
-def s05_sobrevivio(t, D):
-    bg_paper()
-    bone(700, 560, 1220, 520, w=50, callus=pop(t, 0.3))
-    k = pop(t, D * 0.45, 0.3)
-    text('¡SOBREVIVIÓ!', 960, 300, 140, YEL, INK, sc=k)
-    if k: check(1340, 380, 1.4 * k)
+@scene("Sin anestesia. Sin antibióticos. Sin hospital.", mind=3.6, extra=0.4)
+def h02_sin(t, D):
+    k = min(2, int(t / (D / 3)))
+    t0 = k * D / 3
+    rect_raw(-400, -400, 2400, 1500, [(232, 72, 60), (250, 150, 40), (130, 90, 200)][k])
+    sx = shake(t, t0 + 0.25, 0.3, 14)
+    cam(lerp(1.15, 1.0, ease((t - t0) / 0.25)), 960 + sx, 540)
+    s = pop(t, t0, 0.2)
+    if k == 0: syringe(960, 600, 1.8 * s)
+    elif k == 1: pill(960, 600, 2.2 * s)
+    else: hospital(960, 760, 2.0 * s)
+    if t > t0 + 0.25: cross(960, 600, 3.0 * pop(t, t0 + 0.25, 0.15), WHITE)
+    lbl = ['SIN ANESTESIA', 'SIN ANTIBIÓTICOS', 'SIN HOSPITAL'][k]
+    text(lbl, 960, 220, 130, WHITE, INK, sw=12, sc=pop(t, t0, 0.2))
 
 
-@scene("¿Cómo es posible? Para entenderlo, tenemos que empezar por algo mucho más simple.")
-def s06_como(t, D):
+@scene("Lo normal habría sido... morir.", mind=2.8, extra=0.5)
+def h03_morir(t, D):
     bg_black()
-    sx = shake(t, 0.2, 0.5, 14)
-    text('¿CÓMO?', 960 + sx, 520, 220, YEL, INK, sc=pop(t, 0.15) * lerp(1, 0.6, prog(t, D * 0.5, 1)))
-    if t > D * 0.55:
-        text('empecemos por lo simple...', 960, 760, 60, WHITE, None, font='hand', sc=pop(t, D * 0.55))
+    drop = prog(t, D * 0.45, 0.22)
+    land = D * 0.45 + 0.22
+    cam(1, 960 + shake(t, land, 0.35, 18), 540)
+    rect_raw(-400, 820, 2400, 1500, (40, 36, 40))
+    tomb(960, lerp(-200, 820, drop), 1.6)
+    if t > land:
+        for i in range(6):
+            u = clamp((t - land) / 0.6)
+            circ(960 + (i - 2.5) * 70 * (1 + u), 820 - u * 40, 20 * (1 - u) + 1, (120, 110, 110), None, 0)
+        text('MORIR', 960, 160, 160, RED, INK, sw=14, sc=pop(t, land, 0.2))
+
+
+@scene("Pero los científicos encontraron algo imposible: el hueso había cicatrizado.", mind=4, extra=0.4)
+def h04_imposible(t, D):
+    bg_paper()
+    cam(lerp(1.0, 1.25, ease(t / D)), 960, 560)
+    heal = prog(t, D * 0.55, 0.5)
+    bone(520, 600, 1400, 580, w=64, gap=36 * (1 - heal), callus=heal)
+    magnifier(lerp(1500, 1000, prog(t, 0.1, 0.6)), 560, 1.4)
+    cam(1, 960, 540)
+    text('¡IMPOSIBLE!', 960, 200, 140, YEL, INK, sw=12, sc=pop(t, 0.4, 0.2))
+    if heal >= 1:
+        check(1500, 330, 1.6 * pop(t, D * 0.55 + 0.5))
+        for i in range(5):
+            a = t * 3 + i * 1.25
+            text('✦', 960 + math.cos(a) * 420, 590 + math.sin(a) * 140, 60, YEL, INK, font='hand')
+
+
+@scene("Esa persona vivió años. Con una sola pierna. En plena jungla.", mind=3.6, extra=0.4)
+def h05_vivio(t, D):
+    bg_jungle(t=t)
+    hop = abs(math.sin(t * 6)) * 30
+    x = lerp(400, 1150, t / D)
+    p = person(x, 870 - hop, 1.05, mood='happy', arms=('down', 'hold_low'), t=t, legs_lost=(0,))
+    h = p['hands'][1]
+    line([(h[0], h[1] - 10), (h[0] + 10, 870)], 10, BROWN)
+    line([(h[0] - 25, h[1] - 10), (h[0] + 25, h[1] - 10)], 10, BROWN)
+    yrs = int(prog(t, 0.2, D * 0.6) * 9)
+    text(f'+{yrs} AÑOS', 1500, 260, 130, YEL, INK, sw=12, sc=pop(t, 0.2, 0.2))
+
+
+@scene("Y eso no es ni lo más loco.", mind=1.8, extra=0.3)
+def h06_loco(t, D):
+    cam(lerp(1.0, 2.0, ease(t / 0.35)), 960 + shake(t, 0.35, 0.4, 10), 400)
+    bg_plain()
+    person(960, 860, 1.0, mood='shock', t=t)
+    cam(1, 960, 540)
+    text('¿¡HAY MÁS!?', 960, 170, 130, YEL, INK, sw=12, sc=pop(t, 0.3, 0.18))
+
+
+@scene("Neandertales con aspirina en la boca.", mind=2.0, extra=0.3)
+def h07_aspirina(t, D):
+    bg_cave_night()
+    cam(lerp(1.3, 1.1, ease(t / D)), 900, 480)
+    p = person(860, 860, 1.05, mood='wink', arms=('down', 'hold'), t=t, extras=('brow',))
+    h = p['hands'][1]
+    bottle(h[0] + 20, h[1] + 60, 1.2, 'ASPIRINA')
+    cam(1, 960, 540)
+    text('ASPIRINA PREHISTÓRICA', 960, 140, 100, YEL, INK, sc=pop(t, 0.1, 0.18))
+
+
+@scene("Un hombre de hielo con su propio botiquín.", mind=2.2, extra=0.3)
+def h08_hielo(t, D):
+    bg_mountain()
+    cam(lerp(1.25, 1.05, ease(t / D)), 900, 560)
+    p = person(760, 880, 1.0, mood='happy', arms=('down', 'hold'), t=t, extras=('beard',))
+    h = p['hands'][1]
+    kit(h[0] + 40, h[1] + 40, 1.0)
+    cam(1, 960, 540)
+    text('BOTIQUÍN DE 5.300 AÑOS', 960, 140, 100, YEL, INK, sc=pop(t, 0.1, 0.18))
+
+
+@scene("Cráneos agujereados... con el paciente vivo.", mind=2.4, extra=0.4)
+def h09_craneo(t, D):
+    bg_paper()
+    if t < D * 0.5:
+        cam(lerp(1.0, 1.4, ease(t / (D * 0.5))), 960, 480)
+        skull(960, 500, 1.8, hole=1.2)
+    else:
+        cam(lerp(1.3, 1.0, ease((t - D * 0.5) / 0.3)), 960, 500)
+        bg_plain()
+        person(960, 880, 1.0, mood='happy', arms=('down', 'thumb'), t=t, extras=('headband',))
+        cam(1, 960, 540)
+        text('¡VIVO!', 1400, 300, 150, GREEN, INK, sw=12, sc=pop(t, D * 0.5, 0.18))
+
+
+@scene("Hoy vas a descubrir cómo se curaban los humanos antiguos sin médicos...", mind=3.5, extra=0.4)
+def h10_titulo(t, D):
+    bg_cave_night()
+    glow(960, 860, 400, 60, (110, 80, 50))
+    fire(960, 860, 1.0, t)
+    for i, (x, f) in enumerate(((560, 1), (1360, -1))):
+        person(x, 860, 0.9, face=f, mood='sick' if i == 0 else 'worried', t=t, seed=i, legs='sit' if i == 0 else 'stand')
+    text('¿CÓMO SE CURABAN\nSIN MÉDICOS?', 960, 240, 120, YEL, INK, sw=12, sc=pop(t, 0.2, 0.25))
+
+
+@scene("...y al final, lo que de verdad los mataba.", mind=2.8, extra=0.6)
+def h11_final(t, D):
+    bg_black()
+    beat = 1 + 0.08 * max(0, math.sin(t * 7))
+    rect(560, 100, 800, 480, (30, 28, 34), RED, 8)
+    text('?', 960, 360, 380 * beat, RED, INK, sw=0)
+    text('LO QUE DE VERDAD LOS MATABA', 960, 690, 76, WHITE, INK, sc=pop(t, 0.3, 0.2))
+    text('(AL FINAL)', 960, 790, 54, YEL, None, sc=pop(t, D * 0.6, 0.2))
+
+
+@scene("Pero empecemos por algo mucho más simple.", mind=2.4, extra=0.3)
+def h12_empecemos(t, D):
+    bg_savanna()
+    x = lerp(-300, 960, ease(t / 0.5))
+    person(x, 840, 1.0, mood='happy', t=t, legs='walk' if t < 0.5 else 'stand', walk=t * 12, arms=('down', 'wave'))
+    text('EMPECEMOS...', 960, 180, 110, YEL, INK, sc=pop(t, 0.4, 0.2))
 
 
 # =============== 1. ANIMALES ===============
@@ -533,7 +640,7 @@ def s36_fuego(t, D):
 
 
 # =============== 4. CIRUGIA ===============
-@scene("Y ahora sí: volvamos a la pregunta del principio.", mind=3.2)
+@scene("Y ahora sí: volvamos a esa amputación de hace treinta y un mil años.", mind=3.2)
 def s37_volver(t, D):
     bg_black()
     cam(lerp(1.0, 1.6, ease(t / D)), 960, 540)

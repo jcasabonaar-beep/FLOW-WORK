@@ -1,5 +1,5 @@
 """Montaje final: voz (Kokoro) + música + efectos + subtítulos animados -> salida/VIDEO_FINAL.mp4
-Uso: python3 montaje.py [voz]   (requiere salida/video_sin_audio.mp4 de render.py)"""
+Uso: python3 montaje.py [voz] solo-voz  ->  python3 render.py full  ->  python3 montaje.py [voz]"""
 import os, re, sys, subprocess
 import numpy as np, soundfile as sf
 from scipy.signal import resample_poly
@@ -8,9 +8,9 @@ from render import FPS, OUT, HERE
 import sonidos as S
 from sonidos import SR, place
 
-VOZ = sys.argv[1] if len(sys.argv) > 1 else 'em_alex'
+VOZ = sys.argv[1] if len(sys.argv) > 1 else 'carlfm'
 MD = os.environ.get('KOKORO_DIR', '/home/user/tts')
-VDIR = os.path.join(OUT, 'voz')
+VDIR = os.path.join(OUT, 'voz_' + VOZ)
 DUR = [round(dur(sc) * FPS) / FPS for sc in SC]
 START = np.concatenate([[0], np.cumsum(DUR)])
 TOTAL = START[-1]
@@ -19,36 +19,71 @@ LEAD = 0.15  # la voz entra 0.15 s después del corte
 
 
 # ---------- voz ----------
+PIPER = {'carlfm': 'voice-es-carlfm-x-low/es-carlfm-x-low', 'mls9972': 'voice-es-mls_9972-low/es-mls_9972-low',
+         'mls10246': 'voice-es-mls_10246-low/es-mls_10246-low'}
+
+
+class _Voz:
+    def __init__(self):
+        if VOZ in PIPER:
+            from piper import PiperVoice
+            self.pv = PiperVoice.load(f'{MD}/{PIPER[VOZ]}.onnx')
+        else:
+            from kokoro_onnx import Kokoro
+            self.k = Kokoro(f'{MD}/kokoro-v1.0.onnx', f'{MD}/voices-v1.0.bin')
+
+    def say(self, txt, vel):
+        txt = txt.replace('...', ',')
+        if VOZ in PIPER:
+            from piper import SynthesisConfig
+            chunks = list(self.pv.synthesize(txt, syn_config=SynthesisConfig(length_scale=1 / vel)))
+            sr = chunks[0].sample_rate
+            gap = np.zeros(int(0.12 * sr), dtype=np.float32)
+            a = np.concatenate([np.concatenate([c.audio_float_array, gap]) for c in chunks])
+            return a, sr
+        return self.k.create(txt, voice=VOZ, speed=vel * 0.92, lang='es')
+
+
+def _recorta(a, sr):  # quita silencios al principio y al final
+    on = np.where(np.abs(a) > 0.02)[0]
+    return a[max(0, on[0] - int(0.03 * sr)):on[-1] + int(0.08 * sr)] if len(on) else a
+
+
 def voces():
     os.makedirs(VDIR, exist_ok=True)
-    k = None; out = []
+    v = None; out = []
     for i, sc in enumerate(SC):
         p = os.path.join(VDIR, f'{i + 1:02d}.wav')
         if not os.path.exists(p):
-            if k is None:
-                from kokoro_onnx import Kokoro
-                k = Kokoro(f'{MD}/kokoro-v1.0.onnx', f'{MD}/voices-v1.0.bin')
-            vel = 0.92
-            while True:
-                a, sr = k.create(sc['text'].replace('...', ','), voice=VOZ, speed=vel, lang='es')
-                if len(a) / sr <= DUR[i] - 0.35 or vel >= 1.4: break
-                vel = round(vel + 0.06, 2)
+            v = v or _Voz()
+            vel = 1.15 if sc['name'].startswith('h') else 1.05
+            a, sr = v.say(sc['text'], vel)
+            a = _recorta(a, sr)
             sf.write(p, a, sr)
         a, sr = sf.read(p, dtype='float32')
-        out.append(resample_poly(a, SR, sr).astype(np.float32))
+        a = resample_poly(a, SR, sr).astype(np.float32)
+        # presencia: realza agudos y comprime un poco para que suene más "YouTuber"
+        a = a + 0.6 * S.hp(a, 2200) + 0.25 * S.lp(a, 180)
+        a = np.tanh(2.2 * a / max(1e-6, np.abs(a).max())) / np.tanh(2.2)
+        out.append(a.astype(np.float32))
     return out
 
 
 # ---------- efectos por escena (tiempos relativos a la escena, en s) ----------
 def eventos(D):
     E = {
-        's01_fiebre': [(0, 'cough'), (1.6, 'cough'), (3.2, 'cough')],
-        's02_hospital': [(0.6, 'pop')] + [(0.6 + k * 0.12, 'tick') for k in range(int(D * 0.5 / 0.12))] + [(D * .75, 'boing')],
-        's03_nohay': [(0.2, 'pop'), (0.7, 'wrong'), (D * .3, 'pop'), (D * .3 + .5, 'wrong'), (D * .58, 'pop'),
-                      (D * .58 + .5, 'wrong'), (D - 1.0, 'crickets')],
-        's04_cuchillo': [(D * .25, 'steps1.4'), (D * .25 + 1.6, 'sting')],
-        's05_sobrevivio': [(0.3, 'crack'), (D * .45, 'boom'), (D * .45, 'ding')],
-        's06_como': [(0.15, 'boom'), (D * .55, 'pop')],
+        'h01_corte': [(0, 'boom'), (0.15, 'pop'), (D * .72 - .25, 'whoosh'), (D * .72, 'crack'), (D * .72, 'sting')],
+        'h02_sin': sum([[(k * D / 3, 'pop'), (k * D / 3 + .25, 'wrong'), (k * D / 3 + .25, 'thud')] for k in range(3)], []),
+        'h03_morir': [(D * .45, 'whoosh'), (D * .45 + .22, 'thud'), (D * .45 + .22, 'boom')],
+        'h04_imposible': [(0.1, 'whoosh'), (0.4, 'pop'), (D * .55, 'sparkle'), (D * .55 + .5, 'ding')],
+        'h05_vivio': [(0.2, 'pop')] + [(0.2 + k * 0.15, 'tick') for k in range(int(D * .6 / .15))] + [(0, 'steps3')],
+        'h06_loco': [(0, 'scratch'), (0.3, 'pop')],
+        'h07_aspirina': [(0.1, 'pop'), (0.4, 'ding')],
+        'h08_hielo': [(0.1, 'pop'), (0.4, 'sparkle')],
+        'h09_craneo': [(0, 'pop'), (D * .5, 'whoosh'), (D * .5, 'ding')],
+        'h10_titulo': [(0.2, 'boom'), (0.25, 'pop')],
+        'h11_final': [(0, 'heartbeat'), (0.8, 'heartbeat'), (1.6, 'heartbeat'), (0.3, 'sting')],
+        'h12_empecemos': [(0, 'steps0.6'), (0.4, 'pop')],
         's07_auto': [(0.5, 'pop')],
         's08_chimp': [(0, 'chew'), (D * .45, 'boing'), (D * .7, 'pop')],
         's09_orangutan': [(0.4, 'pop'), (1.0, 'chew')],
@@ -124,10 +159,10 @@ def sfx_track():
 
 
 # ---------- ambiente ----------
-AMB = {'cave': ['s01', 's04', 's16', 's19', 's27', 's35', 's36', 's46', 's49', 's50', 's51', 's53', 's54'],
-       'savanna': ['s07', 's08', 's14', 's15', 's24', 's25', 's26', 's28', 's30', 's32'],
-       'jungle': ['s09', 's10', 's12', 's38', 's42', 's44'],
-       'wind': ['s21', 's22', 's23'], 'night': ['s35']}
+AMB = {'cave': ['h01', 'h07', 'h10', 's16', 's19', 's27', 's35', 's36', 's46', 's49', 's50', 's51', 's53', 's54'],
+       'savanna': ['h12', 's07', 's08', 's14', 's15', 's24', 's25', 's26', 's28', 's30', 's32'],
+       'jungle': ['h05', 's09', 's10', 's12', 's38', 's42', 's44'],
+       'wind': ['h08', 's21', 's22', 's23'], 'night': ['s35']}
 
 
 def amb_track():
@@ -149,15 +184,16 @@ def amb_track():
 
 
 # ---------- música ----------
-SECCIONES = [(1, 6, 'tension'), (7, 34, 'playful'), (35, 35, 'emotional'), (36, 36, 'playful'), (37, 41, 'tension'),
-             (42, 48, 'playful'), (49, 51, 'tribal'), (52, 52, 'playful'), (53, 53, 'emotional'), (54, 54, 'tension'),
-             (55, 55, 'playful')]
+SECCIONES = [('h01', 'tension'), ('h12', 'playful'), ('s35', 'emotional'), ('s36', 'playful'), ('s37', 'tension'),
+             ('s42', 'playful'), ('s49', 'tribal'), ('s52', 'playful'), ('s53', 'emotional'), ('s54', 'tension'),
+             ('s55', 'playful')]
 
 
 def music_track():
     x = np.zeros(int((TOTAL + 3) * SR)); xf = 0.4
-    for k, (a, b, mood) in enumerate(SECCIONES):
-        t0, t1 = START[a - 1], START[b]
+    first = [next(i for i, sc in enumerate(SC) if sc['name'].startswith(n)) for n, _ in SECCIONES] + [len(SC)]
+    for k, (_, mood) in enumerate(SECCIONES):
+        t0, t1 = START[first[k]], START[first[k + 1]]
         fn = S.MOODS[mood]
         seg = fn(t1 - t0 + xf, seed=k) if mood == 'playful' else fn(t1 - t0 + xf)
         seg = seg / max(1e-6, np.percentile(np.abs(seg), 99.5))
@@ -222,9 +258,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
 def main():
     vs = voces()
+    if len(sys.argv) > 2 and sys.argv[2] == 'solo-voz':
+        import json
+        json.dump({sc['name']: round(len(a) / SR, 3) for sc, a in zip(SC, vs)},
+                  open(os.path.join(OUT, 'duraciones.json'), 'w'), indent=1)
+        print('duraciones guardadas; ahora: python3 render.py full && python3 montaje.py', VOZ); return
     voice = np.zeros(int((TOTAL + 3) * SR))
     for i, a in enumerate(vs):
-        a = a[:int((DUR[i] - LEAD - 0.05) * SR)]
         place(voice, a / max(1e-6, np.abs(a).max()) * 0.9, START[i] + LEAD)
     print('voz ok', flush=True)
     sfx = sfx_track(); print('efectos ok', flush=True)
