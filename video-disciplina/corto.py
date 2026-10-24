@@ -488,7 +488,7 @@ def c02_rewind(t, D):
     text(f"{L('day')} {n}", 960, 760, 70, WHITE, None, font='mono')
 
 
-@scene(7.5, 'same')
+@scene(5.0, 'same')
 def c03_desk(t, D):
     cam(1.35, 880, 610)
     bg_dark()
@@ -506,7 +506,7 @@ def c03_desk(t, D):
     typed(L('why'), 600, 420, 62, t, 2.0, RD, glowc=GLOWRED)
 
 
-@scene(5.0)
+@scene(3.5)
 def c04_phone(t, D):
     cam(1.3, 820, 610)
     bg_dark()
@@ -523,7 +523,7 @@ def c04_phone(t, D):
         if tp < t < tp + 0.6: text('•', hx + 30, hy - 60 - (t - tp) * 60, 60, BLUEG, None, font='hand')
 
 
-@scene(5.0)
+@scene(3.5)
 def c05_alarm(t, D):
     cam(1.25, 960, 600)
     bg_dark()
@@ -542,7 +542,7 @@ def c05_alarm(t, D):
     if t > D * 0.65: text('z', 820 + (t * 30 % 40), 600 - (t * 40 % 60), 40, (180, 180, 190), None, font='hand')
 
 
-@scene(5.0)
+@scene(3.6)
 def c06_sleep(t, D):
     cam(1.3, 820, 610)
     bg_dark()
@@ -557,7 +557,7 @@ def c06_sleep(t, D):
     if t > 1.0: typed(L('same'), 960, 940, 56, t, 1.0, (200, 200, 205), fixed=True)
 
 
-@scene(4.2)
+@scene(2.5)
 def c07_montage(t, D):
     k = int(t / 0.42)
     n = 151 + k * 6
@@ -767,8 +767,8 @@ def c18_summit(t, D):
          band=True, arms=('down', (lerp(10, 170, up), lerp(5, 175, up))))
     cam(1, 960, 540)
     day_label(365)
-    typed(L('save1'), 960, 200, 64, t, 4.6, WHITE, cps=14, fixed=True)
-    typed(L('save2'), 960, 290, 64, t, 8.0, (255, 220, 170), cps=14, fixed=True)
+    typed(L('save1'), 960, 860, 64, t, 4.6, WHITE, cps=14, fixed=True)
+    typed(L('save2'), 960, 950, 64, t, 8.0, (255, 220, 170), cps=14, fixed=True)
 
 
 @scene(8.0, 'end')

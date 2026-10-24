@@ -1,10 +1,29 @@
-# DISCIPLINA — textos para publicar
+# DISCIPLINA — guía de publicación
 
-## 🇪🇸 Versión en español (`DISCIPLINA_ES.mp4`, `miniatura_es.png`)
+Archivos (en `salida/`):
+| | Español | Inglés |
+|---|---|---|
+| Video largo (2:19) | `DISCIPLINA_ES.mp4` | `DISCIPLINA_EN.mp4` |
+| Short vertical (0:53, en bucle) | `SHORT_ES.mp4` | `SHORT_EN.mp4` |
+| Miniatura A — pequeño contra gigante | `miniatura_A_es.png` | `miniatura_A_en.png` |
+| Miniatura B — Día 1 vs Día 365 | `miniatura_B_es.png` | `miniatura_B_en.png` |
+| Miniatura C — "nunca vas a cambiar" | `miniatura_C_es.png` | `miniatura_C_en.png` |
 
-**Título:** DISCIPLINA | Un cortometraje animado
+---
 
-**Descripción:**
+## 1. Video largo — prueba A/B/C
+
+En YouTube Studio → al subir → **Probar y comparar**: sube las 3 miniaturas (y los 3 títulos, si tu cuenta ya permite probar títulos). YouTube muestra cada una a parte del público y se queda con la que más tiempo de visualización consigue.
+
+| | Título ES | Title EN | Miniatura |
+|---|---|---|---|
+| A | DISCIPLINA \| Un cortometraje animado | DISCIPLINE \| An Animated Short Film | A |
+| B | Día 1 vs Día 365 | Day 1 vs Day 365 | B |
+| C | La voz que no te deja cambiar | The Voice That Keeps You Stuck | C |
+
+Si solo puedes probar miniaturas, usa el título **B** ("Día 1 vs Día 365"): es el que más curiosidad genera y encaja con las tres.
+
+### Descripción ES
 ```
 Día uno, o un día. Tú decides.
 
@@ -14,28 +33,21 @@ Una historia sobre la pereza, la voz que te dice "no puedes"... y el día en que
 
 0:00 Día 365
 0:10 Todos los días eran iguales
-0:37 El espejo
-0:47 Tocar fondo
-0:58 Día 1
-1:10 La rutina
-1:39 La pelea final
-1:52 La cima
-2:04 Día uno, o un día
+0:28 El espejo
+0:38 Tocar fondo
+0:49 Día 1
+1:01 La rutina
+1:30 La pelea final
+1:43 La cima
+1:55 Día uno, o un día
 
 #disciplina #motivacion #cortometraje #animacion #superacion
 ```
-**Etiquetas:** disciplina, motivación, cortometraje animado, animación, superación personal, hábitos, pereza, día 1, mentalidad, autoayuda
+**Etiquetas:** disciplina, motivación, cortometraje animado, animación, superación personal, hábitos, pereza, día 1, mentalidad, día 1 vs día 365
 
-**Comentario fijado (publícalo tú nada más subirlo):**
-> "Si nadie viene a salvarte, nadie puede detenerte." ¿Qué día vas tú? 👇
+**Comentario fijado:** "Si nadie viene a salvarte, nadie puede detenerte." ¿En qué día vas tú? 👇
 
----
-
-## 🇺🇸 English version (`DISCIPLINA_EN.mp4`, `miniatura_en.png`)
-
-**Title:** DISCIPLINE | An Animated Short Film
-
-**Description:**
+### Description EN
 ```
 Day one, or one day. You decide.
 
@@ -45,24 +57,26 @@ What's your DAY 1? Write it in the comments 👇
 
 0:00 Day 365
 0:10 Every day was the same
-0:37 The mirror
-0:47 Rock bottom
-0:58 Day 1
-1:10 The grind
-1:39 The final fight
-1:52 The summit
-2:04 Day one, or one day
+0:28 The mirror
+0:38 Rock bottom
+0:49 Day 1
+1:01 The grind
+1:30 The final fight
+1:43 The summit
+1:55 Day one, or one day
 
 #discipline #motivation #shortfilm #animation #selfimprovement
 ```
-**Tags:** discipline, motivation, animated short film, animation, self improvement, habits, laziness, day one, mindset, stickman animation
+**Tags:** discipline, motivation, animated short film, animation, self improvement, habits, laziness, day one, mindset, day 1 vs day 365
 
-**Pinned comment:**
-> "If nobody is coming to save you, nobody can stop you either." What day are you on? 👇
+**Pinned comment:** "If nobody is coming to save you, nobody can stop you either." What day are you on? 👇
 
 ---
 
-## Consejos de publicación
-- **Sube la versión en inglés como principal** (paga más por mil vistas, sobre todo en EE. UU.). Puedes subir la española en un segundo canal, o añadir en el mismo video los títulos/descripciones traducidos (YouTube Studio → Idiomas).
-- **Short de gancho:** recorta en vertical el tramo 1:35–1:55 (pelea final) y súbelo como Short con el enlace al video completo.
-- **Pantalla final:** los últimos 15 s están preparados para los elementos de YouTube (suscribirse a la izquierda, video siguiente en el recuadro).
+## 2. Short (vertical, 53 s)
+
+- Termina con "Pero nadie puede detenerte." y vuelve a empezar con la sombra diciendo "nunca vas a cambiar." → se ve como un diálogo continuo y la gente lo repite sin darse cuenta (las repeticiones cuentan como vistas).
+- **Título ES:** Si te cuesta empezar, mira esto #disciplina #motivacion
+- **Title EN:** If you struggle to start, watch this #discipline #motivation
+- Al subirlo, en **"Video relacionado"** elige el video largo: aparece un enlace directo bajo el Short.
+- Publica el Short **1-2 días después** del largo, para que el largo ya tenga sus primeras vistas cuando el Short empiece a mandar gente.
