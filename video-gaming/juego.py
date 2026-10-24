@@ -18,7 +18,7 @@ OUT = os.path.join(BASE, 'salida')
 GREEN = (90, 220, 110); PURP = (150, 110, 210); GOLD = (255, 205, 60)
 
 TX = {
-    'lv99': ('NIVEL 99', 'LEVEL 99'), 'levelup': ('¡NIVEL ARRIBA!', 'LEVEL UP!'),
+    'lv99': ('NIVEL 99', 'LEVEL 99'), 'levelup': ('LEVEL UP!', 'LEVEL UP!'),
     'hook': ('Nivel 99 en el juego. Nivel 1 en la vida.', 'Level 99 in the game. Level 1 in real life.'),
     'real': ('VIDA REAL', 'REAL LIFE'),
     'health': ('SALUD', 'HEALTH'), 'friends': ('AMIGOS', 'FRIENDS'), 'grades': ('ESTUDIOS', 'GRADES'), 'sleep': ('SUEÑO', 'SLEEP'),
@@ -134,9 +134,13 @@ def monitor(x, y, w=420, h=260, t=0.0, on=True, level=12, fx=0.0, boss=False, re
 
 
 def controller(x, y, s=1.0):
-    ell(x, y, 46 * s, 22 * s, (40, 40, 48), (90, 90, 100), 4 * s)
-    for k in (-1, 1): ell(x + k * 34 * s, y + 14 * s, 16 * s, 18 * s, (40, 40, 48), (90, 90, 100), 4 * s)
-    dot(x + 18 * s, y - 4 * s, 4 * s, RD); dot(x + 28 * s, y + 2 * s, 4 * s, GREEN); dot(x - 22 * s, y, 4 * s, (150, 150, 160))
+    for k in (-1, 1): ell(x + k * 34 * s, y + 14 * s, 16 * s, 20 * s, (236, 236, 240), OL, 4 * s)
+    ell(x, y, 48 * s, 22 * s, (236, 236, 240), OL, 4 * s)
+    ell(x, y + 2 * s, 24 * s, 14 * s, (30, 30, 36), None, 0)
+    line([(x - 14 * s, y - 16 * s), (x + 14 * s, y - 16 * s)], 3 * s, (90, 160, 255), amp=0)
+    glow(x, y - 16 * s, 14 * s, BLUEG, 0.5)
+    for k, c in enumerate(((120, 200, 255), (255, 120, 140), (120, 230, 160))):
+        dot(x + (22 + k * 6) * s, y - (4 - k * 3) * s, 3 * s, c)
 
 
 def headset(hc, s=1.0, face=1):
@@ -171,7 +175,8 @@ def gchair(x, y):
     line([(x, y - 80), (x, y - 20)], 8, (60, 60, 66)); line([(x - 40, y), (x + 40, y)], 6, (60, 60, 66))
 
 
-def gdesk(x, y, w=520):
+def gdesk(x, y, w=520, ps=True):
+    if ps: console(x + w / 2 + 50, y, 0.6, 0.6)
     line([(x - w / 2, y - 150), (x + w / 2, y - 150)], 12, (52, 46, 44))
     line([(x - w / 2 + 20, y - 150), (x - w / 2 + 20, y)], 8, (52, 46, 44))
     line([(x + w / 2 - 20, y - 150), (x + w / 2 - 20, y)], 8, (52, 46, 44))
@@ -209,16 +214,27 @@ def friend(x, y, t, col, face=1, arms=('down', 'down'), mood='happy', seed=1, le
 def gift(x, y, s=1.0, open_=0.0):
     rect(x - 60 * s, y - 100 * s, 120 * s, 100 * s, (210, 50, 50), OL, 4 * s)
     line([(x, y - 100 * s), (x, y)], 14 * s, GOLD, amp=0)
-    ly = y - 100 * s - 140 * s * open_
+    ly = y - 100 * s - 220 * s * math.sin(open_ * math.pi) + 100 * s * open_
+    x = x + 105 * s * open_
     rect(x - 68 * s, ly - 26 * s, 136 * s, 26 * s, (220, 60, 60), OL, 4 * s)
     line([(x, ly - 26 * s), (x, ly)], 14 * s, GOLD, amp=0)
     for k in (-1, 1): ell(x + k * 22 * s, ly - 36 * s, 22 * s, 12 * s, GOLD, OL, 3 * s, rot=k * 0.4)
 
 
 def console(x, y, s=1.0, glow_a=1.0):
-    rect(x - 80 * s, y - 40 * s, 160 * s, 40 * s, (30, 30, 36), (100, 100, 110), 4 * s)
-    line([(x - 50 * s, y - 20 * s), (x - 20 * s, y - 20 * s)], 4 * s, (120, 200, 255), amp=0)
-    if glow_a > 0: glow(x, y - 20 * s, 120 * s, BLUEG, 0.5 * glow_a)
+    """Consola vertical: núcleo negro, dos carcasas blancas curvas y luz azul. (x, y) = base."""
+    if glow_a > 0: glow(x, y - 130 * s, 150 * s, BLUEG, 0.45 * glow_a)
+    ell(x, y, 50 * s, 8 * s, (24, 24, 28), OL, 3 * s)
+    for k in (-1, 1):
+        pts = [(x + k * 20 * s, y - 8 * s), (x + k * 44 * s, y - 10 * s), (x + k * 38 * s, y - 90 * s),
+               (x + k * 50 * s, y - 170 * s), (x + k * 70 * s, y - 252 * s), (x + k * 58 * s, y - 268 * s),
+               (x + k * 20 * s, y - 248 * s)]
+        poly(pts, (240, 240, 244), OL, 4 * s, amp=0.5)
+    rect(x - 20 * s, y - 252 * s, 40 * s, 246 * s, (20, 20, 24), OL, 3 * s, amp=0.3)
+    for k in (-1, 1):
+        line([(x + k * 18 * s, y - 238 * s), (x + k * 18 * s, y - 18 * s)], 3 * s, (110, 180, 255), amp=0)
+    if glow_a > 0:
+        for k in (-1, 1): glow(x + k * 18 * s, y - 126 * s, 30 * s, BLUEG, 0.5 * glow_a)
 
 
 def pizza(x, y, n):
@@ -337,7 +353,7 @@ def g03_gift(t, D):
         gift(p['hands'][1][0] + 50, p['hands'][1][1] + 40, 0.9)
     else:
         gift(860, 780, 1.0, op)
-        console(860, 700 - 60 * op, 0.9, op)
+        console(860, lerp(780, 676, op), 0.8, op)
     if 2.0 < t < 4.0: label(mx + 60, 470, L('surprise'), 42)
 
 
@@ -478,13 +494,13 @@ def g11_unplug(t, D):
     room(moon=False)
     glow_poly([(1420, 220), (1580, 220), (1200, 800), (700, 800)], (200, 190, 160), 0.12)
     day(1)
-    gdesk(1250, 780); monitor(1300, 520, t=t, on=False)
+    gdesk(1250, 780, ps=False); monitor(1300, 520, t=t, on=False)
     pull = prog(t, 1.5, 0.4)
     line([(1330, 640), (1500, 700), (lerp(1640, 1560, pull), 760)], 5, (30, 30, 34))
     rect(1650 - 90 * pull, 700, 30, 70, (200, 200, 205), OL, 3)
     pack = prog(t, 3.5, 2.5)
     cx = lerp(1120, 700, pack); cy = lerp(630, 640 + 0 * pack, pack)
-    if t < 6.2: console(cx, cy, 0.8, 0.3 * (1 - pull))
+    if t < 6.2: console(cx, cy, 0.55, 0.3 * (1 - pull))
     cardbox(560, 780, prog(t, 6.2, 0.5))
     bx = lerp(900, 760, pack)
     blob(bx, 780, 1.0, -1 if pack > 0 else 1, 'determined' if t > 1.0 else 'sad', t=t,
