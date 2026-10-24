@@ -38,6 +38,11 @@ TX = {
     'next': ('SIGUIENTE\nVIDEO', 'NEXT\nVIDEO'),
     'subs': ('SUSCRÍBETE', 'SUBSCRIBE'),
     'same': ('Todos los días eran iguales.', 'Every day was the same.'),
+    'never': ('nunca vas a cambiar.', "you'll never change."),
+    'onemore': ('un vídeo más...', 'one more video...'),
+    'skipgym': ('hoy llueve... sáltate el gym', "it's raining... skip the gym"),
+    'enough': ('ya has hecho suficiente', "that's enough for today"),
+    'phone': ('mira el móvil', 'check your phone'),
 }
 
 
@@ -415,6 +420,23 @@ def step_pos(k, x0=280, y0=1060, sw=110, sh=52):
     return x, y
 
 
+def tempt(x, y, s, t, t_in, key, t_out=None, face=-1, ty=None, size=50):
+    """La sombra aparece, susurra y, si la ignora, se encoge y se deshace en humo."""
+    if t < t_in: return
+    k = prog(t, t_in, 0.4)
+    out = prog(t, t_out, 0.5) if t_out is not None else 0.0
+    sc = s * lerp(0.6, 1.0, k) * (1 - out)
+    if sc > 0.03:
+        blob(x, y, sc, face, 'tired', t=t, demon=True, seed=9)
+    if 0 < out < 1:
+        for i in range(5):
+            a = i * 1.26
+            circ(x + math.cos(a) * 80 * s * out, y - 130 * s - math.sin(a) * 60 * s * out - 60 * out, 30 * s * (1 - out) + 2,
+                 (70, 66, 70), None, 0)
+    if out < 0.4:
+        typed(L(key), x, ty if ty is not None else y - 330 * s, size, t, t_in + 0.2, RD, glowc=GLOWRED)
+
+
 # ---------------- escenas ----------------
 SC = []
 
@@ -431,8 +453,15 @@ CH = {'hook': ('Día 365', 'Day 365'), 'same': ('Todos los días eran iguales', 
       'summit': ('La cima', 'The summit'), 'end': ('Día uno, o un día', 'Day one, or one day')}
 
 
-@scene(6.0, 'hook')
+@scene(7.6, 'hook')
 def c01_hook(t, D):
+    if t < 1.6:
+        rect_raw(-500, -500, 2500, 1600, (8, 7, 9))
+        cam(lerp(2.0, 2.3, t / 1.6), 960, 600)
+        blob(960, 900, 1.6, -1, 'tired', t=t, demon=True, seed=1)
+        typed(L('never'), 960, 170, 96, t, 0.15, RD, cps=18, glowc=GLOWRED, fixed=True)
+        return
+    T0 = t; t = t - 1.6; D = D - 1.6
     cam(lerp(1.15, 1.0, ease(t / D)), 960, 540)
     sky_grad((40, 20, 40), (240, 120, 60), -300, 700)
     sun_y = lerp(720, 600, t / D)
@@ -443,6 +472,7 @@ def c01_hook(t, D):
     cam(1, 960, 540)
     day_label(365)
     if t > 3.4: typed(L('notalways'), 960, 900, 62, t, 3.4, WHITE, fixed=True)
+    flash(T0, 1.6, 0.07)
 
 
 @scene(1.6)
@@ -488,6 +518,7 @@ def c04_phone(t, D):
     phone(hx, hy, -0.4)
     glow(700, 690, 70, BLUEG, 0.35)
     digital(330, 640, '03:12', 0.8, t=t)
+    tempt(1250, 780, 0.8, t, 1.5, 'onemore', ty=430)
     for k, tp in enumerate((1.2, 2.6, 3.8)):
         if tp < t < tp + 0.6: text('•', hx + 30, hy - 60 - (t - tp) * 60, 60, BLUEG, None, font='hand')
 
@@ -615,6 +646,10 @@ def c12_run(t, D):
     for i in range(10):
         rx = ((i * 260 - t * 500) % 2600) - 300
         ell(rx, 830, 60, 6, (60, 70, 100), None, 0)
+    dx = 1350 - t * 260
+    if dx > -300:
+        blob(dx, 780, 0.8, -1, 'tired', t=t, demon=True, seed=9)
+        typed(L('skipgym'), dx, 470, 46, t, 0.5, RD, glowc=GLOWRED)
     blob(900, 780, 1.0, 1, 'determined', arms=((50 + 40 * math.sin(t * 12), 120), (50 - 40 * math.sin(t * 12), 120)),
          legs='run', walk=t * 12, t=t, band=True, lean=18)
     rain(t)
@@ -631,6 +666,7 @@ def c13_pushups(t, D):
     G.rot = (math.radians(-56 + rep * 5), 1150, 780)
     blob(1150, 780, 1.0, -1, 'strain', arms=((60, 60 + 35 * (1 - rep)), (-60, -60 - 35 * (1 - rep))), t=t, band=True)
     G.rot = None
+    tempt(1500, 780, 0.6, t, 1.0, 'enough', t_out=D * 0.8, ty=520, size=44)
     n = 17 + int((t * 5 + math.pi / 2) / (2 * math.pi))
     text(str(n), 960, 300, 120, WHITE, None, font='mono')
 
@@ -644,6 +680,8 @@ def c14_study(t, D):
     desk(1100, 780); lamp(1300, 630)
     books(1240, 630, 2 + int(t / D * 6))
     chair(800, 780)
+    tempt(520, 780, 0.55, t, 0.8, 'phone', t_out=D * 0.75, face=1, ty=560, size=44)
+    if 0.8 < t < D * 0.75: phone(560, 690, 0.3)
     p = blob(800, 780, 1.0, 1, 'determined', arms=((40, 110), (55, 120)), legs='sit', t=t, band=True, lean=12)
     h = p['hands'][1]
     poly([(h[0] - 10, h[1] - 30), (h[0] + 70, h[1] - 50), (h[0] + 80, h[1]), (h[0], h[1] + 10)], (240, 236, 220), OL, 3)
@@ -660,9 +698,7 @@ def c15_fridge(t, D):
     p = blob(780, 780, 1.0, 1, 'determined', arms=('down', (40 + 50 * pick, 100 + 20 * pick)), t=t, band=True)
     if pick > 0.9:
         h = p['hands'][1]; apple(h[0], h[1] - 10)
-    if t > 1.0:
-        blob(1500, 780, 0.8, -1, 'tired', t=t, demon=True, seed=5)
-        typed(L('justone'), 1500, 470, 46, t, 1.2, RD, glowc=GLOWRED)
+    tempt(1500, 780, 0.5, t, 1.0, 'justone', t_out=D * 0.8, ty=560, size=44)
     if pick > 0.9: text('✓', 900, 360, 90, (120, 220, 120), None, font='hand', sc=pop(t, D * 0.55 + 0.5))
 
 

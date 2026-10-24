@@ -193,7 +193,8 @@ def music():
         n = len(seg); r = np.arange(n)
         seg *= np.minimum(1, np.minimum(r / (fi * SR + 1), (n - r) / (fo * SR + 1)))
         place(x, seg, a)
-    put(lambda D: g_piano(D, MAJOR, 72, v=0.9), at('c01_hook'), at('c02_rewind', 0.2), 0.75)
+    put(lambda D: g_drone(D), at('c01_hook'), at('c01_hook', 1.6), 0.5, fi=0.05, fo=0.05)
+    put(lambda D: g_piano(D, MAJOR, 72, v=0.9), at('c01_hook', 1.6), at('c02_rewind', 0.2), 0.75, fi=0.05)
     put(lambda D: g_piano(D, MINOR, 66, v=1.0, strings_v=0.8), at('c03_desk'), at('c08_mirror', 3.0), 0.42, fi=1.0, fo=2.0)
     put(lambda D: g_drone(D), at('c08_mirror'), at('c09_rock', 1.0), 0.38, fi=2.0, fo=1.5)
     put(g_sparse, at('c09_rock', 0.5), at('c10_day1'), 0.22, fi=1.5, fo=0.8)
@@ -211,12 +212,13 @@ def music():
     return x
 
 
-TYPED = [('c01_hook', 3.4, 'notalways', 16), ('c03_desk', 2.0, 'why', 16), ('c05_alarm', 2.5, '5min', 16),
+TYPED = [('c01_hook', 0.15, 'never', 18), ('c01_hook', 5.0, 'notalways', 16), ('c04_phone', 1.7, 'onemore', 16),
+         ('c12_run', 0.5, 'skipgym', 16), ('c13_pushups', 1.2, 'enough', 16), ('c14_study', 1.0, 'phone', 16), ('c03_desk', 2.0, 'why', 16), ('c05_alarm', 2.5, '5min', 16),
          ('c06_sleep', 1.0, 'same', 16), ('c09_rock', 2.0, 'rb1', 14), ('c09_rock', 6.0, 'rb2', 12),
          ('c11_wake', 3.6, 'tomorrow', 16), ('c15_fridge', 1.2, 'justone', 16), ('c16_fall', 1.8, 'giveup', 16),
          ('c17_fight', 2.0, 'cant', 16), ('c18_summit', 4.6, 'save1', 14), ('c18_summit', 8.0, 'save2', 14),
          ('c19_title', 2.4, 'sub', 14), ('c19_title', 4.6, 'decide', 10)]
-WHISPER = {'why', '5min', 'tomorrow', 'justone', 'giveup', 'cant'}
+WHISPER = {'why', '5min', 'tomorrow', 'justone', 'giveup', 'cant', 'never', 'onemore', 'skipgym', 'enough', 'phone'}
 
 
 def sfx(lang):
@@ -233,7 +235,10 @@ def sfx(lang):
                 if s[k] != ' ': place(x, typekey(), at(name, t0 + k / cps), 0.8)
     D = DUR
     E = [
-        ('c01_hook', 0, S.wind(6.0) * 1.5), ('c01_hook', 1.0, S.whoosh(0.5) * 0.5),
+        ('c01_hook', 0, S.heartbeat() * 0.7), ('c01_hook', 1.6, S.boom() * 0.8), ('c01_hook', 1.6, S.wind(6.0) * 1.5),
+        ('c01_hook', 2.6, S.whoosh(0.5) * 0.5),
+        ('c13_pushups', D['c13_pushups'] * 0.8, S.whoosh(0.4) * 0.5), ('c14_study', D['c14_study'] * 0.75, S.whoosh(0.4) * 0.5),
+        ('c15_fridge', D['c15_fridge'] * 0.8, S.whoosh(0.4) * 0.5),
         ('c02_rewind', 0, rewind(1.6)),
         *[('c03_desk', k * 1.0, S.tick() * 0.9) for k in range(8)], ('c03_desk', D['c03_desk'] * 0.62 + 0.5, S.thud() * 0.35),
         *[('c04_phone', tp, S.ding(2400, 0.5) * 0.6) for tp in (1.2, 2.6, 3.8)],
