@@ -13,14 +13,14 @@ Una historia sobre la pereza, la voz que te dice "no puedes"... y el día en que
 ¿Cuál es tu DÍA 1? Escríbelo en los comentarios 👇
 
 0:00 Día 365
-0:09 Todos los días eran iguales
-0:35 El espejo
-0:46 Tocar fondo
-0:57 Día 1
-1:08 La rutina
-1:38 La pelea final
-1:51 La cima
-2:03 Día uno, o un día
+0:10 Todos los días eran iguales
+0:37 El espejo
+0:47 Tocar fondo
+0:58 Día 1
+1:10 La rutina
+1:39 La pelea final
+1:52 La cima
+2:04 Día uno, o un día
 
 #disciplina #motivacion #cortometraje #animacion #superacion
 ```
@@ -44,14 +44,14 @@ A story about laziness, the voice that says "you can't"... and the day you final
 What's your DAY 1? Write it in the comments 👇
 
 0:00 Day 365
-0:09 Every day was the same
-0:35 The mirror
-0:46 Rock bottom
-0:57 Day 1
-1:08 The grind
-1:38 The final fight
-1:51 The summit
-2:03 Day one, or one day
+0:10 Every day was the same
+0:37 The mirror
+0:47 Rock bottom
+0:58 Day 1
+1:10 The grind
+1:39 The final fight
+1:52 The summit
+2:04 Day one, or one day
 
 #discipline #motivation #shortfilm #animation #selfimprovement
 ```

@@ -453,7 +453,7 @@ CH = {'hook': ('Día 365', 'Day 365'), 'same': ('Todos los días eran iguales', 
       'summit': ('La cima', 'The summit'), 'end': ('Día uno, o un día', 'Day one, or one day')}
 
 
-@scene(7.6, 'hook')
+@scene(8.8, 'hook')
 def c01_hook(t, D):
     if t < 1.6:
         rect_raw(-500, -500, 2500, 1600, (8, 7, 9))
