@@ -568,7 +568,7 @@ def c07_montage(t, D):
     flash(t % 0.42, 0, 0.04, (60, 60, 66))
 
 
-@scene(9.0, 'mirror')
+@scene(10.5, 'mirror')
 def c08_mirror(t, D):
     bg_dark()
     day_label(201)
