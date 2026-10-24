@@ -529,7 +529,7 @@ def s36_fuego(t, D):
     for i, x in enumerate((1300, 1560)):
         person(x, 860, 0.85, face=-1, mood='happy', t=t, seed=i + 3, extras=('heart_eyes',))
     text('EL ÚNICO QUE\nHACÍA FUEGO', 960, 200, 80, YEL, INK, sc=pop(t, D * 0.35))
-    text('NO TODO ES AMOR', 960, 980, 60, WHITE, INK, sc=pop(t, D * 0.8))
+    text('NO TODO ES AMOR', 960, 380, 60, WHITE, INK, sc=pop(t, D * 0.8))
 
 
 # =============== 4. CIRUGIA ===============
@@ -580,7 +580,7 @@ def s40_corte(t, D):
     if k:
         magnifier(1440, 640, 1.6 * k)
         text('CORTE LIMPIO', 1300, 330, 80, YEL, INK, sc=pop(t, D * 0.5))
-    text('A PROPÓSITO', 1250, 900, 90, RED, INK, sc=pop(t, D * 0.78))
+    text('A PROPÓSITO', 1250, 820, 90, RED, INK, sc=pop(t, D * 0.78))
 
 
 @scene("Y aquí viene lo increíble:", mind=2.4)
@@ -763,7 +763,7 @@ def s54_oscuro(t, D):
         if dark > 0.95:
             bg_black()
             for k in (-1, 1): dot(720 + k * 22, 486, 9, WHITE)
-        text('¿QUÉ PODRÍA SER?', 960, 900, 80, RED, INK, sc=pop(t, D * 0.75))
+        text('¿QUÉ PODRÍA SER?', 960, 780, 80, RED, INK, sc=pop(t, D * 0.75))
 
 
 @scene("Y de eso hablamos en este video.", mind=12)
@@ -774,4 +774,4 @@ def s55_final(t, D):
     p = person(480, 860, 1.0, mood='happy', arms=('down', 'point'), t=t)
     arrow(640, 520, 900, 450, 10, INK)
     circ(1650, 870, 110, (60, 60, 64), INK, 8)
-    text('SUSCRÍBETE', 1650, 1020, 46, INK, None)
+    text('SUSCRÍBETE', 1650, 720, 46, INK, None)

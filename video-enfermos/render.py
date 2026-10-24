@@ -17,7 +17,13 @@ def frame(i, t):
     sc = SC[i]
     engine.begin(t, i + 1)
     sc['f'](t, dur(sc))
-    return engine.end()
+    im = engine.end()
+    if t < 0.22 and i > 0:  # zoom de golpe al entrar en cada escena
+        z = 1 + 0.06 * (1 - engine.ease(t / 0.22))
+        w, h = int(engine.W / z), int(engine.H / z)
+        x0, y0 = (engine.W - w) // 2, (engine.H - h) // 2
+        im = im.crop((x0, y0, x0 + w, y0 + h)).resize((engine.W, engine.H), Image.BILINEAR)
+    return im
 
 
 def render_clip(i):
