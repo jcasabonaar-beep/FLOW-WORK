@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Protección del crédito</title>
+<style>
+  @page { size: A4 landscape; margin: 6mm; }
+  html, body { margin: 0; background: #fff; color: #000; }
+  body { font-family: Arial, Helvetica, sans-serif; padding: 16px; box-sizing: border-box; }
+  svg { display: block; width: 100%; max-width: 1077px; height: auto; margin: 0 auto; }
+  .imprimir {
+    position: fixed; top: 12px; right: 12px; z-index: 10;
+    font: bold 16px Arial, Helvetica, sans-serif;
+    padding: 10px 18px; background: #000; color: #fff;
+    border: 2px solid #000; border-radius: 6px; cursor: pointer;
+  }
+  .imprimir:hover { background: #fff; color: #000; }
+
+  /* Estilos del mapa (solo negro, blanco y grises) */
+  text { font-family: Arial, Helvetica, sans-serif; fill: #000; font-size: 15px; }
+  .c-tit { font-size: 25px; font-weight: 700; }
+  .c-sub { font-size: 16px; font-style: italic; }
+  .n1-tit { font-size: 21px; font-weight: 700; }
+  .n1-sub { font-size: 16px; font-weight: 700; }
+  .n2-tit { font-size: 17px; font-weight: 700; }
+  .n3-tit { font-size: 17px; font-weight: 700; }
+  .it { font-style: italic; }
+  b, .b { font-weight: 700; }
+  .caja1 { fill: #dcdcdc; stroke: #000; stroke-width: 3; }
+  .caja2 { fill: #fff; stroke: #000; stroke-width: 2.2; }
+  .caja3 { fill: #fff; stroke: #000; stroke-width: 1.6; stroke-dasharray: 7 4; }
+  .truco { fill: #efefef; stroke: #000; stroke-width: 2; stroke-dasharray: 12 6; }
+  .sep { stroke: #000; stroke-width: 1; }
+  .sep3 { stroke: #777; stroke-width: 1; }
+  .l1 { fill: none; stroke: #000; stroke-width: 4; stroke-linecap: round; }
+  .l2 { fill: none; stroke: #000; stroke-width: 2.5; stroke-linecap: round; }
+  .l3 { fill: none; stroke: #000; stroke-width: 1.8; stroke-linecap: round; }
+
+  @media print {
+    .imprimir { display: none !important; }
+    body { padding: 0; }
+    svg { width: 283mm; height: 196mm; max-width: none; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<button class="imprimir" onclick="window.print()">Imprimir</button>
+
+<svg viewBox="0 0 1077 748" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="Mapa mental: Protección del crédito">
+
+  <!-- ===== CONECTORES (debajo de las cajas) ===== -->
+  <!-- Centro → ramas -->
+  <path class="l1" d="M440,295 C425,295 418,296 400,296"/>
+  <path class="l1" d="M680,295 C700,295 715,295 735,295"/>
+  <!-- Rama 1 → 1.1 / 1.2 -->
+  <path class="l2" d="M305,265 C305,252 220,252 220,238"/>
+  <path class="l2" d="M305,326 C305,350 275,346 275,370"/>
+  <!-- 1.2 → a / b -->
+  <path class="l3" d="M200,430 C200,442 202,440 202,452"/>
+  <path class="l3" d="M380,430 C380,446 590,436 590,452"/>
+  <!-- Rama 2 → 2.1 / 2.2 -->
+  <path class="l2" d="M845,255 C845,228 928,228 928,200"/>
+  <path class="l2" d="M845,335 C845,358 928,356 928,380"/>
+
+  <!-- ===== NODO CENTRAL (borde doble) ===== -->
+  <g id="centro">
+    <rect x="440" y="228" width="240" height="134" rx="10" fill="#fff" stroke="#000" stroke-width="3"/>
+    <rect x="447" y="235" width="226" height="120" rx="6" fill="none" stroke="#000" stroke-width="1.5"/>
+    <text x="560" y="268" text-anchor="middle" class="c-tit">PROTECCIÓN</text>
+    <text x="560" y="297" text-anchor="middle" class="c-tit">DEL CRÉDITO</text>
+    <text x="560" y="324" text-anchor="middle" class="c-sub">¿Cómo se asegura el</text>
+    <text x="560" y="344" text-anchor="middle" class="c-sub">acreedor de cobrar?</text>
+  </g>
+
+  <!-- ===== RAMA 1: POR LEY ===== -->
+  <g id="rama1">
+    <rect class="caja1" x="210" y="265" width="190" height="61" rx="8"/>
+    <text x="305" y="291" text-anchor="middle" class="n1-tit">1 · POR LEY</text>
+    <text x="305" y="314" text-anchor="middle" class="it">(siempre, sin pactar)</text>
+  </g>
+
+  <!-- 1.1 Responsabilidad patrimonial universal -->
+  <g id="n11">
+    <rect class="caja2" x="10" y="10" width="420" height="228" rx="6"/>
+    <text x="26" y="36" class="n2-tit">1.1 Responsabilidad patrimonial universal</text>
+    <line class="sep" x1="22" y1="46" x2="418" y2="46"/>
+    <text x="26" y="68">•</text><text x="40" y="68">Responde con <tspan class="b">TODOS</tspan> sus bienes, presentes</text>
+    <text x="40" y="87">y futuros</text>
+    <text x="26" y="106">•</text><text x="40" y="106">Protege todas las deudas sin pactar</text>
+    <text x="26" y="125">•</text><text x="40" y="125">Funciones: seguridad para el acreedor</text>
+    <text x="40" y="144">+ presión para el deudor</text>
+    <text x="26" y="163">•</text><text x="40" y="163">Solo los bienes, <tspan class="b">nunca la persona</tspan></text>
+    <text x="26" y="182">•</text><text x="40" y="182">Se hace mediante <tspan class="b">embargo</tspan></text>
+    <text x="26" y="201">•</text><text x="40" y="201"><tspan class="b">Inembargable:</tspan> sueldo hasta el SMI, muebles,</text>
+    <text x="40" y="220">herramientas de trabajo</text>
+  </g>
+
+  <!-- 1.2 Acciones contra el fraude -->
+  <g id="n12">
+    <rect class="caja2" x="110" y="370" width="330" height="60" rx="6"/>
+    <text x="275" y="395" text-anchor="middle" class="n2-tit">1.2 Acciones contra el fraude</text>
+    <text x="275" y="418" text-anchor="middle" class="it">último recurso: solo tras embargarlo todo</text>
+  </g>
+
+  <!-- a) Subrogatoria -->
+  <g id="n12a">
+    <rect class="caja3" x="10" y="452" width="385" height="210" rx="6"/>
+    <text x="26" y="478" class="n3-tit">a) Subrogatoria</text>
+    <line class="sep3" x1="22" y1="488" x2="383" y2="488"/>
+    <text x="26" y="510">→ el deudor <tspan class="b">NO DEJA ENTRAR</tspan> dinero</text>
+    <text x="26" y="529" class="it">(no reclama lo que le deben)</text>
+    <text x="26" y="552">•</text><text x="40" y="552">El acreedor lo reclama en su nombre,</text>
+    <text x="40" y="571">vía juzgado</text>
+    <text x="26" y="590">•</text><text x="40" y="590">Se reclama <tspan class="b">TODO</tspan> lo que le deben, aunque</text>
+    <text x="40" y="609">a ti te deban menos</text>
+    <text x="26" y="628">•</text><text x="40" y="628">El dinero va al patrimonio del deudor</text>
+    <text x="40" y="647">→ beneficia a <tspan class="b">todos</tspan> los acreedores</text>
+  </g>
+
+  <!-- b) Pauliana -->
+  <g id="n12b">
+    <rect class="caja3" x="415" y="452" width="350" height="228" rx="6"/>
+    <text x="431" y="478" class="n3-tit">b) Pauliana (revocatoria)</text>
+    <line class="sep3" x1="427" y1="488" x2="753" y2="488"/>
+    <text x="431" y="510">→ el deudor <tspan class="b">SACA</tspan> sus bienes para</text>
+    <text x="431" y="529">esconderlos</text>
+    <text x="431" y="552">•</text><text x="445" y="552">Se anula el regalo o la venta y el bien</text>
+    <text x="445" y="571"><tspan class="b">vuelve</tspan> al deudor</text>
+    <text x="431" y="590">•</text><text x="445" y="590">Requisitos: <tspan class="b">intención de engañar</tspan></text>
+    <text x="445" y="609">+ <tspan class="b">daño real</tspan></text>
+    <text x="431" y="628">•</text><text x="445" y="628">Se presume fraude si: lo regala (título</text>
+    <text x="445" y="647">gratuito) o lo vende con sentencia</text>
+    <text x="445" y="666">o embargo ya en contra</text>
+  </g>
+
+  <!-- ===== RAMA 2: PACTADAS ===== -->
+  <g id="rama2">
+    <rect class="caja1" x="735" y="255" width="220" height="80" rx="8"/>
+    <text x="845" y="283" text-anchor="middle" class="n1-tit">2 · PACTADAS</text>
+    <text x="845" y="305" text-anchor="middle" class="n1-sub">GARANTÍAS</text>
+    <text x="845" y="325" text-anchor="middle" class="it">(hay que acordarlas)</text>
+  </g>
+
+  <!-- 2.1 Personales -->
+  <g id="n21">
+    <rect class="caja2" x="790" y="80" width="277" height="120" rx="6"/>
+    <text x="806" y="106" class="n2-tit">2.1 Personales</text>
+    <line class="sep" x1="802" y1="116" x2="1055" y2="116"/>
+    <text x="806" y="140">→ responde una <tspan class="b">PERSONA</tspan></text>
+    <text x="806" y="166">•</text><text x="820" y="166">Ejemplo: fianza, aval de tus</text>
+    <text x="820" y="185">padres en el alquiler</text>
+  </g>
+
+  <!-- 2.2 Reales -->
+  <g id="n22">
+    <rect class="caja2" x="790" y="380" width="277" height="176" rx="6"/>
+    <text x="806" y="406" class="n2-tit">2.2 Reales</text>
+    <line class="sep" x1="802" y1="416" x2="1055" y2="416"/>
+    <text x="806" y="440">→ responde una <tspan class="b">COSA</tspan></text>
+    <text x="806" y="462" class="it">(“real” viene del latín</text>
+    <text x="806" y="481" class="it"><tspan class="b">res</tspan> = cosa)</text>
+    <text x="806" y="504">•</text><text x="820" y="504">Ejemplo: hipoteca (si no pagas,</text>
+    <text x="820" y="523">el banco subasta el piso</text>
+    <text x="820" y="542">y cobra)</text>
+  </g>
+
+  <!-- ===== TRUCO (recuadro discontinuo) ===== -->
+  <g id="truco">
+    <rect class="truco" x="10" y="696" width="1057" height="46" rx="6"/>
+    <text x="538.5" y="725" text-anchor="middle" style="font-size:16px"><tspan class="b">TRUCO:</tspan>   Subrogatoria: que <tspan class="b">ENTRE</tspan>   ·   Pauliana: que <tspan class="b">VUELVA</tspan>   ·   Personal = <tspan class="b">persona</tspan>   ·   Real = <tspan class="b">cosa</tspan></text>
+  </g>
+</svg>
+</body>
+</html>
