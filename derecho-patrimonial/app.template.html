@@ -442,13 +442,38 @@ const noteFor = id => {
   return (noteCache[id] = best);
 };
 // Si la opción elegida es la respuesta correcta de otra pregunta, se enseña a qué corresponde en realidad.
-const confusionFor = (chosen, id) => { const ids = (BY_ANSWER[norm(chosen)] || []).filter(x => x !== id && norm(BANK[x].right) !== norm(BANK[id].right)); return ids.length ? BANK[ids[0]] : null; };
+// ---------- Sin números de artículo: oculta las preguntas que solo piden un número y limpia las referencias del resto ----------
+const ART_SET = new Set(typeof SOLO_ARTICULO !== 'undefined' ? SOLO_ARTICULO : []);
+const ART_RE = /(?:\b(?:según|por|en|de|del|los|las|el|la)\s+){0,2}\barts?\.\s*(?:[\d.]+(?:\s*[a-z]\))?|ss\.|y|a|,|-|–|párr\.|\d+º|\s)*(?:CC|CE|LGP|LH|LSSI|TRLPI|CCom|LGCA|CP|LPI|Código Penal|Ley Hipotecaria|de la Ley Hipotecaria)?/gi;
+const clean = str => {
+  let t = String(str)
+    .replace(/\s*\([^()]*?\b(?:arts?\.|art[ií]culos?)[^()]*\)/gi, '')
+    .replace(ART_RE, ' ')
+    .replace(/\s+/g, ' ').replace(/\s+([,.;:?…])/g, '$1').replace(/,\s*,/g, ',').replace(/([¿(])\s+/g, '$1')
+    .replace(/^[\s,.;:]+/, '').replace(/,\s*([.?…])/g, '$1').replace(/^(Excepción|Ámbito|Definición amplia|Son las seis causas)\s*\.$/i, '').trim();
+  if (/^[.\s]*$/.test(t)) return '';
+  return t.replace(/^(¿?)(.)/, (m, a, c) => a + c.toUpperCase());
+};
+const noArt = () => S.settings.noArt !== false;
+const cx = str => noArt() ? clean(str) : str;
+const playable = id => !(noArt() && ART_SET.has(id));
+const allIds = () => Object.keys(BANK).filter(playable);
+const noteView = n => ({ t: cx(n.t), b: n.b.map(cx).filter(Boolean), truco: n.truco && !(noArt() && /^(\d|3-4-6)/.test(n.truco)) ? n.truco : '' });
+const noteHtml = n => { const v = noteView(n); return '<ul>' + v.b.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' + (v.truco ? '<div class="truco">' + I.bulb + '<span>' + esc(v.truco) + '</span></div>' : ''); };
+const lvIds = (t, l) => t.niveles[l].q.map((_, i) => t.id + '-' + l + '-' + i).filter(playable);
+const lvTotal = (t, l) => lvIds(t, l).length;
+let BY_CLEAN = null;
+const confusionFor = (chosen, id) => {
+  if (!BY_CLEAN) { BY_CLEAN = {}; Object.values(BANK).forEach(b => { const k = norm(clean(b.right)); (BY_CLEAN[k] = BY_CLEAN[k] || []).push(b.id); }); }
+  const ids = [...new Set([...(BY_ANSWER[norm(chosen)] || []), ...(BY_CLEAN[norm(chosen)] || [])])].filter(x => x !== id && playable(x) && norm(BANK[x].right) !== norm(BANK[id].right));
+  return ids.length ? BANK[ids[0]] : null;
+};
 const temaById = id => TEMAS.find(t => t.id === id);
 const tc = id => 'var(--c-' + id + ')';
 
 // ---------- Estado persistente ----------
 const KEY = 'dpp-quiz-v1';
-const fresh = () => ({ xp: 0, levels: {}, fails: {}, stats: {}, ach: {}, day: { last: '', streak: 0 }, settings: { timer: false, sound: true, theme: 'system', unlockAll: false, goal: 30 }, fixed: 0, blitzBest: 0, games: 0, answered: 0, correct: 0, perfects: 0, today: { d: '', n: 0 }, mem: {}, nmem: {} });
+const fresh = () => ({ xp: 0, levels: {}, fails: {}, stats: {}, ach: {}, day: { last: '', streak: 0 }, settings: { timer: false, sound: true, theme: 'system', unlockAll: false, goal: 30, noArt: true }, fixed: 0, blitzBest: 0, games: 0, answered: 0, correct: 0, perfects: 0, today: { d: '', n: 0 }, mem: {}, nmem: {} });
 let S = fresh();
 try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); S.settings = Object.assign(fresh().settings, S.settings); } catch (e) {}
 // Guardado: siempre en este navegador y, si el visor lo permite, en la cuenta de claude.ai (privado, sincroniza móvil y ordenador).
@@ -474,7 +499,7 @@ const memUpdate = (store, id, grade) => { // grade: 0 fallo, 1 a medias, 2 bien
   m.due = dayNum() + (grade === 2 ? GAPS[m.b] : 0); m.seen = dayNum(); store[id] = m;
 };
 const temaMemory = tid => {
-  const ids = Object.keys(BANK).filter(id => BANK[id].tema === tid), today = dayNum();
+  const ids = allIds().filter(id => BANK[id].tema === tid), today = dayNum();
   let strong = 0, due = 0; const studied = !!(S.stats[tid] && S.stats[tid].a);
   ids.forEach(id => { const m = S.mem[id]; if (S.fails[id] || (m && m.due <= today && m.b < 6) || (!m && studied)) due++; if (m && m.b >= 2 && !S.fails[id]) strong++; });
   return { total: ids.length, strong, due, pct: Math.round(strong / ids.length * 100) };
@@ -482,7 +507,7 @@ const temaMemory = tid => {
 // Prioridad: fallos > vencidas (caja baja primero) > nunca vistas > el resto; los temas más flojos pesan más.
 const pickSmart = (temas, n = 30) => {
   const today = dayNum(), acc = t => { const st = S.stats[t]; return st && st.a ? st.c / st.a : .6; };
-  const scored = Object.keys(BANK).filter(id => temas.includes(BANK[id].tema)).map(id => {
+  const scored = allIds().filter(id => temas.includes(BANK[id].tema)).map(id => {
     const m = S.mem[id]; let p;
     if (S.fails[id]) p = 100 + S.fails[id] * 5;
     else if (m && m.due <= today) p = 75 - m.b * 8 + Math.min(today - m.due, 10);
@@ -575,10 +600,10 @@ const on = (sel, fn) => binders.push([sel, fn]);
 const go = (v, arg) => { view = v; viewArg = arg; render(); window.scrollTo(0, 0); };
 const render = () => { header(); const fn = V[view] || V.home; app.innerHTML = '<div class="fade">' + fn(viewArg || {}) + '</div>'; binders.forEach(([sel, fn]) => document.querySelectorAll(sel).forEach(el => el.addEventListener('click', e => fn(el, e)))); binders = []; };
 const isUnlocked = (t, l) => S.settings.unlockAll || l === 0 || lvData(t.id, l - 1).stars > 0;
-const failIds = temaId => Object.keys(S.fails).filter(id => BANK[id] && (!temaId || BANK[id].tema === temaId));
+const failIds = temaId => Object.keys(S.fails).filter(id => BANK[id] && playable(id) && (!temaId || BANK[id].tema === temaId));
 const ring = (v, max) => { const p = Math.min(1, v / max), r = 25, c = 2 * Math.PI * r; return `<svg class="ring" viewBox="0 0 62 62" aria-hidden="true"><circle cx="31" cy="31" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="8"/><circle cx="31" cy="31" r="${r}" fill="none" stroke="var(--ok)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${c * p} ${c}" transform="rotate(-90 31 31)"/><text x="31" y="36" text-anchor="middle" font-family="Unbounded, sans-serif" font-weight="800" font-size="13" fill="var(--ink)">${Math.round(p * 100)}%</text></svg>`; };
-const noteCard = (n, open, extra = '') => `<details class="stk note-card" ${open ? 'open' : ''}><summary><span>${esc(n.t)}${extra}</span>${I.chev}</summary>
-  <div class="note-body"><ul>${n.b.map(x => '<li>' + esc(x) + '</li>').join('')}</ul>${n.truco ? '<div class="truco">' + I.bulb + '<span>' + esc(n.truco) + '</span></div>' : ''}</div></details>`;
+const noteCard = (n, open, extra = '') => `<details class="stk note-card" ${open ? 'open' : ''}><summary><span>${esc(cx(n.t))}${extra}</span>${I.chev}</summary>
+  <div class="note-body">${noteHtml(n)}</div></details>`;
 
 // ---------- Vistas ----------
 const V = {};
@@ -619,7 +644,7 @@ V.home = () => {
     <button class="stk mode press" id="mBlitz"><span class="ic" style="background:var(--c-t1)">${I.bolt}</span><b>Relámpago</b><span>60 s · récord ${S.blitzBest}</span></button>
     <button class="stk mode press" id="mStats"><span class="ic" style="background:var(--c-t4)">${I.chart}</span><b>Progreso</b><span>${Object.keys(S.ach).length}/${ACH.length} logros</span></button>
   </div>
-  <div class="sec"><h2>Temas</h2><span>${Object.keys(BANK).length} preguntas · ${NOTES.length} mini-apuntes</span></div>
+  <div class="sec"><h2>Temas</h2><span>${allIds().length} preguntas · ${NOTES.length} mini-apuntes</span></div>
   <div class="temas">
     ${TEMAS.map(t => {
       const n = t.niveles.filter((_, i) => lvData(t.id, i).stars > 0).length;
@@ -661,7 +686,7 @@ V.tema = ({ id, tab }) => {
       return `<div class="node-row">
         <button class="node ${un ? '' : 'locked'} ${d.stars ? 'done' : ''} ${i === firstOpen ? 'next' : ''}" data-node="${i}" aria-label="Nivel ${i + 1}: ${esc(lv.t)}">
           ${i === firstOpen ? '<span class="start-tag">' + (d.plays ? 'REINTENTA' : 'EMPIEZA') + '</span>' : ''}${un ? (d.stars ? I.check : i + 1) : I.lock}</button>
-        <div class="node-lbl"><b>${esc(lv.t)}</b>${d.plays ? starRow(d.stars) + ' <span class="tiny">' + d.best + '/30</span>' : '<span class="tiny">' + (un ? 'Nivel ' + (i + 1) : 'Bloqueado') + '</span>'}</div>
+        <div class="node-lbl"><b>${esc(lv.t)}</b>${d.plays ? starRow(d.stars) + ' <span class="tiny">' + Math.min(d.best, lvTotal(t, i)) + '/' + lvTotal(t, i) + '</span>' : '<span class="tiny">' + (un ? 'Nivel ' + (i + 1) : 'Bloqueado') + '</span>'}</div>
       </div>`;
     }).join('')}
   </div>
@@ -679,7 +704,7 @@ const openLevel = (t, i) => {
   layer.innerHTML = `<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true" aria-label="Nivel ${i + 1}">
     <span class="tag" style="--tc:${tc(t.id)};width:max-content">Tema ${t.num} · Nivel ${i + 1}</span>
     <h3>${esc(lv.t)}</h3>
-    <p class="muted">30 preguntas. Apruebas con 15 aciertos. ${d.plays ? 'Tu mejor marca: ' + d.best + '/30.' : 'Las que falles vuelven en una ronda de repaso al final.'}</p>
+    <p class="muted">${lvTotal(t, i)} preguntas. Apruebas con ${Math.ceil(lvTotal(t, i) / 2)} aciertos. ${d.plays ? 'Tu mejor marca: ' + Math.min(d.best, lvTotal(t, i)) + '/' + lvTotal(t, i) + '.' : 'Las que falles vuelven en una ronda de repaso al final.'}</p>
     ${d.plays ? starRow(d.stars, 3, 'big-stars') : ''}
     <button class="btn go lg block press" id="mPlay">${d.plays ? 'Jugar otra vez' : '¡Vamos!'} ${I.chev}</button>
     <button class="btn block press" id="mFicha">${I.book} Ver ficha de estudio</button>
@@ -698,8 +723,8 @@ V.ficha = ({ tema, lvl }) => {
   <button class="back">${I.left} Tema ${t.num}</button>
   <div class="page">
     <div><span class="tag" style="--tc:${tc(tema)}">Ficha · Nivel ${lvl + 1}</span><h1 style="margin-top:10px">${esc(lv.t)}</h1></div>
-    <p class="muted">Las 30 preguntas del nivel con su respuesta correcta. Léelas una vez y luego juega.</p>
-    <div style="display:grid;gap:10px">${lv.q.map((q, i) => `<div class="stk fq"><span class="n">${String(i + 1).padStart(2, '0')}</span><b>${esc(q[0])}</b><span class="ans">${esc(q[1])}</span><span class="why">${esc(q[q.length - 1])}</span></div>`).join('')}</div>
+    <p class="muted">Las preguntas del nivel con su respuesta correcta. Léelas una vez y luego juega.</p>
+    <div style="display:grid;gap:10px">${lvIds(t, lvl).map((id, i) => { const b = BANK[id]; return `<div class="stk fq"><span class="n">${String(i + 1).padStart(2, '0')}</span><b>${esc(cx(b.q))}</b><span class="ans">${esc(cx(b.right))}</span><span class="why">${esc(cx(b.e))}</span></div>`; }).join('')}</div>
     <button class="btn go lg block press" id="fPlay">Jugar este nivel ${I.chev}</button>
   </div>`;
 };
@@ -752,8 +777,8 @@ const drawFlash = () => {
       <div class="prog"><i style="width:${F.i / F.cards.length * 100}%"></i></div><span class="pill">${F.i + 1}/${F.cards.length}</span></div>
     <div class="stk flash fade">
       <span class="tag" style="width:max-content">Tema ${t.num}${F.again.has(n.i) ? ' · otra vez' : ''}</span>
-      <h2>${esc(n.t)}</h2>
-      ${F.open ? `<ul>${n.b.map(x => '<li>' + esc(x) + '</li>').join('')}</ul>${n.truco ? '<div class="truco">' + I.bulb + '<span>' + esc(n.truco) + '</span></div>' : ''}
+      <h2>${esc(cx(n.t))}</h2>
+      ${F.open ? `${noteHtml(n)}
         <p class="muted">Sé sincero/a: ¿lo recordabas?</p>
         <div class="rate"><button class="btn danger press" data-r="0">Ni idea</button><button class="btn mid press" data-r="1">A medias</button><button class="btn go press" data-r="2">Lo sabía</button></div>`
       : `<div class="ask">Antes de girar la tarjeta, intenta decir en voz alta o en tu cabeza todo lo que recuerdes de este concepto: definición, artículos, tipos y ejemplos.</div>
@@ -825,6 +850,7 @@ V.settings = () => {
     <div class="stk panel">
       ${sw('timer', 'Contrarreloj', '20 segundos por pregunta. Lo que te sobre suma puntos.')}
       ${sw('sound', 'Sonidos', 'Tonos al acertar, fallar y terminar.')}
+      ${sw('noArt', 'Sin números de artículo', 'Oculta las preguntas que solo piden un número de artículo o de ley y quita esas referencias de explicaciones y apuntes.')}
       ${sw('unlockAll', 'Desbloquear todo', 'Juega cualquier nivel o examen sin aprobar los anteriores.')}
       <div class="set"><div><b>Objetivo diario</b><span>Preguntas que quieres responder cada día.</span></div>
         <div class="seg">${[15, 30, 60].map(v => `<button data-goal="${v}" aria-pressed="${st.goal === v}">${v}</button>`).join('')}</div></div>
@@ -843,14 +869,14 @@ const TIME_Q = 20, BLITZ_T = 60;
 const CHEERS = ['¡Bien ahí!', '¡Crack!', '¡Exacto!', '¡Correctísimo!', '¡Lo tienes!', '¡Eso es!', '¡De matrícula!'];
 const STREAK_CHEERS = { 3: '¡Tres seguidas!', 5: '¡Estás en racha!', 8: '¡Imparable!', 10: '¡Modo magistrado/a!', 15: '¡Esto ya es jurisprudencia!', 20: '¡Leyenda del Código Civil!' };
 const OOPS = ['Casi. Vamos a verlo bien', 'Esta tenía truco', 'Tranqui, así se aprende', 'Esta se te ha escapado'];
-const mkItem = id => { const b = BANK[id]; const opts = shuffle([b.right, ...b.wrong]); return { id, q: b.q, opts, correct: opts.indexOf(b.right), e: b.e, tema: b.tema, lvl: b.lvl }; };
+const mkItem = id => { const b = BANK[id]; const right = cx(b.right); const opts = shuffle([right, ...b.wrong.map(cx)]); return { id, q: cx(b.q), opts, correct: opts.indexOf(right), e: cx(b.e), tema: b.tema, lvl: b.lvl }; };
 const mult = s => s >= 10 ? 3 : s >= 6 ? 2 : s >= 3 ? 1.5 : 1;
 
 const startGame = cfg => {
   leave();
   let ids = [], title = '';
-  const all = Object.keys(BANK);
-  if (cfg.mode === 'level') { const t = temaById(cfg.tema); ids = shuffle(t.niveles[cfg.lvl].q.map((_, i) => t.id + '-' + cfg.lvl + '-' + i)); title = 'Tema ' + t.num + ' · Nivel ' + (cfg.lvl + 1); }
+  const all = allIds();
+  if (cfg.mode === 'level') { const t = temaById(cfg.tema); ids = shuffle(lvIds(t, cfg.lvl)); title = 'Tema ' + t.num + ' · Nivel ' + (cfg.lvl + 1); }
   else if (cfg.mode === 'exam') { ids = shuffle(all.filter(id => BANK[id].tema === cfg.tema)).slice(0, 30); title = 'Examen · Tema ' + temaById(cfg.tema).num; }
   else if (cfg.mode === 'global') { const per = TEMAS.map(t => shuffle(all.filter(id => BANK[id].tema === t.id))); let k = 0; while (ids.length < 30) { const p = per[k % per.length]; if (p.length) ids.push(p.pop()); k++; } ids = shuffle(ids); title = 'Examen global'; }
   else if (cfg.mode === 'review') { ids = shuffle(failIds(cfg.tema)).slice(0, 30); title = cfg.tema ? 'Mis fallos · Tema ' + temaById(cfg.tema).num : 'Mis fallos'; }
@@ -873,7 +899,7 @@ const startQTimer = () => {
     if (left <= 0) { stopTimers(); answer(-1); }
   }, 100);
 };
-const hintBox = it => { const n = noteFor(it.id); return n ? `<div class="hint">${I.bulb}<span><b>Pista · ${esc(n.t)}:</b> ${esc(n.truco || n.b[0])}</span></div>` : ''; };
+const hintBox = it => { const n = noteFor(it.id); if (!n) return ''; const v = noteView(n); return `<div class="hint">${I.bulb}<span><b>Pista · ${esc(v.t)}:</b> ${esc(v.truco || v.b[0] || '')}</span></div>`; };
 const drawQ = () => {
   header(); layer.innerHTML = '';
   const it = cur(); const t = temaById(it.tema); const m = mult(G.streak); const blitz = G.mode === 'blitz';
@@ -923,8 +949,8 @@ const hint = () => {
 const skipQ = () => {
   if (!G.life.skip || G.answered) return; G.life.skip = 0; G.usedLife = true;
   const used = new Set(G.items.map(x => x.id));
-  let pool = Object.keys(BANK).filter(id => !used.has(id) && (G.mode === 'level' ? BANK[id].tema === G.tema && BANK[id].lvl === G.lvl : G.temas ? G.temas.includes(BANK[id].tema) : !G.tema || BANK[id].tema === G.tema));
-  if (!pool.length) pool = Object.keys(BANK).filter(id => !used.has(id) && (!G.tema || BANK[id].tema === G.tema));
+  let pool = allIds().filter(id => !used.has(id) && (G.mode === 'level' ? BANK[id].tema === G.tema && BANK[id].lvl === G.lvl : G.temas ? G.temas.includes(BANK[id].tema) : !G.tema || BANK[id].tema === G.tema));
+  if (!pool.length) pool = allIds().filter(id => !used.has(id) && (!G.tema || BANK[id].tema === G.tema));
   if (!pool.length) { toast('<span>No quedan preguntas para cambiar</span>'); return; }
   G.items[G.i] = mkItem(pick(pool)); G.hinted = false; drawQ();
 };
@@ -963,7 +989,7 @@ const showSheet = (it, k, right) => {
   const note = noteFor(it.id);
   if (right) {
     layer.innerHTML = `<div class="sheet ok" role="status"><div class="sheet-in">
-      <div class="sheet-head">${mascot(G.streak >= 5 ? 'cool' : 'happy', tc(it.tema))}<div><h3>${esc(STREAK_CHEERS[G.streak] || pick(CHEERS))}</h3><p>${esc(it.e)}</p></div></div>
+      <div class="sheet-head">${mascot(G.streak >= 5 ? 'cool' : 'happy', tc(it.tema))}<div><h3>${esc(STREAK_CHEERS[G.streak] || pick(CHEERS))}</h3>${it.e ? '<p>' + esc(it.e) + '</p>' : ''}</div></div>
       <button class="btn go lg block press" id="next">Continuar ${I.chev}</button></div></div>`;
   } else {
     const chosen = k >= 0 ? it.opts[k] : null;
@@ -974,9 +1000,9 @@ const showSheet = (it, k, right) => {
         ${chosen ? `<div class="y">${I.cross}<span><small>Marcaste</small><s>${esc(chosen)}</s></span></div>` : ''}
         <div class="g">${I.check}<span><small>Correcta</small>${esc(it.opts[it.correct])}</span></div>
       </div>
-      <div class="learn"><h4>${I.target} Por qué es así</h4><p>${esc(it.e)}</p></div>
-      ${conf ? `<div class="learn trap"><h4>${I.alert} Ojo, lo has confundido</h4><p>Lo que marcaste es la respuesta a otra pregunta del temario:</p><p class="q">«${esc(conf.q)}» → ${esc(conf.right)}</p></div>` : ''}
-      ${note ? `<div class="learn"><h4>${I.book} Mini-apunte · ${esc(note.t)}</h4><ul>${note.b.map(x => '<li>' + esc(x) + '</li>').join('')}</ul>${note.truco ? '<div class="truco">' + I.bulb + '<span>' + esc(note.truco) + '</span></div>' : ''}</div>` : ''}
+      ${it.e ? `<div class="learn"><h4>${I.target} Por qué es así</h4><p>${esc(it.e)}</p></div>` : ''}
+      ${conf ? `<div class="learn trap"><h4>${I.alert} Ojo, lo has confundido</h4><p>Lo que marcaste es la respuesta a otra pregunta del temario:</p><p class="q">«${esc(cx(conf.q))}» → ${esc(cx(conf.right))}</p></div>` : ''}
+      ${note ? `<div class="learn"><h4>${I.book} Mini-apunte · ${esc(cx(note.t))}</h4>${noteHtml(note)}</div>` : ''}
       <p class="muted">${G.retry ? 'Se queda en «Mis fallos» para que la recuperes más adelante.' : (G.mode === 'smart' && !it.again ? 'Te la vuelvo a preguntar dentro de unas preguntas, para fijarla.' : 'Esta pregunta volverá en la ronda de repaso al final.')}</p>
       <button class="btn danger lg block press" id="next">Entendido ${I.chev}</button></div></div>`;
   }
@@ -1020,7 +1046,7 @@ const finish = () => {
     d.best = Math.max(d.best, g.ok); d.stars = Math.max(d.stars, stars); d.plays++; S.levels[key] = d;
     const t = temaById(g.tema);
     if (!was && stars > 0) unlocked = g.lvl + 1 < t.niveles.length ? 'Nivel ' + (g.lvl + 2) + ' desbloqueado: ' + t.niveles[g.lvl + 1].t : 'Examen del Tema ' + t.num + ' desbloqueado';
-    if (g.ok === 30) S.perfects++;
+    if (g.ok === n) S.perfects++;
     if (stars > 0 && !g.usedLife) S.noLifePass = true;
   }
   if (g.mode === 'exam' || g.mode === 'global') S.bestExam = Math.max(S.bestExam || 0, Math.round(pct * 100));
@@ -1039,7 +1065,7 @@ const finish = () => {
     ${blitz ? `<div class="grade">${g.ok}<small> aciertos</small></div>` : `<div class="grade">${grade}<small> /10</small></div>${starRow(stars, 3, 'big-stars')}`}
     <h1>${title}</h1>
     ${blitz ? `<p>Récord: ${S.blitzBest}</p>` : ''}
-    ${g.mode === 'level' && stars === 0 ? '<p>Necesitas 15 aciertos para aprobar. Lee los conceptos de abajo y vuelve a intentarlo.</p>' : ''}
+    ${g.mode === 'level' && stars === 0 ? '<p>Necesitas ' + Math.ceil(n / 2) + ' aciertos para aprobar. Lee los conceptos de abajo y vuelve a intentarlo.</p>' : ''}
     <div class="kpis">
       <div class="stk"><b>${g.ok}/${n}</b><span>Aciertos</span></div>
       <div class="stk"><b>${g.bestStreak}</b><span>Mejor racha</span></div>

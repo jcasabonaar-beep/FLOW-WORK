@@ -35,3 +35,7 @@ python3 build.py
 ## Repaso inteligente
 
 Cada pregunta y cada mini-apunte guardan una «caja» de memoria (sistema Leitner): acertar la sube y aleja la siguiente repetición a 1, 2, 4, 7, 15 y 30 días; fallar la devuelve a hoy. El modo **Repaso inteligente** tiene dos fases: tarjetas de apuntes para el recuerdo activo (te autoevalúas con «Ni idea», «A medias» o «Lo sabía») y un test de 30 preguntas que mezcla los temas elegidos. El test prioriza tus fallos, luego lo que vence hoy y lo que no has repasado, y pesa más los temas con peor acierto. Si fallas una pregunta, vuelve a salir cinco preguntas después.
+
+## Sin números de artículo
+
+El ajuste «Sin números de artículo» está activado por defecto. Oculta las preguntas de `data/articulos.js`, que solo piden un número de artículo, ley o título, y quita del resto de textos (enunciados, opciones, explicaciones y apuntes) las referencias del tipo «art. 1258 CC». Se puede desactivar en Ajustes.
