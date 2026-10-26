@@ -99,8 +99,8 @@ h1, h2, h3 { font-family: var(--f-display); line-height: 1.12; margin: 0; text-w
 .ring { width: 62px; height: 62px; }
 .goal b { font: 800 16px/1.2 var(--f-display); display: block; margin-block: 4px; }
 
-.modes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-block: 16px 26px; }
-@media (max-width: 600px) { .modes { grid-template-columns: repeat(2, 1fr); } }
+.modes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-block: 16px 26px; }
+@media (max-width: 680px) { .modes { grid-template-columns: repeat(2, 1fr); } .modes .mode:first-child { grid-column: 1 / -1; } }
 .mode { padding: 12px; text-align: left; display: grid; gap: 4px; align-content: start; min-width: 0; }
 .mode .ic { width: 38px; height: 38px; border-radius: 11px; border: 2px solid var(--edge); display: grid; place-items: center; margin-bottom: 4px; color: var(--on-color); }
 .mode .ic svg { width: 20px; height: 20px; }
@@ -315,6 +315,30 @@ h1, h2, h3 { font-family: var(--f-display); line-height: 1.12; margin: 0; text-w
 .seg button { border: 0; background: var(--surface); padding: 7px 12px; font-size: 13px; font-weight: 700; }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
 .muted { font-size: 13px; color: var(--muted); margin: 0; }
+
+/* Repaso inteligente y tarjetas de memoria */
+.plan { padding: 16px; display: grid; gap: 10px; background: var(--c-t3); color: var(--on-color); margin-top: 14px; }
+.plan .lbl { color: var(--on-color); opacity: .75; }
+.plan b { font: 800 18px/1.25 var(--f-display); }
+.plan p { margin: 0; font-size: 14px; }
+.plan .btn { box-shadow: 3px 3px 0 var(--shade); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; border: var(--bw) solid var(--edge); background: var(--surface); font-weight: 800; font-size: 14px; }
+.chip[aria-pressed="true"] { background: var(--tc); color: var(--on-color); box-shadow: 2px 2px 0 var(--shade); }
+.chip svg { width: 15px; height: 15px; }
+.mrow { display: grid; grid-template-columns: 1fr 120px 64px; gap: 12px; align-items: center; font-size: 14px; }
+.mrow .track > i { background: var(--tc); }
+.mrow em { font-style: normal; font: 600 12px/1.2 var(--f-mono); text-align: right; color: var(--muted); }
+.mrow em.due { color: var(--bad); }
+@media (max-width: 460px) { .mrow { grid-template-columns: 1fr 70px 56px; } }
+.steps { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; }
+.flash { padding: 20px 18px; display: grid; gap: 14px; min-height: 340px; align-content: start; }
+.flash h2 { font-size: clamp(20px, 5vw, 26px); }
+.flash .ask { background: var(--surface-2); border: 2px dashed var(--edge); border-radius: 14px; padding: 14px; font-size: 15px; }
+.flash ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 15px; }
+.rate { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.rate .btn { padding: 12px 6px; font-size: 14px; white-space: normal; text-align: center; }
+.btn.mid { background: var(--gold); color: var(--on-color); }
 
 /* Modal de nivel */
 .scrim { position: fixed; inset: 0; background: rgba(10,10,20,.5); z-index: 40; display: grid; align-items: end; justify-items: center; animation: fadeIn .2s; }
@@ -1227,7 +1251,7 @@ const tc = id => 'var(--c-' + id + ')';
 
 // ---------- Estado persistente ----------
 const KEY = 'dpp-quiz-v1';
-const fresh = () => ({ xp: 0, levels: {}, fails: {}, stats: {}, ach: {}, day: { last: '', streak: 0 }, settings: { timer: false, sound: true, theme: 'system', unlockAll: false, goal: 30 }, fixed: 0, blitzBest: 0, games: 0, answered: 0, correct: 0, perfects: 0, today: { d: '', n: 0 } });
+const fresh = () => ({ xp: 0, levels: {}, fails: {}, stats: {}, ach: {}, day: { last: '', streak: 0 }, settings: { timer: false, sound: true, theme: 'system', unlockAll: false, goal: 30 }, fixed: 0, blitzBest: 0, games: 0, answered: 0, correct: 0, perfects: 0, today: { d: '', n: 0 }, mem: {}, nmem: {} });
 let S = fresh();
 try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); S.settings = Object.assign(fresh().settings, S.settings); } catch (e) {}
 // Guardado: siempre en este navegador y, si el visor lo permite, en la cuenta de claude.ai (privado, sincroniza móvil y ordenador).
@@ -1243,6 +1267,37 @@ addEventListener('pagehide', flushCloud);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushCloud(); });
 const applyTheme = () => { const t = S.settings.theme; if (t === 'system') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t); };
 applyTheme();
+
+// ---------- Memoria espaciada (sistema Leitner): cada pregunta y cada apunte tiene una caja 0-6 ----------
+const GAPS = [0, 1, 2, 4, 7, 15, 30];
+const dayNum = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
+const memUpdate = (store, id, grade) => { // grade: 0 fallo, 1 a medias, 2 bien
+  const m = store[id] || { b: 0, due: 0 };
+  m.b = grade === 2 ? Math.min(m.b + 1, 6) : grade === 1 ? Math.max(m.b - 1, 0) : 0;
+  m.due = dayNum() + (grade === 2 ? GAPS[m.b] : 0); m.seen = dayNum(); store[id] = m;
+};
+const temaMemory = tid => {
+  const ids = Object.keys(BANK).filter(id => BANK[id].tema === tid), today = dayNum();
+  let strong = 0, due = 0; const studied = !!(S.stats[tid] && S.stats[tid].a);
+  ids.forEach(id => { const m = S.mem[id]; if (S.fails[id] || (m && m.due <= today && m.b < 6) || (!m && studied)) due++; if (m && m.b >= 2 && !S.fails[id]) strong++; });
+  return { total: ids.length, strong, due, pct: Math.round(strong / ids.length * 100) };
+};
+// Prioridad: fallos > vencidas (caja baja primero) > nunca vistas > el resto; los temas más flojos pesan más.
+const pickSmart = (temas, n = 30) => {
+  const today = dayNum(), acc = t => { const st = S.stats[t]; return st && st.a ? st.c / st.a : .6; };
+  const scored = Object.keys(BANK).filter(id => temas.includes(BANK[id].tema)).map(id => {
+    const m = S.mem[id]; let p;
+    if (S.fails[id]) p = 100 + S.fails[id] * 5;
+    else if (m && m.due <= today) p = 75 - m.b * 8 + Math.min(today - m.due, 10);
+    else if (!m) p = 45;
+    else p = 20 - Math.min(m.due - today, 15);
+    return { id, p: p + (1 - acc(BANK[id].tema)) * 40 + Math.random() * 18 };
+  }).sort((a, b) => b.p - a.p);
+  const cap = temas.length > 1 ? Math.ceil(n * .55) : n, per = {}, out = [];
+  for (const x of scored) { const t = BANK[x.id].tema; if ((per[t] || 0) >= cap) continue; per[t] = (per[t] || 0) + 1; out.push(x.id); if (out.length >= n) break; }
+  return shuffle(out);
+};
+const smartTemas = () => (S.settings.smartTemas && S.settings.smartTemas.length ? S.settings.smartTemas : TEMAS.filter(t => S.stats[t.id] && S.stats[t.id].a).map(t => t.id)).filter(temaById);
 
 // ---------- Rangos, días y objetivo diario ----------
 const RANKS = [[0, 'Novato/a de primero'], [400, 'Becario/a de despacho'], [1200, 'Pasante'], [2500, 'Letrado/a'], [4500, 'Notario/a'], [7000, 'Registrador/a'], [10000, 'Magistrado/a'], [14000, 'Catedrático/a']];
@@ -1308,14 +1363,14 @@ const nextToast = () => { const h = toastQ.shift(); if (!h) { toasting = false; 
 const announceAch = list => list.forEach(a => toast(I.medal + '<span>Logro desbloqueado: ' + esc(a.n) + '</span>'));
 
 // ---------- Cabecera y navegación ----------
-let G = null, tick = 0;
+let G = null, F = null, tick = 0;
 const stopTimers = () => { clearInterval(tick); tick = 0; };
 const header = () => {
   $('#xpPill').innerHTML = I.bolt + S.xp.toLocaleString('es-ES');
   $('#dayPill').innerHTML = I.flame + dayStreak();
   $('#setBtn').innerHTML = I.gear;
 };
-const leave = () => { stopTimers(); layer.innerHTML = ''; G = null; };
+const leave = () => { stopTimers(); layer.innerHTML = ''; G = null; F = null; };
 $('#homeBtn').onclick = () => { leave(); go('home'); };
 $('#setBtn').onclick = () => { leave(); go('settings'); };
 let view = 'home', viewArg = null, binders = [];
@@ -1341,13 +1396,19 @@ V.home = () => {
   on('#mBlitz', () => startGame({ mode: 'blitz' }));
   on('#mStats', () => go('stats'));
   on('#goNext', () => nextUp && startGame({ mode: 'level', tema: nextUp.t.id, lvl: nextUp.i }));
+  on('#goPlan', () => go('repaso'));
+  on('#mSmart', () => go('repaso'));
+  const plan = (() => { const ts = smartTemas(); if (!ts.length) return null; const due = ts.reduce((a, t) => a + temaMemory(t).due, 0); return due ? { due, names: ts.map(t => 'T' + temaById(t).num).join(', ') } : null; })();
   return `
   <section class="hello">
     ${mascot(dayStreak() >= 3 ? 'cool' : 'happy', 'var(--c-t4)')}
     <div class="stk bubble"><h1>${S.games ? esc(pick(GREETS)) : '¡Hola! Soy Lexi y te voy a ayudar a aprobar.'}</h1>
       <p>${nextUp ? 'Te toca: Tema ' + nextUp.t.num + ', nivel ' + (nextUp.i + 1) + ' · ' + esc(nextUp.t.niveles[nextUp.i].t) : 'Has aprobado todos los niveles. Prueba el examen global.'}</p></div>
   </section>
-  ${nextUp ? `<button class="btn primary lg block press" id="goNext" style="margin-top:12px">Continuar ${I.chev}</button>` : ''}
+  ${plan ? `<div class="stk plan"><span class="lbl">Plan de repaso de hoy</span><b>${plan.due} preguntas pendientes de repaso en ${plan.names}</b>
+    <p>10 minutos: primero recuerda los apuntes con tarjetas y luego haz un test mezclando temas.</p>
+    <button class="btn lg block press" id="goPlan">Empezar repaso ${I.chev}</button></div>` : ''}
+  ${nextUp ? `<button class="btn ${plan ? '' : 'primary'} lg block press" id="goNext" style="margin-top:12px">Siguiente nivel: T${nextUp.t.num} · ${nextUp.i + 1} ${I.chev}</button>` : ''}
   <div class="cards2">
     <div class="stk rankc"><span class="lbl">Tu rango</span><b>${esc(r.name)}</b>
       <div class="track"><i style="width:${pct}%"></i></div>
@@ -1355,6 +1416,7 @@ V.home = () => {
     <div class="stk goal">${ring(done, goal)}<div><span class="lbl">Objetivo diario</span><b>${Math.min(done, goal)}/${goal}</b><span class="tiny">${done >= goal ? 'Hecho. Lo de ahora es extra.' : 'Te quedan ' + (goal - done) + ' preguntas hoy.'}</span></div></div>
   </div>
   <div class="modes">
+    <button class="stk mode press" id="mSmart"><span class="ic" style="background:var(--c-t8)">${I.target}</span><b>Repaso inteligente</b><span>Lo que estás olvidando</span></button>
     <button class="stk mode press" id="mGlobal"><span class="ic" style="background:var(--c-t3)">${I.globe}</span><b>Examen global</b><span>30 preguntas de todo</span></button>
     <button class="stk mode press" id="mFails" ${fails ? '' : 'disabled'}><span class="ic" style="background:var(--c-t2)">${I.redo}</span><b>Mis fallos</b><span>${fails ? fails + ' por recuperar' : 'Nada pendiente'}</span></button>
     <button class="stk mode press" id="mBlitz"><span class="ic" style="background:var(--c-t1)">${I.bolt}</span><b>Relámpago</b><span>60 s · récord ${S.blitzBest}</span></button>
@@ -1445,6 +1507,88 @@ V.ficha = ({ tema, lvl }) => {
   </div>`;
 };
 
+V.repaso = () => {
+  const sel = smartTemas();
+  on('.back', () => go('home'));
+  on('[data-st]', el => { const t = el.dataset.st; const cur_ = smartTemas(); S.settings.smartTemas = cur_.includes(t) ? cur_.filter(x => x !== t) : [...cur_, t].sort(); save(); render(); });
+  on('#sFlash', () => startFlash(smartTemas()));
+  on('#sQuiz', () => startGame({ mode: 'smart', temas: smartTemas() }));
+  return `
+  <button class="back">${I.left} Inicio</button>
+  <div class="page">
+    <div><span class="lbl">Repaso inteligente</span><h1 style="margin-top:6px">Recupera lo que se te está olvidando</h1></div>
+    <div class="stk panel"><h2>1. Elige qué temas repasar</h2>
+      <div class="chips">${TEMAS.map(t => `<button class="chip press" data-st="${t.id}" style="--tc:${tc(t.id)}" aria-pressed="${sel.includes(t.id)}">${sel.includes(t.id) ? I.check : ''}Tema ${t.num}</button>`).join('')}</div>
+      ${TEMAS.filter(t => sel.includes(t.id)).map(t => { const m = temaMemory(t.id); return `<div class="mrow" style="--tc:${tc(t.id)}"><span>T${t.num} · memoria fuerte</span><div class="track"><i style="width:${m.pct}%"></i></div><em class="${m.due ? 'due' : ''}">${m.due ? m.due + ' a repasar' : 'al día'}</em></div>`; }).join('')}
+      <p class="muted">«Memoria fuerte» son las preguntas que has acertado al menos dos veces seguidas. Cada acierto aleja la siguiente repetición (1, 2, 4, 7, 15 y 30 días) y cada fallo la trae a hoy.</p>
+    </div>
+    <div class="stk panel"><h2>2. Haz las dos fases, en este orden</h2>
+      <ol class="steps">
+        <li><b>Tarjetas de apuntes (5 min).</b> Ves el nombre de un concepto, intentas recordarlo en voz alta o en la cabeza y luego lo giras. Recordar antes de mirar es lo que más fija la memoria.</li>
+        <li><b>Test mezclado (30 preguntas).</b> Primero tus fallos, luego lo que toca repasar hoy, con los temas mezclados. Si fallas una, te la vuelvo a preguntar a los pocos minutos.</li>
+      </ol>
+      <div class="row">
+        <button class="btn mid lg press" id="sFlash" ${sel.length ? '' : 'disabled'}>${I.book} 1 · Tarjetas</button>
+        <button class="btn go lg press" id="sQuiz" ${sel.length ? '' : 'disabled'}>${I.target} 2 · Test mezclado</button>
+      </div>
+    </div>
+    <p class="muted">Consejo: haz este repaso cada día antes de empezar un tema nuevo. Con 10 minutos al día no se te olvidan los anteriores.</p>
+  </div>`;
+};
+
+// ---------- Tarjetas de apuntes (recuerdo activo) ----------
+const noteWeak = (() => { let map = null; return n => { if (!map) { map = {}; Object.keys(BANK).forEach(id => { const nt = noteFor(id); if (nt) (map[nt.i] = map[nt.i] || []).push(id); }); }
+  const ids = map[n.i] || []; let w = 0; ids.forEach(id => { const m = S.mem[id]; if (S.fails[id]) w += 3; else if (!m) w += 1; else if (m.b < 2) w += 2; }); return ids.length ? w / ids.length : 0; }; })();
+const startFlash = temas => {
+  leave(); const today = dayNum();
+  const cards = NOTES.filter(n => temas.includes(n.tema)).map(n => { const m = S.nmem[n.i]; const dueP = !m ? 2 : m.due <= today ? 3 - m.b * .3 : -1; return { n, p: dueP + noteWeak(n) + Math.random() * .8 }; })
+    .sort((a, b) => b.p - a.p).slice(0, 15).map(x => x.n);
+  if (!cards.length) return;
+  touchDay();
+  F = { cards: shuffle(cards), i: 0, open: false, known: 0, mid: 0, nope: 0, xp: 0, again: new Set() };
+  view = 'flash'; window.scrollTo(0, 0); drawFlash();
+};
+const drawFlash = () => {
+  header(); const n = F.cards[F.i]; const t = temaById(n.tema);
+  app.innerHTML = `<div class="game" style="--tc:${tc(n.tema)}">
+    <div class="hud"><button class="sq press" id="fq" aria-label="Salir">${I.cross}</button>
+      <div class="prog"><i style="width:${F.i / F.cards.length * 100}%"></i></div><span class="pill">${F.i + 1}/${F.cards.length}</span></div>
+    <div class="stk flash fade">
+      <span class="tag" style="width:max-content">Tema ${t.num}${F.again.has(n.i) ? ' · otra vez' : ''}</span>
+      <h2>${esc(n.t)}</h2>
+      ${F.open ? `<ul>${n.b.map(x => '<li>' + esc(x) + '</li>').join('')}</ul>${n.truco ? '<div class="truco">' + I.bulb + '<span>' + esc(n.truco) + '</span></div>' : ''}
+        <p class="muted">Sé sincero/a: ¿lo recordabas?</p>
+        <div class="rate"><button class="btn danger press" data-r="0">Ni idea</button><button class="btn mid press" data-r="1">A medias</button><button class="btn go press" data-r="2">Lo sabía</button></div>`
+      : `<div class="ask">Antes de girar la tarjeta, intenta decir en voz alta o en tu cabeza todo lo que recuerdes de este concepto: definición, artículos, tipos y ejemplos.</div>
+        <button class="btn primary lg block press" id="flip">Girar tarjeta ${I.chev}</button>`}
+    </div>
+    <p class="kbd">Espacio para girar · 1 Ni idea · 2 A medias · 3 Lo sabía</p>
+  </div>`;
+  $('#fq').onclick = () => { F = null; go('repaso'); };
+  const fl = $('#flip'); if (fl) { fl.onclick = flip; fl.focus({ preventScroll: true }); }
+  document.querySelectorAll('[data-r]').forEach(b => b.onclick = () => rateFlash(+b.dataset.r));
+};
+const flip = () => { if (F && !F.open) { F.open = true; drawFlash(); } };
+const rateFlash = r => {
+  if (!F || !F.open) return; const n = F.cards[F.i];
+  if (!F.again.has(n.i)) { memUpdate(S.nmem, n.i, r); if (r === 2) F.known++; else if (r === 1) F.mid++; else F.nope++; }
+  if (r < 2 && !F.again.has(n.i)) { F.again.add(n.i); F.cards.push(n); }
+  if (r === 2) sOk(); const gx = r === 2 ? 5 : 2; S.xp += gx; F.xp += gx; save();
+  F.i++; F.open = false;
+  if (F.i < F.cards.length) { drawFlash(); return; }
+  const f = F; F = null; view = 'flashdone'; header();
+  const firstTotal = f.known + f.mid + f.nope;
+  app.innerHTML = `<div class="center fade">${mascot(f.known >= firstTotal * .7 ? 'cool' : 'happy', 'var(--c-t1)')}
+    <span class="lbl">Tarjetas terminadas</span><h1>${f.known} de ${firstTotal} las recordabas</h1>
+    <p>Las que no recordabas te han salido dos veces. Ahora toca comprobarlo con el test mezclado: ahí se fija de verdad.</p>
+    <div class="kpis"><div class="stk"><b>${f.known}</b><span>Lo sabía</span></div><div class="stk"><b>${f.mid}</b><span>A medias</span></div><div class="stk"><b>${f.nope}</b><span>Ni idea</span></div><div class="stk"><b>+${f.xp}</b><span>XP</span></div></div>
+    <button class="btn go lg press" id="toQuiz">${I.target} 2 · Test mezclado ${I.chev}</button>
+    <button class="btn press" id="toRep">Volver</button></div>`;
+  $('#toQuiz').onclick = () => startGame({ mode: 'smart', temas: smartTemas() });
+  $('#toRep').onclick = () => go('repaso');
+  confetti(60); sWin();
+};
+
 V.stats = () => {
   const acc = S.answered ? Math.round(S.correct / S.answered * 100) : 0;
   on('.back', () => go('home'));
@@ -1514,6 +1658,7 @@ const startGame = cfg => {
   else if (cfg.mode === 'global') { const per = TEMAS.map(t => shuffle(all.filter(id => BANK[id].tema === t.id))); let k = 0; while (ids.length < 30) { const p = per[k % per.length]; if (p.length) ids.push(p.pop()); k++; } ids = shuffle(ids); title = 'Examen global'; }
   else if (cfg.mode === 'review') { ids = shuffle(failIds(cfg.tema)).slice(0, 30); title = cfg.tema ? 'Mis fallos · Tema ' + temaById(cfg.tema).num : 'Mis fallos'; }
   else if (cfg.mode === 'blitz') { ids = shuffle(all); title = 'Relámpago'; }
+  else if (cfg.mode === 'smart') { ids = pickSmart(cfg.temas); title = 'Repaso inteligente · ' + cfg.temas.map(t => 'T' + temaById(t).num).join(' '); }
   if (!ids.length) { toast(I.check + '<span>¡No te queda nada pendiente aquí!</span>'); go(cfg.tema ? 'tema' : 'home', cfg.tema ? { id: cfg.tema } : {}); return; }
   touchDay();
   G = { ...cfg, title, items: ids.map(mkItem), i: 0, score: 0, streak: 0, bestStreak: 0, ok: 0, wrongs: [], life: { fifty: 1, hint: 1, skip: 1 }, usedLife: false, answered: false, gone: [], hinted: false, tLeft: TIME_Q, blitzLeft: BLITZ_T, retry: null, recovered: 0 };
@@ -1546,7 +1691,7 @@ const drawQ = () => {
     ${blitz ? `<div class="blitz-clock ${G.blitzLeft <= 10 ? 'warn' : ''}" id="blitzClock" aria-live="polite">${G.blitzLeft}</div>` : ''}
     ${S.settings.timer && !blitz && !G.retry ? '<div class="timer" id="tbar"><i style="width:100%"></i></div>' : ''}
     <div class="qhead">
-      <span class="tag ${G.retry ? 'retry' : ''}">${G.retry ? 'Ronda de repaso' : 'T' + t.num + ' · Nivel ' + (it.lvl + 1)}</span>
+      <span class="tag ${G.retry || it.again ? 'retry' : ''}">${G.retry ? 'Ronda de repaso' : it.again ? 'Otra vez, para fijarla' : 'T' + t.num + ' · Nivel ' + (it.lvl + 1)}</span>
       <span class="pill">${blitz ? G.ok + ' aciertos' : (pos + 1) + '/' + total}</span>
     </div>
     <div class="qtext fade">${esc(it.q)}</div>
@@ -1581,7 +1726,7 @@ const hint = () => {
 const skipQ = () => {
   if (!G.life.skip || G.answered) return; G.life.skip = 0; G.usedLife = true;
   const used = new Set(G.items.map(x => x.id));
-  let pool = Object.keys(BANK).filter(id => !used.has(id) && (G.mode === 'level' ? BANK[id].tema === G.tema && BANK[id].lvl === G.lvl : !G.tema || BANK[id].tema === G.tema));
+  let pool = Object.keys(BANK).filter(id => !used.has(id) && (G.mode === 'level' ? BANK[id].tema === G.tema && BANK[id].lvl === G.lvl : G.temas ? G.temas.includes(BANK[id].tema) : !G.tema || BANK[id].tema === G.tema));
   if (!pool.length) pool = Object.keys(BANK).filter(id => !used.has(id) && (!G.tema || BANK[id].tema === G.tema));
   if (!pool.length) { toast('<span>No quedan preguntas para cambiar</span>'); return; }
   G.items[G.i] = mkItem(pick(pool)); G.hinted = false; drawQ();
@@ -1591,20 +1736,24 @@ const answer = k => {
   if (!G || G.answered) return; G.answered = true; stopTimers();
   const it = cur(); const right = k === it.correct; const blitz = G.mode === 'blitz';
   const st = S.stats[it.tema] || (S.stats[it.tema] = { a: 0, c: 0 });
-  if (!G.retry) { st.a++; S.answered++; bumpToday(); }
+  const first = !G.retry && !it.again;
+  if (first) { st.a++; S.answered++; bumpToday(); }
+  if (!it.again) memUpdate(S.mem, it.id, right ? 2 : 0);
   document.querySelectorAll('.opt').forEach(b => { b.disabled = true; const kk = +b.dataset.k; if (kk === it.correct) b.classList.add('right'); else if (kk === k) b.classList.add('wrong'); else b.classList.add('dim'); });
   document.querySelectorAll('.life .btn').forEach(b => b.disabled = true);
   if (right) {
-    if (!G.retry) { st.c++; S.correct++; G.ok++; }
+    if (first) { st.c++; S.correct++; G.ok++; }
     G.streak++; G.bestStreak = Math.max(G.bestStreak, G.streak); S.bestStreak = Math.max(S.bestStreak || 0, G.streak);
-    const gained = G.retry ? 50 : Math.round(100 * mult(G.streak) * (G.hinted ? .5 : 1) + (S.settings.timer && !blitz ? Math.round(G.tLeft) * 5 : 0));
+    const gained = (G.retry || it.again) ? 50 : Math.round(100 * mult(G.streak) * (G.hinted ? .5 : 1) + (S.settings.timer && !blitz ? Math.round(G.tLeft) * 5 : 0));
     G.score += gained; sOk();
-    if (S.fails[it.id]) { delete S.fails[it.id]; if (G.retry || G.mode === 'review') { S.fixed++; G.recovered++; } }
+    if (S.fails[it.id]) { delete S.fails[it.id]; if (G.retry || it.again || G.mode === 'review') { S.fixed++; G.recovered++; } }
     const fl = document.createElement('div'); fl.className = 'float'; fl.textContent = '+' + gained; document.body.appendChild(fl); setTimeout(() => fl.remove(), 900);
     if (G.streak >= 5 && G.streak % 5 === 0) confetti(50);
   } else {
     G.streak = 0; S.fails[it.id] = (S.fails[it.id] || 0) + 1; sKo();
-    if (!G.retry) G.wrongs.push({ it, k });
+    if (first) G.wrongs.push({ it, k });
+    // En el repaso inteligente, la fallada vuelve a salir 4 preguntas después (con las opciones barajadas).
+    if (G.mode === 'smart' && !it.again) { const again = mkItem(it.id); again.again = true; G.items.splice(Math.min(G.i + 5, G.items.length), 0, again); }
   }
   save();
   if (blitz) { setTimeout(() => { if (!G || G.blitzLeft <= 0) return; G.i++; if (G.i >= G.items.length) { stopTimers(); finish(); } else drawQ(); }, right ? 350 : 1200); return; }
@@ -1631,7 +1780,7 @@ const showSheet = (it, k, right) => {
       <div class="learn"><h4>${I.target} Por qué es así</h4><p>${esc(it.e)}</p></div>
       ${conf ? `<div class="learn trap"><h4>${I.alert} Ojo, lo has confundido</h4><p>Lo que marcaste es la respuesta a otra pregunta del temario:</p><p class="q">«${esc(conf.q)}» → ${esc(conf.right)}</p></div>` : ''}
       ${note ? `<div class="learn"><h4>${I.book} Mini-apunte · ${esc(note.t)}</h4><ul>${note.b.map(x => '<li>' + esc(x) + '</li>').join('')}</ul>${note.truco ? '<div class="truco">' + I.bulb + '<span>' + esc(note.truco) + '</span></div>' : ''}</div>` : ''}
-      <p class="muted">${G.retry ? 'Se queda en «Mis fallos» para que la recuperes más adelante.' : 'Esta pregunta volverá en la ronda de repaso al final.'}</p>
+      <p class="muted">${G.retry ? 'Se queda en «Mis fallos» para que la recuperes más adelante.' : (G.mode === 'smart' && !it.again ? 'Te la vuelvo a preguntar dentro de unas preguntas, para fijarla.' : 'Esta pregunta volverá en la ronda de repaso al final.')}</p>
       <button class="btn danger lg block press" id="next">Entendido ${I.chev}</button></div></div>`;
   }
   $('#next').onclick = nextQ; $('#next').focus({ preventScroll: true });
@@ -1641,7 +1790,7 @@ const nextQ = () => {
   if (!G || !G.answered) return; layer.innerHTML = ''; G.hinted = false;
   if (G.retry) { G.retry.i++; if (G.retry.i >= G.retry.items.length) finish(); else drawQ(); return; }
   if (G.i < G.items.length - 1) { G.i++; drawQ(); return; }
-  if (G.wrongs.length && G.mode !== 'review') { interlude(); return; }
+  if (G.wrongs.length && G.mode !== 'review' && G.mode !== 'smart') { interlude(); return; }
   finish();
 };
 const interlude = () => {
@@ -1662,7 +1811,7 @@ const interlude = () => {
 const finish = () => {
   stopTimers(); layer.innerHTML = '';
   const g = G; const blitz = g.mode === 'blitz';
-  const n = blitz ? g.i + (g.answered ? 1 : 0) : g.items.length;
+  const n = blitz ? g.i + (g.answered ? 1 : 0) : g.items.filter(x => !x.again).length;
   const pct = n ? g.ok / n : 0;
   const stars = blitz ? 0 : pct >= .9 ? 3 : pct >= .75 ? 2 : pct >= .5 ? 1 : 0;
   const xp = Math.round(g.score / 10) + stars * 15;
@@ -1697,7 +1846,7 @@ const finish = () => {
     <div class="kpis">
       <div class="stk"><b>${g.ok}/${n}</b><span>Aciertos</span></div>
       <div class="stk"><b>${g.bestStreak}</b><span>Mejor racha</span></div>
-      <div class="stk"><b>${g.retry ? g.recovered + '/' + g.retry.items.length : '—'}</b><span>Recuperadas</span></div>
+      <div class="stk"><b>${g.retry ? g.recovered + '/' + g.retry.items.length : g.mode === 'smart' ? g.recovered : '—'}</b><span>Recuperadas</span></div>
       <div class="stk"><b>+${xp}</b><span>XP</span></div>
     </div>
     ${unlocked ? `<div class="stk banner-mini">${I.trophy}<span>${esc(unlocked)}</span></div>` : ''}
@@ -1713,7 +1862,7 @@ const finish = () => {
       ${g.wrongs.map(({ it, k }) => `<div class="stk rv"><b>${esc(it.q)}</b><span class="yo">${k === -1 ? 'Sin responder' : 'Marcaste: ' + esc(it.opts[k])}</span><span class="ok">Correcta: ${esc(it.opts[it.correct])}</span><span class="why">${esc(it.e)}</span></div>`).join('')}</div></details>` : ''}
   </div>`;
   window.scrollTo(0, 0);
-  $('#rAgain').onclick = () => startGame({ mode: g.mode, tema: g.tema, lvl: g.lvl });
+  $('#rAgain').onclick = () => startGame({ mode: g.mode, tema: g.tema, lvl: g.lvl, temas: g.temas });
   const nx = $('#rNext'); if (nx) nx.onclick = () => startGame({ mode: 'level', tema: g.tema, lvl: g.lvl + 1 });
   $('#rBack').onclick = () => g.tema ? go('tema', { id: g.tema }) : go('home');
   if (stars === 3 || (blitz && newBest && g.ok > 0)) { confetti(); sWin(); } else if (stars > 0) { confetti(60); sWin(); }
@@ -1750,6 +1899,11 @@ const finish = () => {
 
 // ---------- Teclado ----------
 document.addEventListener('keydown', e => {
+  if (view === 'flash' && F && !e.metaKey && !e.ctrlKey && !e.altKey) {
+    if ((e.key === ' ' || e.key === 'Enter') && !F.open) { e.preventDefault(); flip(); }
+    else if (F.open && ['1', '2', '3'].includes(e.key)) { e.preventDefault(); rateFlash(+e.key - 1); }
+    return;
+  }
   if (view !== 'game' || !G || e.metaKey || e.ctrlKey || e.altKey) return;
   const k = { '1': 0, '2': 1, '3': 2, '4': 3, a: 0, b: 1, c: 2, d: 3 }[e.key.toLowerCase()];
   if (k !== undefined && !G.answered && !G.gone.includes(k) && document.querySelector('.opt')) { e.preventDefault(); answer(k); }
