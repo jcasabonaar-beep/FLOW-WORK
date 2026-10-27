@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mapa de todos los temas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4 landscape; margin: 10mm; }
+
+  :root {
+    --negro: #000;
+    --gris: #555;
+    --gris-claro: #e6e6e6;
+    --blanco: #fff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #f2f2f2; color: var(--negro); }
+  body {
+    font-family: "Atkinson Hyperlegible", Verdana, Geneva, "DejaVu Sans", sans-serif;
+    font-size: 10pt;
+    line-height: 1.22;
+    padding: 16px;
+  }
+
+  .imprimir {
+    position: fixed; top: 12px; right: 12px; z-index: 10;
+    font: 700 12pt "Atkinson Hyperlegible", Verdana, sans-serif;
+    padding: 8px 18px; border: 2px solid var(--negro); border-radius: 6px;
+    background: var(--negro); color: var(--blanco); cursor: pointer;
+  }
+  .imprimir:hover { background: var(--blanco); color: var(--negro); }
+
+  /* La hoja: área útil de A4 horizontal con márgenes de 10 mm */
+  .hoja {
+    position: relative;
+    width: 277mm; height: 190mm;
+    margin: 0 auto;
+    background: var(--blanco);
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    column-gap: 9mm;
+    overflow: hidden;
+  }
+  .columna {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; justify-content: space-between;
+    min-height: 0;
+  }
+
+  /* Líneas al centro (debajo de las cajas) */
+  #lineas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  #lineas line { stroke: var(--negro); stroke-width: 2; }
+
+  /* Nodo central */
+  .centro {
+    background: var(--negro); color: var(--blanco);
+    border-radius: 9mm;
+    padding: 3.2mm 4mm;
+    text-align: center;
+  }
+  .centro h1 { margin: 0; font-size: 22pt; line-height: 1.05; letter-spacing: .3px; }
+  .centro p { margin: 1mm 0 0; font-size: 11pt; }
+
+  /* Bloques */
+  .bloque {
+    background: var(--blanco);
+    border: 2px solid var(--negro);
+    border-radius: 2.5mm;
+    padding: 2.2mm 3mm 2.4mm;
+  }
+  .cab {
+    display: flex; align-items: center; gap: 2mm;
+    padding-bottom: 1.4mm; margin-bottom: 1.6mm;
+    border-bottom: 1px solid var(--negro);
+  }
+  .num {
+    flex: none;
+    width: 6.4mm; height: 6.4mm; border-radius: 50%;
+    background: var(--negro); color: var(--blanco);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 11pt;
+  }
+  .cab h2 { margin: 0; font-size: 12.5pt; font-weight: 700; }
+  .diap { margin-left: auto; color: var(--gris); font-size: 9.5pt; white-space: nowrap; }
+
+  ul { margin: 0; padding-left: 4mm; }
+  li { margin: 0 0 .7mm; }
+  li:last-child { margin-bottom: 0; }
+  li::marker { color: var(--negro); }
+  ul ul { margin-top: .5mm; padding-left: 4mm; list-style: circle; }
+  .sub { font-weight: 700; }
+  .truco { font-style: italic; }
+  b { font-weight: 700; }
+
+  @media print {
+    html, body { background: var(--blanco); padding: 0; }
+    .imprimir { display: none !important; }
+    .hoja { margin: 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  .centro h1 { font-size: 19pt; } .num { width: auto; min-width: 6.4mm; padding: 0 1.6mm; border-radius: 3.2mm; }
+</style>
+</head>
+<body>
+<button class="imprimir" type="button" onclick="window.print()">Imprimir</button>
+
+<main class="hoja" id="hoja">
+  <svg id="lineas" aria-hidden="true"></svg>
+  <div class="columna">
+    <section class="bloque" id="b1"><div class="cab"><span class="num">T1</span><h2>Relaciones económicas y Derecho</h2><span class="diap">Tema 1</span></div><ul><li><b>Derecho</b>: normas <b>impuestas coactivamente</b>; objetivo / subjetivo</li><li>Norma: <b>general</b>, <b>abstracta</b>, <b>obligatoria</b> y <b>coercible</b>; supuesto → consecuencia</li><li>Fuentes: <b>ley</b>, <b>costumbre</b> y <b>PGD</b>; jerarquía, temporalidad y especialidad</li><li><b>CE</b> suprema; ley <b>orgánica</b> (absoluta) / <b>ordinaria</b> (simple); RD-ley, RD legislativo, reglamentos</li><li><b>BOE</b> → vigor a los <b>20 días</b>; <b>irretroactividad</b></li><li><b>UE</b>: reglamento (directo) y directiva (<b>transposición</b>). <b>CCAA</b>: Estatuto</li><li>Público / privado; <b>propiedad</b> (art. 33) y <b>libertad de empresa</b> (art. 38)</li></ul></section>
+    <section class="bloque" id="b6"><div class="cab"><span class="num">T8</span><h2>Derecho de la publicidad</h2><span class="diap">Tema 8</span></div><ul><li><b>Publicidad</b>: comunicación para <b>promover la contratación</b> (art. 2 LGP)</li><li>Fuentes: <b>directivas</b> UE, CE (arts. 20, 38 y 51), <b>LGP</b> y otras</li><li>Sujetos: <b>anunciante</b>, destinatarios, <b>agencias</b> y <b>medios</b></li><li><b>Prohibido garantizar ventas</b>; nulas las exoneraciones de responsabilidad</li><li>Contratos: <b>publicidad</b>, <b>difusión</b>, <b>creación</b> y <b>patrocinio</b> (de resultado)</li><li>Patrocinio audiovisual: <b>no en noticiarios</b>, identificado y <b>sin incitar a comprar</b></li></ul></section>
+  </div>
+  <div class="columna">
+    <section class="bloque" id="b2"><div class="cab"><span class="num">T2</span><h2>Relación jurídica y sujetos</h2><span class="diap">Tema 2</span></div><ul><li>Relación jurídica: <b>sujetos</b>, <b>objeto</b> y <b>contenido</b>; dº subjetivo ↔ obligación</li><li>Capacidad <b>jurídica</b> (ser titular) / <b>de obrar</b> (ejercer)</li><li>Persona física: <b>nace con vida</b>; <b>18 años</b>; emancipado desde los 16</li><li><b>Discapacidad</b>: capacidad con <b>apoyos</b>; primero los voluntarios; guarda de hecho, curatela, defensor judicial</li><li><b>Persona jurídica</b>: corporaciones, asociaciones, fundaciones y sociedades</li><li><b>Representación</b> legal o voluntaria; poder y mandato</li></ul></section>
+    <div class="centro" id="centro">
+      <h1>Derecho Patrimonial Privado</h1>
+      <p>Temas 1, 2, 3, 4 y 8</p>
+    </div>
+    <section class="bloque" id="b5"><div class="cab"><span class="num">T4</span><h2>Contratos</h2><span class="diap">Tema 4 · 2.ª parte</span></div><ul><li><b>Acuerdo de voluntades</b>; <i>pacta sunt servanda</i>; título + modo</li><li>Clases: unilateral/bilateral, consensual/real/formal, oneroso/gratuito…</li><li>Elementos: <b>consentimiento</b> (sin error, violencia ni dolo), <b>objeto</b> y <b>causa</b></li><li><b>Nulidad</b> (nunca existió) / <b>anulabilidad</b> (4 años, solo el protegido)</li><li>Formación → <b>perfección</b> → ejecución</li><li><b>Adhesión</b>, <b>electrónica</b>, automatizada y <i>smart contracts</i></li></ul></section>
+  </div>
+  <div class="columna">
+    <section class="bloque" id="b3"><div class="cab"><span class="num">T3</span><h2>El objeto de la actividad económica</h2><span class="diap">Tema 3</span></div><ul><li><b>Real</b> (sobre la cosa, <i>erga omnes</i>) / <b>crédito</b> (frente al deudor)</li><li><b>Propiedad</b>: gozar, disponer y reivindicar</li><li>Adquirir: <b>originarios</b> (ocupación, accesión, usucapión) y <b>derivativos</b> (título + modo)</li><li><b>Propiedad intelectual</b>: vida + 70 años; facultades morales y económicas</li><li>Limitados: <b>goce</b> (usufructo, servidumbre), <b>garantía</b> (prenda, hipoteca) y <b>adquisición</b> (tanteo, retracto, opción)</li><li><b>Registro</b>: publicidad, prioridad, legitimación y <b>tercero hipotecario</b></li></ul></section>
+    <section class="bloque" id="b4"><div class="cab"><span class="num">T4</span><h2>Obligaciones</h2><span class="diap">Tema 4 · 1.ª parte</span></div><ul><li>Prestación: <b>dar, hacer o no hacer</b>; si no cumple, responde con su <b>patrimonio</b></li><li><b>Solidaria</b> (todo a cualquiera) / <b>mancomunada</b> (por defecto)</li><li>Fuentes: <b>ley</b>, <b>contrato</b>, <b>cuasicontrato</b> y <b>actos ilícitos</b></li><li>Prestación <b>posible</b>, <b>lícita</b> y <b>determinada</b>; dinero e <b>intereses</b></li><li><b>Pago exacto</b>; incumplimiento y <b>mora</b>; resarcimiento</li><li>Protección: <b>responsabilidad patrimonial universal</b>, <b>subrogatoria</b>, <b>pauliana</b> y <b>garantías</b></li></ul></section>
+  </div>
+</main>
+
+<script>
+  // Dibuja las líneas del nodo central a cada bloque, solo por los huecos entre cajas.
+  function dibujarLineas() {
+    const hoja = document.getElementById('hoja');
+    const svg = document.getElementById('lineas');
+    const H = hoja.getBoundingClientRect();
+    const r = id => {
+      const b = document.getElementById(id).getBoundingClientRect();
+      return { l: b.left - H.left, r: b.right - H.left, t: b.top - H.top, b: b.bottom - H.top,
+               cx: (b.left + b.right) / 2 - H.left, cy: (b.top + b.bottom) / 2 - H.top };
+    };
+    const c = r('centro'), b = {};
+    ['b1', 'b2', 'b3', 'b4', 'b5', 'b6'].forEach(id => b[id] = r(id));
+    const alto = c.b - c.t;
+    // Punto de llegada en el borde lateral del bloque, lo más cerca posible del centro.
+    const yLado = (blq, arriba) => arriba ? Math.max(blq.t + 12, blq.b - 18) : Math.min(blq.b - 12, blq.t + 18);
+    const seg = [
+      [c.l, c.t + alto * 0.3, b.b1.r, yLado(b.b1, true)],
+      [c.cx, c.t, b.b2.cx, b.b2.b],
+      [c.r, c.t + alto * 0.3, b.b3.l, yLado(b.b3, true)],
+      [c.r, c.b - alto * 0.3, b.b4.l, yLado(b.b4, false)],
+      [c.cx, c.b, b.b5.cx, b.b5.t],
+      [c.l, c.b - alto * 0.3, b.b6.r, yLado(b.b6, false)],
+    ];
+    svg.setAttribute('viewBox', `0 0 ${H.width} ${H.height}`);
+    svg.innerHTML = seg.map(([x1, y1, x2, y2]) =>
+      `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`).join('');
+  }
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(dibujarLineas);
+  window.addEventListener('load', dibujarLineas);
+  window.addEventListener('beforeprint', dibujarLineas);
+</script>
+</body>
+</html>
