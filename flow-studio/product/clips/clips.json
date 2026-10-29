@@ -1,0 +1,5 @@
+{
+  "cta_comenta_libro.mp4": { "duration": 10.0, "use": "cta", "says": "", "description": "Ella sostiene el libro, lo señala y pide que comenten LIBRO. Cierre de video de venta." },
+  "libro_presenta_1.mp4": { "duration": 6.0, "use": "pitch", "says": "", "description": "Ella presenta el libro a cámara con mucha energía." },
+  "libro_presenta_2.mp4": { "duration": 6.0, "use": "pitch", "says": "", "description": "Ella presenta el libro a cámara, lo señala y sonríe." }
+}

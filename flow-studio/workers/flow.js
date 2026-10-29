@@ -5,6 +5,7 @@ const store = require('../lib/store');
 const claude = require('../lib/claude');
 const config = require('../config.json');
 const { fill } = require('./director');
+const { ffmpeg } = require('../lib/ff');
 
 const pad = (n) => String(n).padStart(2, '0');
 const abs = (job, rel) => path.join(store.jobDir(job.id), rel);
@@ -78,6 +79,18 @@ async function session(job, worker, role, model, list, makeTask, extra) {
 
 // Genera los frames pendientes. Devuelve 'ok' | 'wait'
 async function runFrames(job) {
+  // Clips ya hechos: se usan tal cual (frame = su primer fotograma)
+  for (const c of job.clips) {
+    const src = c.readyClip && path.join(store.ROOT, 'product', 'clips', path.basename(c.readyClip));
+    if (src && fs.existsSync(src) && c.frameStatus === 'pending') {
+      const frame = `frames/frame_${pad(c.n)}.png`;
+      const clip = `clips/clip_${pad(c.n)}.mp4`;
+      await ffmpeg(['-i', src, '-frames:v', '1', abs(job, frame)]);
+      fs.copyFileSync(src, abs(job, clip));
+      Object.assign(c, { frame, frameStatus: 'done', frameNote: 'Clip ya hecho, se usa tal cual', clip, clipStatus: 'done', v: Date.now() });
+      store.log(job, 'frames', `🎬 Clip ${c.n}: uso ${path.basename(src)} tal cual`);
+    }
+  }
   // Frames "tal cual": el director puede usar directamente una foto del libro en mano
   for (const c of job.clips) {
     if (c.frameFrom && ['pending'].includes(c.frameStatus)) {
