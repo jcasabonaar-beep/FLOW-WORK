@@ -84,6 +84,13 @@ async function drive(id) {
     }
   } catch (e) {
     const w = STAGE_WORKER[job.stage];
+    if (e.message === 'Detenido por ti') {
+      job.status = 'paused';
+      job.error = null;
+      if (w) store.setWorker(job, w, { state: 'paused', action: '⏸ Parado por ti. Pulsa Reanudar para seguir.' });
+      store.save(job);
+      return;
+    }
     job.status = 'error';
     job.error = e.message;
     if (w) store.setWorker(job, w, { state: e.message === 'Detenido por ti' ? 'paused' : 'error', action: e.message.slice(0, 300) });

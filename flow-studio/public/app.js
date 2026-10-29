@@ -59,7 +59,8 @@ async function refresh() {
   const mins = Math.round((Object.values(job.timings || {}).reduce((a, b) => a + b, 0)) / 60000);
   $('#jMeta').textContent = `${job.videoType === 'venta' ? '💰 Venta' : '🚀 Crecimiento'} · ${new Date(job.createdAt).toLocaleString()} · ${job.clips.length || '?'} clips · ${mins} min de trabajo${job.url ? ' · ' : ''}`;
   if (job.url) $('#jMeta').insertAdjacentHTML('beforeend', `<a href="${esc(job.url)}" target="_blank" style="color:#93c5fd">referencia</a>`);
-  $('#btnPauseAll').textContent = job.paused ? '▶ Reanudar todo' : '⏸ Pausar todo';
+  $('#btnPauseAll').textContent = job.paused || job.status === 'paused' ? '▶ Reanudar' : '⏹ Parar ahora';
+  $('#btnPauseAll').hidden = !job.paused && job.status !== 'paused' && !job.running;
   const canContinue = !job.running && ['error', 'stopped', 'waiting_you'].includes(job.status) && !['review_frames', 'review_final', 'done'].includes(job.stage);
   $('#btnContinue').hidden = !canContinue;
 
@@ -349,7 +350,10 @@ $('#formNew').onsubmit = async (e) => {
   e.target.reset();
   open(j.id);
 };
-$('#btnPauseAll').onclick = () => api('jobs/' + job.id + '/' + (job.paused ? 'resume' : 'pause'), {}).then(refresh);
+$('#btnPauseAll').onclick = () => {
+  if (job.paused || job.status === 'paused') return api('jobs/' + job.id + '/resume', {}).then(refresh);
+  if (confirm('¿Parar ahora? El trabajador se detiene al momento. Lo ya hecho se guarda y luego puedes Reanudar.')) api('jobs/' + job.id + '/stop-all', {}).then(refresh);
+};
 $('#btnContinue').onclick = () => api('jobs/' + job.id + '/continue', {}).then(refresh);
 $('#dlgOffice').onclose = () => { delete $('#dlgOffice').dataset.w; };
 

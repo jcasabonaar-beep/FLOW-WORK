@@ -136,6 +136,12 @@ async function api(req, res, url) {
       store.save(job);
       if (!pipeline.active.has(job.id) && !['review_frames', 'review_final', 'done'].includes(job.stage)) pipeline.drive(job.id);
       return send(res, 200, { ok: true });
+    case 'stop-all':
+      // Parar ya: pausa el video y corta al trabajador que esté en marcha
+      job.paused = true;
+      store.save(job);
+      for (const w of store.WORKERS) claude.stop(job.id, w);
+      return send(res, 200, { ok: true });
     case 'stop-worker':
       return send(res, 200, { ok: claude.stop(job.id, body.worker) });
     case 'upload': {
