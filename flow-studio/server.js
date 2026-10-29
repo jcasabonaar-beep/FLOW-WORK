@@ -135,6 +135,7 @@ async function api(req, res, url) {
       for (const k of ['line', 'framePrompt', 'clipPrompt', 'feedback']) if (k in body) c[k] = body[k];
       if (body.regenFrame) c.frameStatus = 'regen';
       if (body.keepFrame) { c.frameStatus = 'done'; c.feedback = ''; }
+      if (body.freshFrame) Object.assign(c, { frameStatus: 'regen', feedback: '', frame: null, frameNote: 'Se rehace desde cero' });
       if ('regenClip' in body) c.clipStatus = body.regenClip ? 'regen' : (c.clip ? 'done' : c.clipStatus);
       store.save(job);
       return send(res, 200, c);

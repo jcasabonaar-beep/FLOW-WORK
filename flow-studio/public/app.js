@@ -191,6 +191,7 @@ function cardsHtml(mode) {
         <div class="btns">
           <button class="small ${c.frameStatus !== 'regen' ? 'good' : ''}" data-ok="${c.n}">✓ Vale</button>
           <button class="small ${c.frameStatus === 'regen' ? 'primary' : ''}" data-chg="${c.n}">✎ Cambiar</button>
+          <button class="small" data-fresh="${c.n}">↻ Desde cero</button>
           <label class="small" style="margin:0"><button class="small" onclick="this.nextElementSibling.click()">⬆ Subir el mío</button><input type="file" accept="image/*" hidden data-up="frame" data-n="${c.n}"></label>
         </div>
         <textarea rows="2" data-fb="${c.n}" placeholder="Qué cambiar: ej. la cara más cerca, quita el texto del bote…" ${c.frameStatus === 'regen' ? '' : 'hidden'}>${esc(c.feedback)}</textarea>` : ''}
@@ -209,6 +210,7 @@ function cardsHtml(mode) {
 function bindCards() {
   const n = (el, k) => parseInt(el.dataset[k], 10);
   document.querySelectorAll('[data-ok]').forEach((b) => b.onclick = () => api(`jobs/${job.id}/clip/${n(b, 'ok')}`, { keepFrame: true }).then(refresh));
+  document.querySelectorAll('[data-fresh]').forEach((b) => b.onclick = () => api(`jobs/${job.id}/clip/${n(b, 'fresh')}`, { freshFrame: true }).then(() => { panelSig = ''; refresh(); }));
   document.querySelectorAll('[data-chg]').forEach((b) => b.onclick = () => {
     const ta = document.querySelector(`[data-fb="${n(b, 'chg')}"]`);
     ta.hidden = false;
