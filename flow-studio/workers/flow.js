@@ -178,6 +178,16 @@ async function runFrames(job) {
 }
 
 async function runClips(job) {
+  // Si se detuvo a medias, aprovecha los clips que ya estaban descargados
+  for (const c of job.clips.filter((x) => x.clipStatus === 'pending')) {
+    const dest = `clips/clip_${pad(c.n)}.mp4`;
+    if (fs.existsSync(abs(job, dest.replace('.mp4', '_a.mp4')))) {
+      await pickClip(job, c, dest);
+      Object.assign(c, { clip: dest, clipStatus: 'done', clipNote: 'Recuperado de la sesión anterior', v: Date.now() });
+      store.log(job, 'clips', `♻️ Clip ${c.n}: ya estaba descargado, no lo repito`);
+    }
+  }
+  store.save(job);
   for (let round = 0; round < 2; round++) {
     const todo = job.clips.filter((c) => ['pending', 'regen'].includes(c.clipStatus));
     if (!todo.length) break;
