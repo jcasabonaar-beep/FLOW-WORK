@@ -223,7 +223,8 @@ async function pickClip(job, c, dest) {
   const out = abs(job, `clips/score_${pad(c.n)}.json`);
   const lang = config.languages[job.language || config.language].whisper;
   try {
-    await exec('python', [path.join(store.ROOT, 'tools', 'score_clip.py'), out, lang, c.line, prev ? abs(job, prev.clip) : '-', ...cands]);
+    await exec('python', [path.join(store.ROOT, 'tools', 'score_clip.py'), out, lang, c.line, prev ? abs(job, prev.clip) : '-', ...cands],
+      { env: { ...process.env, SCORE_MODEL: config.scoreModel || '' } });
     const res = JSON.parse(fs.readFileSync(out, 'utf8')).sort((x, y) => y.score - x.score);
     best = res[0].file;
     q = res[0];

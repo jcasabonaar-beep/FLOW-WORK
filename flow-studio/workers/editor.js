@@ -159,7 +159,7 @@ async function run(job) {
 
   // 4) Quemar hook + subtítulos + CTA
   store.setWorker(job, 'editor', { action: 'Poniendo hook, subtítulos y CTA…' });
-  await ffmpeg(['-i', 'joined.mp4', '-vf', 'ass=captions.ass:fontsdir=fonts', '-c:v', 'libx264', '-preset', 'medium', '-crf', '18',
+  await ffmpeg(['-i', 'joined.mp4', '-vf', 'ass=captions.ass:fontsdir=fonts', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18',
     '-pix_fmt', 'yuv420p', '-c:a', 'copy', '-movflags', '+faststart', 'final.mp4'], { cwd: edit });
   job.output = 'edit/final.mp4';
   job.outputV = Date.now();

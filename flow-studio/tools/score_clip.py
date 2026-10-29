@@ -2,6 +2,7 @@
 # Uso: python score_clip.py <salida.json> <idioma> "<frase>" <referencia.mp4|-> <candidato1.mp4> [candidato2.mp4 ...]
 import difflib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -43,7 +44,7 @@ def norm(s):
 
 try:
     from faster_whisper import WhisperModel
-    model = WhisperModel("base.en" if lang == "en" else "small", device="cpu", compute_type="int8")
+    model = WhisperModel(os.environ.get("SCORE_MODEL") or ("base.en" if lang == "en" else "base"), device="cpu", compute_type="int8")
 except Exception:
     model = None
 

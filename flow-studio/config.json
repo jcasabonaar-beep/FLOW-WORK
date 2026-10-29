@@ -68,7 +68,7 @@
     "SÍ"
   ],
   "maxClips": {
-    "venta": 9,
+    "venta": 8,
     "crecimiento": 7
   },
   "uploadReference": false,
@@ -86,11 +86,12 @@
     "perAccount": 12,
     "minRatio": 2.5,
     "minViews": 50000,
-    "maxIdeas": 8,
+    "maxIdeas": 5,
     "accounts": [
       "allnaturalyouneed",
       "wellnesseverydayh",
       "soyclaireholloway"
     ]
-  }
+  },
+  "scoreModel": "base"
 }
