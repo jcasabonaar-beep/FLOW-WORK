@@ -254,7 +254,7 @@ function cardsHtml(mode) {
         <figure>${media}${clipDrop}</figure>
       </div>
       ${note ? `<div class="note">⚠ ${esc(note)}</div>` : ''}
-      ${review ? `<label class="line">Frase (inglés)<textarea rows="2" data-line="${c.n}">${esc(c.line)}</textarea></label>` : `<div class="line">“${esc(c.line)}”</div>`}
+      ${review ? `<label class="line">Frase (${job.language === "en" ? "inglés" : "español"})<textarea rows="2" data-line="${c.n}">${esc(c.line)}</textarea></label>` : `<div class="line">“${esc(c.line)}”</div>`}
       ${review ? `
         <div class="btns">
           <button class="small ${c.frameStatus !== 'regen' ? 'good' : ''}" data-ok="${c.n}">✓ Vale</button>
