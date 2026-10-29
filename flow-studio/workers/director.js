@@ -30,6 +30,8 @@ async function run(job) {
     AUDIENCE: lang.audience,
     SPEECH: lang.speech,
     CTA_EXAMPLES: lang.ctaExamples,
+    PRODUCT_NAME: config.product.name,
+    PRODUCT_PITCH: config.product.pitch,
   };
   vars.NANO_RULES = fill(P('nano_rules.md'), vars);
   vars.OMNI_RULES = fill(P('omni_rules.md'), vars);

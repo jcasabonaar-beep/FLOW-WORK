@@ -50,5 +50,10 @@
       "ctaExamples": "RECIPE, BOOK",
       "whisper": "en"
     }
+  },
+  "product": {
+    "name": "200 Soluciones Naturales para Problemas Cotidianos",
+    "pitch": "En mi libro tengo más de 200 recetas naturales como esta",
+    "image": ""
   }
 }
