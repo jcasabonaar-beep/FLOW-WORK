@@ -33,11 +33,29 @@ function estimateWords(segments) {
 }
 
 // Si está instalado faster-whisper, usa los tiempos reales de cada palabra
-async function whisperWords(job, audio, segments, est) {
+// Pasa las palabras oídas en cada clip a la línea de tiempo del video montado
+function wordsOnTimeline(segments, heard) {
+  const real = [];
+  for (const sg of segments) {
+    const ws = heard[sg.file];
+    if (!ws) return null;
+    let off = sg.start;
+    for (const [a, b] of sg.ranges) {
+      for (const w of ws) if (w.s >= a - 0.02 && w.e <= b + 0.05) real.push({ w: w.w, s: off + Math.max(0, w.s - a), e: off + Math.min(b, w.e) - a });
+      off += b - a;
+    }
+  }
+  return real;
+}
+
+async function whisperWords(job, audio, segments, est, pre) {
   try {
-    const out = path.join(store.jobDir(job.id), 'edit', 'words.json');
-    await exec('python', [path.join(store.ROOT, 'tools', 'transcribe.py'), audio, out, config.languages[job.language || config.language].whisper]);
-    const real = JSON.parse(fs.readFileSync(out, 'utf8'));
+    let real = pre;
+    if (!real) {
+      const out = path.join(store.jobDir(job.id), 'edit', 'words.json');
+      await exec('python', [path.join(store.ROOT, 'tools', 'transcribe.py'), audio, out, config.languages[job.language || config.language].whisper]);
+      real = JSON.parse(fs.readFileSync(out, 'utf8'));
+    }
     const res = [];
     for (const seg of segments) {
       const mine = est.filter((w) => w.clip === seg.n);
@@ -228,7 +246,8 @@ async function run(job) {
 
   // 3) Subtítulos
   const est = estimateWords(segments);
-  const words = await whisperWords(job, path.join(edit, 'joined.mp4'), segments, est);
+  // Reutiliza la transcripción de los clips (no vuelve a transcribir el video entero)
+  const words = await whisperWords(job, path.join(edit, 'joined.mp4'), segments, est, wordsOnTimeline(segments, heard));
   fs.writeFileSync(path.join(edit, 'captions.ass'), buildAss(job, words, total));
 
   // 4) Quemar hook + subtítulos + CTA

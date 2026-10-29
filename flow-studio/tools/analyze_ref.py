@@ -35,7 +35,7 @@ def stats(a):
 
 from faster_whisper import WhisperModel  # noqa: E402
 
-model = WhisperModel("small", device="cpu", compute_type="int8")
+model = WhisperModel("base", device="cpu", compute_type="int8")
 segs, info = model.transcribe(video, language=lang, word_timestamps=True, vad_filter=True)
 segs = list(segs)
 
