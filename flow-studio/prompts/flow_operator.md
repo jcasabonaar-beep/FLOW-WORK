@@ -16,7 +16,8 @@ Look at the result and compare it with the avatar images. It FAILS if: the face 
 If it fails, regenerate (same inputs) up to {{RETRIES}} more times and keep the best one. Write your verdict for each item in `{{STATUS_FILE}}`.
 
 ## If Flow refuses ("might violate our policies", "Failed", "couldn't generate")
-You are not charged for refused generations, so fix the prompt and try again, up to 3 rewrites:
+You are not charged for refused generations, so fix the prompt and try again. Maximum 3 attempts per item in total (each one with a rewritten prompt). If the 3rd attempt is refused too, STOP trying that item, write {"ok": false, "refused": true, "note": "<in Spanish: what Flow said and what you tried>"} for it and move on to the next item. The producer will decide.
+Rewrite steps, in this order:
 1. Rewrite the prompt keeping the same scene, but remove or neutralize words that can trigger the filter: skin tone, skin color, bathroom, toilet, poop, stool, waste, feces, colon, intestine, bowel, gut, inside the body, medical, cure, detox, parasite, blood, skin close-up of private areas, child, kid, brand names, real people's names. Describe props neutrally ("a tall clear glass tube filled with layers of colorful food", "a ceramic mug of warm golden milk").
 2. If it still fails, also remove any mention that the reference image shows another person: say "Image A is only a pose and framing guide".
 3. If it still fails, do NOT upload Image A; describe the pose and framing in words instead.

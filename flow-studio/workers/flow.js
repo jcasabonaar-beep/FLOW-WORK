@@ -89,7 +89,10 @@ async function runFrames(job) {
         if (it.prompt && !c.feedback) c.framePrompt = it.prompt;
         Object.assign(c, { frame: dest, frameStatus: it.ok === false ? 'doubt' : 'done', frameNote: it.note || '', feedback: '', v: Date.now() });
       } else {
-        Object.assign(c, { frameStatus: 'manual', frameNote: 'No se pudo generar automáticamente: súbelo tú' });
+        Object.assign(c, { frameStatus: 'manual', frameNote: it.refused
+          ? `Flow lo rechazó 3 veces. ${it.note || ''} Corrige el prompt y pulsa Reintentar, o sube tu frame.`
+          : (it.note || 'No se pudo generar automáticamente') + ' — corrige el prompt y pulsa Reintentar, o sube tu frame.' });
+        if (it.prompt) c.framePrompt = it.prompt;
       }
     }
     store.save(job);

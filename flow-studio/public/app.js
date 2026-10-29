@@ -196,7 +196,9 @@ function cardsHtml(mode) {
         </div>
         <textarea rows="2" data-fb="${c.n}" placeholder="Qué cambiar: ej. la cara más cerca, quita el texto del bote…" ${c.frameStatus === 'regen' ? '' : 'hidden'}>${esc(c.feedback)}</textarea>` : ''}
       ${st === 'manual' && mode === 'clips' ? `<label class="small" style="margin:6px 0"><input type="file" accept="video/*" data-up="clip" data-n="${c.n}"></label>` : ''}
-      ${st === 'manual' && mode === 'frames' ? `<label class="small" style="margin:6px 0"><input type="file" accept="image/*" data-up="frame" data-n="${c.n}"></label>` : ''}
+      ${st === 'manual' && mode === 'frames' ? `<label class="small" style="margin:6px 0"><input type="file" accept="image/*" data-up="frame" data-n="${c.n}"></label>
+        <label>Prompt del frame (puedes corregirlo)<textarea rows="6" data-fp="${c.n}">${esc(c.framePrompt)}</textarea></label>
+        <button class="small primary" data-retry="${c.n}">↻ Reintentar con este prompt</button>` : ''}
       <details><summary class="muted">Ver prompts e imágenes de Flow</summary>
         <div class="muted" style="margin-top:6px">Imágenes a subir en Flow (en este orden):</div>
         <div class="thumbs">${(pr.frameInputs || []).map((p, i) => `<a href="${p.startsWith('avatar/') ? rootFile(p) : file(p.replace(/^jobs\/[^/]+\//, ''))}" target="_blank" title="Imagen ${'ABC'[i]}"><img src="${p.startsWith('avatar/') ? rootFile(p) : file(p.replace(/^jobs\/[^/]+\//, ''))}"></a>`).join('')}</div>
@@ -210,6 +212,13 @@ function cardsHtml(mode) {
 function bindCards() {
   const n = (el, k) => parseInt(el.dataset[k], 10);
   document.querySelectorAll('[data-ok]').forEach((b) => b.onclick = () => api(`jobs/${job.id}/clip/${n(b, 'ok')}`, { keepFrame: true }).then(refresh));
+  document.querySelectorAll('[data-retry]').forEach((b) => b.onclick = async () => {
+    const k = n(b, 'retry');
+    await api(`jobs/${job.id}/clip/${k}`, { framePrompt: document.querySelector(`[data-fp="${k}"]`).value, regenFrame: true });
+    if (!job.running) await api('jobs/' + job.id + '/continue', {});
+    panelSig = '';
+    refresh();
+  });
   document.querySelectorAll('[data-fresh]').forEach((b) => b.onclick = () => api(`jobs/${job.id}/clip/${n(b, 'fresh')}`, { freshFrame: true }).then(() => { panelSig = ''; refresh(); }));
   document.querySelectorAll('[data-chg]').forEach((b) => b.onclick = () => {
     const ta = document.querySelector(`[data-fb="${n(b, 'chg')}"]`);
