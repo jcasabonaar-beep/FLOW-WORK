@@ -65,6 +65,7 @@ async function run(job) {
     CTA_WORDS: config.ctaWords.join(', '),
     VIDEO_TYPE: job.videoType === 'venta' ? 'VENTA (sell the book)' : 'CRECIMIENTO (maximum virality, no selling)',
     TYPE_RULES: typeRules(job),
+    HOOK_STYLE: config.hookStyle,
     MAX_CLIPS: config.maxClips[job.videoType] || 7,
   };
   vars.NANO_RULES = fill(P('nano_rules.md'), vars) + '\n\nLESSONS LEARNED IN FLOW (write prompts that avoid these problems from the start):\n' + fs.readFileSync(require('./flow').lessonsFile(), 'utf8');

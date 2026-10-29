@@ -5,7 +5,7 @@ const store = require('../lib/store');
 const claude = require('../lib/claude');
 const config = require('../config.json');
 const { fill } = require('./director');
-const { ffmpeg } = require('../lib/ff');
+const { ffmpeg, exec } = require('../lib/ff');
 
 const pad = (n) => String(n).padStart(2, '0');
 const abs = (job, rel) => path.join(store.jobDir(job.id), rel);
@@ -51,7 +51,7 @@ function frameTask(job, c) {
 function clipTask(job, c) {
   const dest = abs(job, `clips/clip_${pad(c.n)}.mp4`);
   return { dest, text: `### Clip ${c.n}\nMode: frames to video (start frame only). Start frame = ${abs(job, c.frame)}\n` +
-    `Paste this prompt exactly:\n\`\`\`\n${clipPromptFor(c, job)}\n\`\`\`\nThen download the video (MP4, best quality, with audio) and save to: ${dest}` };
+    `Paste this prompt exactly:\n\`\`\`\n${clipPromptFor(c, job)}\n\`\`\`\nThen download the video (MP4, best quality, with audio) and save to: ${config.clipsPerPrompt > 1 ? `${dest.replace('.mp4', '_a.mp4')} and the second one to ${dest.replace('.mp4', '_b.mp4')}` : dest}` };
 }
 
 // Lecciones que los trabajadores van aprendiendo (no se borran al actualizar)
@@ -64,10 +64,17 @@ function lessonsFile() {
   return f;
 }
 
+const PICK = {
+  frames: (n) => `Each prompt gives ${n} images. Look at both and download ONLY the best one: our avatar's face, same sweater, face large and close, natural and realistic, the action of the scene, no text, good hands. For frame 1 (the HOOK) be extra demanding: it must be the most striking image of the video; if neither is great, generate ${n} more with an improved prompt and pick from all of them.`,
+  clips: (n) => `Each prompt gives ${n} videos. Watch both (screenshots at several moments) and download BOTH: save the first as <destination>_a.mp4 and the second as <destination>_b.mp4 (replace .mp4 in the destination path). The system listens to them and keeps the one that says the whole line with the same voice as the previous clips. If one is visually broken (face changes, glitches, text on screen), do not download it and write "bad": "a" or "b" for that item.`,
+};
+
 function operatorPrompt(job, role, model, tasks, statusFile, extra = '') {
   const lf = lessonsFile();
+  const kind = role.startsWith('FRAMES') ? 'frames' : 'clips';
+  const outs = kind === 'frames' ? config.framesPerPrompt : config.clipsPerPrompt;
   return fill(fs.readFileSync(path.join(store.ROOT, 'prompts', 'flow_operator.md'), 'utf8'), {
-    LESSONS: fs.readFileSync(lf, 'utf8'), LESSONS_FILE: lf,
+    LESSONS: fs.readFileSync(lf, 'utf8'), LESSONS_FILE: lf, OUTPUTS: outs || 1, PICK_RULES: outs > 1 ? PICK[kind](outs) : 'Only one output per prompt.',
     ROLE: role, FLOW_URL: config.flowUrl, STATUS_FILE: statusFile, PROJECT: job.title.slice(0, 40),
     MODEL: model, GRAB: path.join(store.ROOT, 'tools', 'grab-latest.js'), RETRIES: config.maxFrameRetries,
     TASKS: extra + tasks.map((t) => t.text).join('\n\n'),
@@ -153,12 +160,13 @@ async function runClips(job) {
   if (!todo.length) return job.clips.some((c) => c.clipStatus === 'manual') ? 'wait' : 'ok';
   if (config.flowMode !== 'auto') return manual(job, 'clips', todo);
   store.setWorker(job, 'clips', { action: `Animando ${todo.length} clips en Flow…` });
-  const extra = 'Submit ALL clips first (Flow can generate several at once), then download each one as soon as it is ready. Quality check for clips: the voice must speak the whole line, the face stays the avatar, no text on screen.\n\n';
+  const extra = 'Submit ALL clips first (Flow can generate several at once), then download each one as soon as it is ready. Quality check for clips: the voice must speak the whole line, the face stays the avatar, no text on screen. Clip 1 is the HOOK: it matters most.\n\n';
   const st = await session(job, 'clips', 'CLIPS worker', `${config.clipModel} (video)`, todo, clipTask, extra);
   if (st.blocked) return blocked(job, 'clips', st.blocked);
   for (const c of todo) {
     const dest = `clips/clip_${pad(c.n)}.mp4`;
     const it = (st.items || {})[c.n] || {};
+    await pickClip(job, c, dest);
     if (it.line && it.prompt) { c.line = it.line; }
     if (it.prompt) c.clipPrompt = it.prompt.includes(c.line) ? it.prompt.replace(`"${c.line}"`, '{{LINE}}') : c.clipPrompt;
     if (fs.existsSync(abs(job, dest))) Object.assign(c, { clip: dest, clipStatus: 'done', clipNote: it.note || '', v: Date.now() });
@@ -166,6 +174,27 @@ async function runClips(job) {
   }
   store.save(job);
   return job.clips.some((c) => c.clipStatus === 'manual') ? 'wait' : 'ok';
+}
+
+// Elige entre los candidatos _a/_b: frase completa y voz igual a la del clip anterior
+async function pickClip(job, c, dest) {
+  const cands = ['a', 'b'].map((k) => abs(job, dest.replace('.mp4', `_${k}.mp4`))).filter((f) => fs.existsSync(f));
+  if (!cands.length) return;
+  let best = cands[0];
+  if (cands.length > 1) {
+    const prev = job.clips.filter((x) => x.n < c.n && x.clip && fs.existsSync(abs(job, x.clip))).pop();
+    const out = abs(job, `clips/score_${pad(c.n)}.json`);
+    const lang = config.languages[job.language || config.language].whisper;
+    try {
+      await exec('python', [path.join(store.ROOT, 'tools', 'score_clip.py'), out, lang, c.line, prev ? abs(job, prev.clip) : '-', ...cands]);
+      const res = JSON.parse(fs.readFileSync(out, 'utf8')).sort((x, y) => y.score - x.score);
+      best = res[0].file;
+      store.log(job, 'clips', `🎧 Clip ${c.n}: elijo ${path.basename(best)} (frase ${Math.round((res[0].text || 0) * 100)}%, voz ${res[0].voiceDiff != null ? (res[0].voiceDiff < 0.15 ? 'igual' : 'algo distinta') : '?'} que el anterior)`);
+    } catch (e) {
+      store.log(job, 'clips', `Clip ${c.n}: no pude comparar las voces (${e.message.slice(0, 80)}), uso el primero`);
+    }
+  }
+  fs.copyFileSync(best, abs(job, dest));
 }
 
 function manual(job, worker, todo) {

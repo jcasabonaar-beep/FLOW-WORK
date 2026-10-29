@@ -71,5 +71,8 @@
     "venta": 9,
     "crecimiento": 7
   },
-  "uploadReference": false
+  "uploadReference": false,
+  "framesPerPrompt": 2,
+  "clipsPerPrompt": 2,
+  "hookStyle": "This is the HOOK of the video, so it must be very striking: exaggerate the gestures, the tone of voice and the facial expressions. The camera moves as if a person were filming her by hand, gently pushing in and pulling back."
 }

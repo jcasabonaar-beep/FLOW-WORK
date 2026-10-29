@@ -14,7 +14,11 @@ FIXED RULES, always included:
 - "No text, no captions, no subtitles, no logos, no overlays."
 - Never eat or drink while speaking.
 
-CAMERA: static by default. If the reference clearly moves (push-in to an object, quick reframe), describe it precisely: on which word it starts, speed, where it lands, and that the voice continues uninterrupted.
+HOOK (clip 1, always) and up to 2 other key moments of the script (a reveal, a surprise, the strongest claim): add exactly this, translated into the action you describe: "{{HOOK_STYLE}}" For those clips the camera is handheld with that gentle push-in and pull-back instead of static. Mark them with "hookStyle": true.
+
+VOICE CONTINUITY: every clip must sound like the same woman in the same moment: same voice, same accent, same energy level as clip 1. Include: "Same voice, tone and energy as the previous clips."
+
+CAMERA: static by default (except the hook-style clips). If the reference clearly moves (push-in to an object, quick reframe), describe it precisely: on which word it starts, speed, where it lands, and that the voice continues uninterrupted.
 
 NEVER describe her appearance, clothing or the setting.
 
