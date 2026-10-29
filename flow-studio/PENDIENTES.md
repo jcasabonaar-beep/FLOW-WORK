@@ -24,6 +24,7 @@
 
 ## Pendiente
 - **Oficina visual**: pestaña nueva con un plano de oficina donde cada trabajador (Capturador, Director, Frames, Clips, Editor y el Jefe que los coordina) tiene su despacho animado según su estado: tecleando cuando trabaja, mano levantada cuando te espera, durmiendo en espera, humo si hay error, y bocadillo con lo que hace. Al hacer clic se abre su oficina. Elegir estilo: pixel art o dibujo moderno.
+- ✅ Hecho: clips igual que frames (hook x2, resto x1 con 1 repetición si no dice la frase o cambia la voz, y lo apunta en lecciones).
 - ✅ Hecho: hook con 2 versiones; resto 1 versión y 1 solo reintento si sale mal; avatar subido una vez.
 - Frames: menos capturas de pantalla por frame (medir en el próximo video).
 - Decirme qué dice la señora en los 3 clips listos (`cta_comenta_libro`, `libro_presenta_1`, `libro_presenta_2`).

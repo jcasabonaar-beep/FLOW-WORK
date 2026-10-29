@@ -60,12 +60,12 @@ for c in cands:
             r["heard"] = heard.strip()
             r["text"] = difflib.SequenceMatcher(None, norm(line), norm(heard)).ratio()
         else:
-            r["text"] = 0.5
+            r["text"] = None
         if ref_v and ref_v[0] and r["voice"][0]:
             r["voiceDiff"] = abs(r["voice"][0] - ref_v[0]) / ref_v[0] + abs(r["voice"][1] - ref_v[1]) / max(ref_v[1], 1)
         else:
             r["voiceDiff"] = 0.0
-        r["score"] = r["text"] * 2 - r["voiceDiff"]
+        r["score"] = (r["text"] if r["text"] is not None else 0.5) * 2 - r["voiceDiff"]
     except Exception as e:
         r["error"] = str(e)
         r["score"] = -9
