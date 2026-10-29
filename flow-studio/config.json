@@ -32,7 +32,8 @@
     "wordsPerChunk": 3,
     "yPercent": 62,
     "hookSeconds": 2.6,
-    "ctaBox": false
+    "ctaBox": false,
+    "yPercentBook": 49
   },
   "languages": {
     "es": {

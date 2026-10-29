@@ -16,6 +16,8 @@ FIXED RULES, always included:
 
 HOOK (clip 1, always) and up to 2 other key moments of the script (a reveal, a surprise, the strongest claim): add exactly this, translated into the action you describe: "{{HOOK_STYLE}}" For those clips the camera is handheld with that gentle push-in and pull-back instead of static. Mark them with "hookStyle": true.
 
+HOOK CLIP (clip 1): the camera starts on what she shows and pushes in on it so the viewer clearly sees what happens (e.g. the small balls dropping out of the tube's funnel onto the paper), then reframes to include her face as she speaks. The key action of the prop must happen visibly in the first 2 seconds.
+
 VOICE CONTINUITY: every clip must sound like the same woman in the same moment: same voice, same accent, same energy level as clip 1. Include: "Same voice, tone and energy as the previous clips."
 
 CAMERA: static by default (except the hook-style clips). If the reference clearly moves (push-in to an object, quick reframe), describe it precisely: on which word it starts, speed, where it lands, and that the voice continues uninterrupted.

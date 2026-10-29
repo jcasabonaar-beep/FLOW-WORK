@@ -85,7 +85,10 @@ function buildAss(job, words, total) {
       if (end <= start) return;
       const txt = chunk.slice(0, k + 1).map((x) => esc(x.w)).join(' ');
       const pop = k === 0 ? '\\fscx88\\fscy88\\t(0,90,\\fscx100\\fscy100)' : '';
-      lines.push(`Dialogue: 0,${assTime(start)},${assTime(end)},Cap,,0,0,0,,{\\pos(540,${y})${pop}}${txt}`);
+      // Si ella sostiene el libro en ese clip, los subtítulos suben para no tapar la portada
+      const clip = job.clips.find((c) => c.n === w.clip) || {};
+      const yy = clip.book === 'hand' || clip.readyClip || clip.frameFrom ? Math.round(1920 * (C.yPercentBook || 49) / 100) : y;
+      lines.push(`Dialogue: 0,${assTime(start)},${assTime(end)},Cap,,0,0,0,,{\\pos(540,${yy})${pop}}${txt}`);
     });
   }
   const word = (job.plan && job.plan.ctaWord) || job.ctaWord;

@@ -18,6 +18,8 @@ COMPOSITION FIRST (the reference is not uploaded, so your words must rebuild it)
 - Her pose (kneeling, leaning in, pointing at X) and where her eyes look.
 If the reference is a face shot, apply the FRAMING rule below. If a prop dominates the reference shot, keep the reference composition and proportions; only make her face as large as the composition allows.
 
+HOOK FRAME (clip 1): what she SHOWS is the star. Recreate EVERY element of the reference shot exactly, in the same size and position (e.g. the tall clear tube filling most of the frame, the funnel at its bottom, the small balls falling and lying on the white paper, her finger pointing at them). Only the person changes into our avatar. The prop must be large, sharp and clearly readable at a glance; her face is secondary (as large as the reference composition allows, never covering the prop).
+
 FRAMING (for face shots): the face must be LARGE and close to the lens, more striking than the reference. State it with numbers: head width 55–70% of frame width, eyes at about 30% from the top, chin at about 55–60%, the top of the hair slightly cropped by the upper edge. Add: "This is NOT a medium shot and NOT a waist-up shot. Do not leave empty space above the head." End with a one-line "Reminder:" repeating the framing. If the reference shot is a hands-only or object close-up, keep that framing and put her face partially in the background, still recognizable.
 
 CONSISTENCY (always include this sentence): "Keep {{ANCHORS}} exactly as in the avatar images; do not change the sweater color, the knitted flag or the neckline."
