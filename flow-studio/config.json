@@ -3,7 +3,7 @@
   "language": "en",
   "claudeCmd": "claude",
   "flowMode": "auto",
-  "flowUrl": "https://labs.google/fx/tools/flow",
+  "flowUrl": "https://flow.google.com",
   "chromeDebugPort": 9222,
   "frameModel": "Nano Banana Pro",
   "clipModel": "Omni 1.1 Flash",
