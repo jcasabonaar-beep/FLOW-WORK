@@ -75,6 +75,7 @@ async function run() {
     if (!j.accounts.length) throw new Error('Añade primero las cuentas que quieres vigilar');
     setW({ state: 'working', action: 'Esperando a que el Chrome quede libre…' });
     await lock.acquire();
+    await require('../lib/chrome').ensure(j, 'research');
     const out = path.join(dir(), 'raw.json');
     try {
       if (fs.existsSync(out)) fs.unlinkSync(out);

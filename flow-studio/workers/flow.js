@@ -91,6 +91,7 @@ function readStatus(file) {
 }
 
 async function session(job, worker, role, model, list, makeTask, extra) {
+  await require('../lib/chrome').ensure(job, worker);
   const statusFile = abs(job, `${worker === 'frames' ? 'frames' : 'clips'}/status.json`);
   const tasks = list.map((c) => makeTask(job, c));
   const prev = readStatus(statusFile);
