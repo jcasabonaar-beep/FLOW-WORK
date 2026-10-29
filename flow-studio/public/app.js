@@ -83,6 +83,7 @@ async function refresh() {
         <button class="small" data-view="${k}">🔍 Ver oficina</button>
       </div></div>`;
   }).join('');
+  renderFloor();
   document.querySelectorAll('[data-pause]').forEach((b) => b.onclick = () => api('jobs/' + job.id + '/' + (job.workers[b.dataset.pause].paused ? 'resume' : 'pause'), { worker: b.dataset.pause }).then(refresh));
   document.querySelectorAll('[data-stop]').forEach((b) => b.onclick = () => confirm('¿Detener a este trabajador ahora? Lo que esté a medias se pierde.') && api('jobs/' + job.id + '/stop-worker', { worker: b.dataset.stop }));
   document.querySelectorAll('[data-view]').forEach((b) => b.onclick = () => viewOffice(b.dataset.view));
@@ -94,6 +95,73 @@ async function refresh() {
     renderPanel();
   }
 }
+
+// ---------- Oficina visual ----------
+let viewMode = 'floor';
+try { viewMode = localStorage.getItem('viewMode') || 'floor'; } catch {}
+const COLORS = { capture: '#f59e0b', director: '#a855f7', frames: '#22c55e', clips: '#3b82f6', editor: '#ec4899', boss: '#94a3b8' };
+const PROPS = { idle: '☕', waiting_you: '✋', error: '💨', paused: '⏸️', done: '✅', limit: '💤' };
+
+function bossState() {
+  if (job.status === 'waiting_limit') return ['limit', 'Esperando a que se renueve el límite de Claude'];
+  if (job.status === 'error') return ['error', 'Algo ha fallado: mira el aviso de arriba'];
+  if (job.stage === 'done') return ['done', '¡Video terminado! 🎉'];
+  if (job.status === 'waiting_you') return ['waiting_you', waitingText()];
+  if (job.paused) return ['paused', 'Has pausado todo'];
+  if (job.running) return ['working', `Coordinando: ${stageName(job.stage)}`];
+  return ['idle', 'Esperando a que le digas que siga'];
+}
+
+function screenFor(k) {
+  // Lo que se ve en el monitor de cada trabajador
+  const last = (arr) => arr.filter(Boolean).pop();
+  if (k === 'frames') { const c = last(job.clips.filter((x) => x.frame)); if (c) return `<img src="${file(c.frame, c.v)}">`; }
+  if (k === 'clips') { const c = last(job.clips.filter((x) => x.clip)); if (c && c.frame) return `<img src="${file(c.frame, c.v)}"><span class="play">▶</span>`; }
+  if (k === 'editor' && job.output) { const c = job.clips[0]; if (c && c.frame) return `<img src="${file(c.frame, c.v)}"><span class="play">✂</span>`; }
+  if (k === 'capture' && job.sheets && job.sheets.length) return `<img src="${file('ref/' + job.sheets[0])}">`;
+  return '<i></i><i></i><i></i><i></i>';
+}
+
+function room(k, icon, name, st, action) {
+  const prop = st === 'working' ? '' : `<div class="prop">${PROPS[st] || ''}</div>`;
+  const bubble = action ? `<div class="bubble">${esc(action.length > 90 ? action.slice(0, 88) + '…' : action)}</div>` : '';
+  return `<div class="room ${st}" data-room="${k}" style="--c:${COLORS[k]}">
+    <div class="plate">${icon} ${name}<span>${k === 'boss' ? '' : STATE_ES[st] || st}</span></div>
+    ${bubble}
+    <div class="scene">
+      <div class="plant"></div>
+      <div class="monitor"><div class="screen">${k === 'boss' ? '<i></i><i></i><i></i>' : screenFor(k)}</div></div>
+      <div class="person"><div class="head"></div><div class="body"></div><div class="arm l"></div><div class="arm r"></div></div>
+      <div class="desk"></div><div class="chair"></div>
+      ${prop}
+      ${st === 'error' ? '<div class="smoke"><b></b><b></b><b></b></div>' : ''}
+      ${st === 'limit' ? '<div class="zzz"><b>z</b><b>z</b><b>z</b></div>' : ''}
+    </div>
+  </div>`;
+}
+
+function renderFloor() {
+  const floor = $('#floor');
+  floor.hidden = viewMode !== 'floor';
+  $('#offices').hidden = viewMode === 'floor';
+  document.querySelectorAll('.viewtabs button').forEach((b) => b.classList.toggle('on', b.dataset.mode === viewMode));
+  if (viewMode !== 'floor') return;
+  const [bs, ba] = bossState();
+  floor.innerHTML = room('boss', '🧑‍💼', 'Jefe', bs, ba) + WORKERS.map(([k, icon, name]) => {
+    const w = job.workers[k];
+    let st = w.paused && w.state !== 'working' ? 'paused' : w.state;
+    if (job.status === 'waiting_limit' && (w.state === 'paused' || w.state === 'working')) st = 'limit';
+    const txt = st === 'working' ? (w.action || 'Trabajando…').replace(/^🔧\s*/, '') : st === 'waiting_you' ? w.action : st === 'error' ? w.action : '';
+    return room(k, icon, name, st, txt);
+  }).join('');
+  floor.querySelectorAll('[data-room]').forEach((r) => r.onclick = () => r.dataset.room !== 'boss' && viewOffice(r.dataset.room));
+}
+
+document.querySelectorAll('.viewtabs button').forEach((b) => b.onclick = () => {
+  viewMode = b.dataset.mode;
+  try { localStorage.setItem('viewMode', viewMode); } catch {}
+  renderFloor();
+});
 
 function waitingText() {
   if (job.stage === 'review_frames') return 'Revisa los frames: marca los que quieras cambiar o apruébalos.';
