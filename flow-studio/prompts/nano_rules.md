@@ -12,14 +12,14 @@ ANALYZE the screenshot and describe:
 
 FRAMING (most important): the face must be LARGE and close to the lens, more striking than the reference. State it with numbers: head width 55–70% of frame width, eyes at about 30% from the top, chin at about 55–60%, the top of the hair slightly cropped by the upper edge. Add: "This is NOT a medium shot and NOT a waist-up shot. Do not leave empty space above the head." End with a one-line "Reminder:" repeating the framing. If the reference shot is a hands-only or object close-up, keep that framing and put her face partially in the background, still recognizable.
 
-CONSISTENCY (always include this sentence): "Keep {{ANCHORS}} exactly as in the avatar images; do not change the sweater color, the knitted flag, the neckline or the skin tone."
+CONSISTENCY (always include this sentence): "Keep {{ANCHORS}} exactly as in the avatar images; do not change the sweater color, the knitted flag or the neckline."
 
 SETTING: {{SETTING}}. Small US flags visible in the background. Describe the setting briefly in Mode 1 and say it comes from the avatar images; in Mode 2 do not describe the background (Image B provides it).
 
 REALISM: "Ultra-realistic smartphone photo, natural skin texture with pores and wrinkles, no beauty filter, no plastic skin, natural indoor daylight 5000–5500K, vertical 9:16, shallow depth of field."
 
-NEVER: describe her face, hair, body or clothing beyond the consistency sentence; any text, captions, subtitles, logos, brand names or labels (every product is plain and unbranded, say so).
+NEVER: mention skin tone, skin color, race or ethnicity (Flow refuses those edits); describe her face, hair, body or clothing beyond the consistency sentence; any text, captions, subtitles, logos, brand names or labels (every product is plain and unbranded, say so).
 
 LAST LINE, exactly:
-- frameMode 1: "Use Image A for the specific action and framing, Images B and C for the person's face, body, outfit, skin tone and the kitchen exactly as shown."
+- frameMode 1: "Use Image A for the specific action and framing, Images B and C for the person's face, body, outfit and the kitchen exactly as shown."
 - frameMode 2: "Use Image A for the specific action and Image B for the character appearance and environment continuity. Use Image C to keep the face exactly as the avatar."

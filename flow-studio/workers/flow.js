@@ -30,7 +30,7 @@ function frameTask(job, c) {
   if (c.feedback && c.frame) {
     return { dest, text: `### Frame ${c.n} — CORRECTION\nUpload in this order: ${imgs.map((p, i) => `Image ${'AB'[i]} = ${p}`).join(' ; ')}\n` +
       `The producer wants this change (translate it to a clear English instruction for the image model): "${c.feedback}".\n` +
-      `Prompt: "Edit Image A: <the change in English>. Use Image B to keep the face, the sweater and the skin tone exactly as the avatar. Keep everything else the same."\n` +
+      `Prompt: "Edit Image A: <the change in English>. Use Image B to keep the face and the sweater exactly as the avatar. Keep everything else the same."\n` +
       `Then download and save to: ${dest}` };
   }
   return { dest, text: `### Frame ${c.n}\nUpload in this order: ${imgs.map((p, i) => `Image ${'ABC'[i]} = ${p}`).join(' ; ')}\n` +
