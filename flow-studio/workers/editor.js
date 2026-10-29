@@ -127,7 +127,7 @@ function buildAss(job, words, total) {
 async function clipWords(job) {
   const dir = store.jobDir(job.id);
   const out = path.join(dir, 'edit', 'clip_words.json');
-  const files = job.clips.map((c) => path.join(dir, c.clip));
+  const files = job.clips.filter((c) => !c.skip && c.clip).map((c) => path.join(dir, c.clip));
   // Si el trabajador de Clips ya los escuchó, no se vuelven a transcribir
   const cached = {};
   for (const f of files) {
@@ -196,6 +196,7 @@ async function run(job) {
   let t = 0;
   let prevWords = null;
   for (const c of job.clips) {
+    if (c.skip || !c.clip) continue;
     const file = path.join(dir, c.clip);
     const [s, e, dur] = await speechBounds(file);
     // El hook arranca hablando desde el primer fotograma

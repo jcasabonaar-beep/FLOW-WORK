@@ -105,7 +105,7 @@ async function api(req, res, url) {
   if (parts[1] !== 'jobs') return send(res, 404, { error: 'ruta' });
 
   if (parts.length === 2 && method === 'GET') {
-    return send(res, 200, store.list().map((j) => ({ id: j.id, title: j.title, stage: j.stage, status: j.status, createdAt: j.createdAt, clips: j.clips.length })));
+    return send(res, 200, store.list().map((j) => ({ id: j.id, title: j.title, stage: j.stage, status: j.status, createdAt: j.createdAt, clips: j.clips.length, auto: !!j.auto })));
   }
   if (parts.length === 2 && method === 'POST') {
     const body = JSON.parse((await readBody(req)).toString() || '{}');
@@ -183,13 +183,7 @@ async function api(req, res, url) {
     }
     case 'final': {
       if (body.action === 'approve') {
-        const outDir = path.join(store.ROOT, 'output');
-        fs.mkdirSync(outDir, { recursive: true });
-        const name = `${job.id}-${job.title.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').slice(0, 50)}.mp4`;
-        fs.copyFileSync(path.join(store.jobDir(job.id), job.output), path.join(outDir, name));
-        job.stage = 'done';
-        job.status = 'done';
-        job.finalFile = 'output/' + name;
+        pipeline.finalize(job);
       } else if (body.action === 'regen-clips') {
         job.stage = 'clips';
         job.status = 'running';
@@ -226,7 +220,8 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname.startsWith('/root/')) {
       const f = safeJoin(store.ROOT, decodeURIComponent(url.pathname.slice(6)));
-      if (!f || !/^(avatar|output)[\\/]/.test(path.relative(store.ROOT, f))) { res.writeHead(403); return res.end(); }
+      const okDirs = ['avatar', 'output', config.outputDir || 'output'];
+      if (!f || !okDirs.some((d) => path.relative(store.ROOT, f).startsWith(d + path.sep))) { res.writeHead(403); return res.end(); }
       return serveFile(req, res, f);
     }
     const f = safeJoin(PUB, url.pathname === '/' ? 'index.html' : url.pathname);

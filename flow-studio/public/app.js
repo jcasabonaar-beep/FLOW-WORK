@@ -33,7 +33,7 @@ async function loadList() {
   $('#jobList').innerHTML = list.map((j) => `
     <div class="job-item ${j.id === current ? 'sel' : ''}" data-id="${j.id}">
       <span class="dot ${j.status}"></span>
-      <div><div>${esc(j.title)}</div><small>${esc(stageName(j.stage))} · ${j.clips} clips</small></div>
+      <div><div>${j.auto ? '🌙 ' : ''}${esc(j.title)}</div><small>${esc(stageName(j.stage))} · ${j.clips} clips</small></div>
     </div>`).join('');
   document.querySelectorAll('.job-item').forEach((el) => el.onclick = () => open(el.dataset.id));
   if (!current && list[0]) open(list[0].id);
@@ -204,7 +204,7 @@ function renderPanel() {
       <div class="final">
         <video controls src="${file(job.output, job.outputV)}"></video>
         <div style="flex:1;min-width:260px">
-          ${job.stage === 'done' ? `<p>Guardado en la carpeta <b>${esc(job.finalFile)}</b>.</p><a href="${rootFile(job.finalFile)}" download><button class="primary">⬇ Descargar</button></a>` : `
+          ${job.stage === 'done' ? `<p>Guardado en <b>flow-studio\\${esc(job.finalFile)}</b>.</p><a href="${rootFile(job.finalFile)}" download><button class="primary">⬇ Descargar</button></a>` : `
           <label>Texto del hook (pon *asteriscos* en las palabras en cursiva)<input id="inHook" value="${esc(job.plan.hook)}"></label>
           <div class="btns"><button class="good" id="bApprove">✓ Aprobar y guardar</button><button id="bReEdit">↻ Rehacer edición</button></div>
           <p class="muted" style="margin-top:18px">¿Algún clip mal? Márcalo y pulsa "Rehacer clips marcados":</p>

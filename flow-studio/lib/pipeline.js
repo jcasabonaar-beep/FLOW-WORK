@@ -9,6 +9,41 @@ const STAGES = ['capture', 'director', 'frames', 'review_frames', 'clips', 'edit
 const STAGE_WORKER = { capture: 'capture', director: 'director', frames: 'frames', clips: 'clips', editor: 'editor' };
 const active = new Set();
 const lock = require('./lock');
+const fs = require('fs');
+const path = require('path');
+
+// Guarda el video terminado en la carpeta de videos completos
+function finalize(job) {
+  const outName = require('../config.json').outputDir || 'output';
+  const outDir = path.join(store.ROOT, outName);
+  fs.mkdirSync(outDir, { recursive: true });
+  const name = `${job.id}-${job.title.replace(/[^\w\- áéíóúñÁÉÍÓÚÑ]+/g, '').trim().replace(/\s+/g, '-').slice(0, 50)}.mp4`;
+  fs.copyFileSync(path.join(store.jobDir(job.id), job.output), path.join(outDir, name));
+  job.stage = 'done';
+  job.status = 'done';
+  job.finalFile = `${outName}/${name}`;
+  store.save(job);
+}
+
+// Modo "todo directo": si algún frame o clip no salió, usa el más cercano para no parar
+function fillGaps(job, key) {
+  const file = key === 'frame' ? 'frame' : 'clip';
+  const st = key === 'frame' ? 'frameStatus' : 'clipStatus';
+  let changed = false;
+  for (const c of job.clips) {
+    if (c[st] !== 'manual') continue;
+    if (key === 'clip') { c.skip = true; c[st] = 'done'; changed = true; store.log(job, 'clips', `🌙 Clip ${c.n} no salió: lo quito del montaje para no pararme`); continue; }
+    const near = [...job.clips].sort((a, b) => Math.abs(a.n - c.n) - Math.abs(b.n - c.n)).find((x) => x[file] && x.n !== c.n);
+    if (!near) continue;
+    const dest = `frames/frame_${String(c.n).padStart(2, '0')}.png`;
+    fs.copyFileSync(path.join(store.jobDir(job.id), near[file]), path.join(store.jobDir(job.id), dest));
+    Object.assign(c, { frame: dest, [st]: 'done', frameNote: `🌙 No salió: uso el frame del clip ${near.n}`, v: Date.now() });
+    store.log(job, 'frames', `🌙 Frame ${c.n} no salió: uso el del clip ${near.n} para no pararme`);
+    changed = true;
+  }
+  if (changed) store.save(job);
+  return changed;
+}
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -25,6 +60,7 @@ async function step(job) {
   if (!worker) return 'stop';
   await gate(job, worker);
   if ((worker === 'frames' || worker === 'clips')) {
+    if (lock.isBusy()) store.setWorker(job, worker, { state: 'idle', action: '⏳ En cola: esperando a que el Chrome de Flow quede libre' });
     await lock.acquire();
   }
   store.setWorker(job, worker, { state: 'working', startedAt: Date.now(), action: 'Empezando…' });
@@ -40,9 +76,13 @@ async function step(job) {
     if (worker === 'frames' || worker === 'clips') lock.release();
   }
   job.timings[stage] = (job.timings[stage] || 0) + (Date.now() - t0);
+  if (r === 'wait' && job.auto && (stage === 'frames' || stage === 'clips') && fillGaps(job, stage === 'frames' ? 'frame' : 'clip')) r = 'ok';
   if (r === 'wait') { job.status = 'waiting_you'; store.save(job); return 'stop'; }
   store.setWorker(job, worker, { state: 'done', action: '', endedAt: Date.now() });
   job.stage = STAGES[STAGES.indexOf(stage) + 1];
+  // Modo "todo directo": se salta las paradas y guarda el video al terminar
+  if (job.auto && job.stage === 'review_frames') { job.stage = 'clips'; store.log(job, 'frames', '🌙 Modo directo: sigo sin esperar tu revisión'); }
+  if (job.auto && job.stage === 'review_final') { finalize(job); store.log(job, 'editor', `🌙 Video guardado en "${job.finalFile}"`); return 'stop'; }
   if (job.stage === 'review_frames' || job.stage === 'review_final') job.status = 'waiting_you';
   store.save(job);
   return job.status === 'waiting_you' ? 'stop' : 'next';
@@ -105,4 +145,4 @@ function resumeAll() {
   for (const j of store.list()) if (j.status === 'running') { j.status = 'stopped'; j.error = 'Se cerró el programa a mitad de trabajo: pulsa Continuar'; store.save(j); }
 }
 
-module.exports = { drive, STAGES, active, resumeAll };
+module.exports = { drive, STAGES, active, resumeAll, finalize };

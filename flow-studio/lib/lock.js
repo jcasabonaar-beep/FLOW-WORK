@@ -1,12 +1,16 @@
-// Un solo Chrome: los trabajadores que lo usan (Flow, Instagram) van de uno en uno
+// Un solo Chrome: los trabajadores que lo usan (Flow, Instagram) van de uno en uno, por orden de llegada
 let busy = false;
-const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const queue = [];
 
-async function acquire() {
-  while (busy) await wait(2000);
-  busy = true;
+function acquire() {
+  if (!busy) { busy = true; return Promise.resolve(); }
+  return new Promise((resolve) => queue.push(resolve));
 }
-function release() { busy = false; }
+function release() {
+  const next = queue.shift();
+  if (next) next(); else busy = false;
+}
 const isBusy = () => busy;
+const waiting = () => queue.length;
 
-module.exports = { acquire, release, isBusy };
+module.exports = { acquire, release, isBusy, waiting };

@@ -59,6 +59,11 @@
       <label class="type"><input type="radio" name="videoType" value="venta" required> <b>💰 Venta</b><span>Receta + al final la señora vende el libro (CTA LIBRO)</span></label>
       <label class="type"><input type="radio" name="videoType" value="crecimiento" required> <b>🚀 Crecimiento</b><span>Máxima viralidad, sin libro (CTA RECETA o SÍ)</span></label>
     </div>
+    <div class="type-pick">
+      <div class="muted" style="font-size:12px;margin-bottom:6px">¿Cómo lo hago?</div>
+      <label class="type"><input type="radio" name="mode" value="review" checked> <b>✋ Lo reviso yo</b><span>Para en los frames y en el video final para que des el OK</span></label>
+      <label class="type"><input type="radio" name="mode" value="auto"> <b>🌙 Todo directo</b><span>Sin paradas: lo hace entero y lo deja en "Videos completos". Ideal para la noche</span></label>
+    </div>
     <label>Nombre <input name="title" placeholder="Golden milk intestino"></label>
     <label>Link de Instagram de referencia <input name="url" placeholder="https://www.instagram.com/reel/…"></label>
     <label>Guion <textarea name="script" rows="9" required placeholder="Pega aquí el guion"></textarea></label>
@@ -69,7 +74,7 @@
     </div>
     <div class="row end">
       <button value="cancel" formnovalidate>Cancelar</button>
-      <button class="primary" value="ok">Empezar</button>
+      <button class="primary" value="ok">Empezar / poner en cola</button>
     </div>
   </form>
 </dialog>
