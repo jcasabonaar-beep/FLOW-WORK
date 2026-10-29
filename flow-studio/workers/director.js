@@ -92,4 +92,23 @@ async function run(job) {
   return j;
 }
 
-module.exports = { run, fill };
+// Segunda pasada: mira cada referencia a tamaño completo y ajusta la composición del prompt
+async function layout(job) {
+  const dir = store.jobDir(job.id);
+  const list = job.clips.filter((c) => c.ref && !c.frameFrom && !c.readyClip);
+  if (!list.length) return;
+  const clips = list.map((c) => `### Clip ${c.n}\nReference: ${path.join(dir, c.ref)}\nCurrent prompt:\n${c.framePrompt}`).join('\n\n');
+  store.log(job, 'director', '📐 Ajustando tamaños y distancias de cada escena con las referencias a tamaño completo…');
+  try {
+    const text = await claude.run({ job, worker: 'director', prompt: fill(P('layout.md'), { CLIPS: clips, JOB_DIR: dir }), tools: ['Read', 'Write'] });
+    const f = path.join(dir, 'layout.json');
+    const res = fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : claude.extractJson(text);
+    for (const c of list) if (res[c.n]) c.framePrompt = res[c.n];
+    store.save(job);
+    store.log(job, 'director', `✅ Composición ajustada en ${Object.keys(res).length} frames`);
+  } catch (e) {
+    store.log(job, 'director', '⚠️ No pude ajustar la composición, sigo con los prompts del plan: ' + e.message.slice(0, 120));
+  }
+}
+
+module.exports = { run, fill, layout };

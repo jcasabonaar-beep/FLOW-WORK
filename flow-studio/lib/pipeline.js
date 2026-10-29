@@ -33,7 +33,7 @@ async function step(job) {
   let r = 'ok';
   try {
     if (stage === 'capture') r = await capture.run(job);
-    if (stage === 'director') { await director.run(job); await capture.extractRefs(job); }
+    if (stage === 'director') { await director.run(job); await capture.extractRefs(job); await director.layout(job); }
     if (stage === 'frames') r = await flow.runFrames(job);
     if (stage === 'clips') r = await flow.runClips(job);
     if (stage === 'editor') await editor.run(job);
