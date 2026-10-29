@@ -86,6 +86,10 @@
     "perAccount": 18,
     "minRatio": 2.5,
     "minViews": 50000,
-    "maxIdeas": 8
+    "maxIdeas": 8,
+    "accounts": [
+      "allnaturalyouneed",
+      "wellnesseverydayh"
+    ]
   }
 }

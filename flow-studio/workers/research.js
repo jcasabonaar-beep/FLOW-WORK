@@ -18,10 +18,11 @@ function rjob() {
   let j = store.load(RID);
   if (!j) {
     for (const d of ['logs', 'vids']) fs.mkdirSync(path.join(dir(), d), { recursive: true });
-    j = { id: RID, title: 'Investigador', createdAt: Date.now(), hidden: true, accounts: [], suggestions: [], lastRun: null,
+    j = { id: RID, title: 'Investigador', createdAt: Date.now(), hidden: true, accounts: [...(R.accounts || [])], suggestions: [], lastRun: null,
       workers: { research: { state: 'idle', action: '', log: [], paused: false } } };
     store.save(j);
   }
+  if (!j.accounts.length && (R.accounts || []).length) { j.accounts = [...R.accounts]; store.save(j); }
   return j;
 }
 
