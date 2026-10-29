@@ -56,8 +56,10 @@ for c in cands:
         x = audio(c)
         r["voice"] = voice(x)
         if model:
-            segs, _ = model.transcribe(c, language=lang, vad_filter=True)
+            segs, _ = model.transcribe(c, language=lang, vad_filter=True, word_timestamps=True)
+            segs = list(segs)
             heard = " ".join(s.text for s in segs)
+            r["words"] = [{"w": w.word.strip(), "s": round(w.start, 3), "e": round(w.end, 3)} for s in segs for w in (s.words or [])]
             r["heard"] = heard.strip()
             r["text"] = difflib.SequenceMatcher(None, norm(line), norm(heard)).ratio()
         else:

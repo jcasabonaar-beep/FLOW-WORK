@@ -119,9 +119,17 @@ async function clipWords(job) {
   const dir = store.jobDir(job.id);
   const out = path.join(dir, 'edit', 'clip_words.json');
   const files = job.clips.map((c) => path.join(dir, c.clip));
+  // Si el trabajador de Clips ya los escuchó, no se vuelven a transcribir
+  const cached = {};
+  for (const f of files) {
+    const w = f.replace(/\.mp4$/, '.words.json');
+    if (fs.existsSync(w) && fs.statSync(w).mtimeMs >= fs.statSync(f).mtimeMs - 1000) cached[f] = JSON.parse(fs.readFileSync(w, 'utf8'));
+  }
+  const missing = files.filter((f) => !cached[f]);
+  if (!missing.length) return cached;
   try {
-    await exec('python', [path.join(store.ROOT, 'tools', 'words_clips.py'), out, config.languages[job.language || config.language].whisper, config.scoreModel || 'base', ...files]);
-    return JSON.parse(fs.readFileSync(out, 'utf8'));
+    await exec('python', [path.join(store.ROOT, 'tools', 'words_clips.py'), out, config.languages[job.language || config.language].whisper, config.scoreModel || 'base', ...missing]);
+    return { ...cached, ...JSON.parse(fs.readFileSync(out, 'utf8')) };
   } catch {
     store.log(job, 'editor', 'No pude transcribir los clips: no quito repeticiones');
     return {};

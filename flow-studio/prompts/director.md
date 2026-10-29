@@ -31,7 +31,7 @@ Script sent by the producer (translate or adapt it to the video language if need
 5. The CTA word is always ONE word in capitals and must be one of: {{CTA_WORDS}}. Put it in `ctaWord`.
 6. The LAST clip always ends with the spoken CTA asking to comment the CTA word (e.g. "Comenta LIBRO y te lo mando personalmente" / "Comment BOOK and I'll send it to you").
 7. For each clip pick the reference second (`refTime`) whose thumbnail best matches the action of that line.
-8. Write the frame prompt and the clip prompt for each clip following the rules below.
+8. Write the frame prompt and the clip prompt for each clip following the rules below. Before writing each frame prompt, Read the full-size frame of its reference second: {{JOB_DIR}}/ref/sec_<refTime rounded to an even number, 3 digits>.jpg (e.g. refTime 15 → sec_014.jpg or sec_016.jpg) and MEASURE the composition there (sizes, positions, distances, camera height), as the COMPOSITION FIRST rule asks. Use even seconds for refTime when possible.
 9. The hook is the most important part of the video: clip 1 (frame and clip) must be the most striking image and line of the whole video.
 10. Write the hook in the video language: the first 3 to 6 words of clip 1 as on-screen text, with the 1 or 2 key words wrapped in *asterisks* (they will be shown in elegant italic), e.g. "Así es tu *intestino*".
 

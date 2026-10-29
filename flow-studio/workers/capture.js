@@ -39,6 +39,12 @@ async function run(job) {
     "fps=1/2,scale=300:-2,drawtext=fontfile=font.ttf:text='%{eif\\:t\\:d}s':x=8:y=8:fontsize=34:fontcolor=yellow:box=1:boxcolor=black@0.6,tile=4x3:padding=4",
     '-q:v', '4', 'sheet_%02d.jpg'], { cwd: path.join(dir, 'ref') });
   const sheets = fs.readdirSync(path.join(dir, 'ref')).filter((f) => /^sheet_\d+\.jpg$/.test(f)).sort();
+  // Fotogramas a tamaño completo cada 2 s (el director mide la composición en ellos)
+  await ffmpeg(['-i', 'video.mp4', '-vf', 'fps=1/2,scale=720:-2', '-q:v', '3', 'full_%03d.jpg'], { cwd: path.join(dir, 'ref') });
+  for (const f of fs.readdirSync(path.join(dir, 'ref')).filter((x) => /^full_\d+\.jpg$/.test(x))) {
+    const sec = (parseInt(f.slice(5, 8), 10) - 1) * 2;
+    fs.renameSync(path.join(dir, 'ref', f), path.join(dir, 'ref', `sec_${String(sec).padStart(3, '0')}.jpg`));
+  }
   job.refDuration = dur;
   job.sheets = sheets;
   store.log(job, 'capture', `✅ ${sheets.length} hojas de contacto listas para el director`);

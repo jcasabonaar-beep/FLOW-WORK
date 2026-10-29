@@ -243,6 +243,7 @@ async function pickClip(job, c, dest) {
     store.log(job, 'clips', `Clip ${c.n}: no pude escuchar el clip (${e.message.slice(0, 80)}), lo doy por bueno`);
   }
   fs.copyFileSync(best, abs(job, dest));
+  if (q && q.words) fs.writeFileSync(abs(job, dest.replace('.mp4', '.words.json')), JSON.stringify(q.words)); // el editor la reutiliza
   for (const f of cands) fs.unlinkSync(f); // fuera los candidatos descartados
   return q;
 }
