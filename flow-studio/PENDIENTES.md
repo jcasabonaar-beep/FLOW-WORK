@@ -3,6 +3,14 @@
 ## En curso
 - Video de prueba **"Golden milk v2"** (💰 Venta, 11 clips) parado en **Frames** por límite de Claude.
 
+## Pasar a GitHub Desktop (una sola vez)
+1. En el panel: pestaña **📋 Panel** → oficina **Clips** → **⏹ Detener ya** → Aceptar. Cerrar la ventana negra.
+2. GitHub Desktop: **Fetch origin** → Current branch **claude/friendly-mayer-lxaw1y** → **Pull origin** si aparece.
+3. **Show in Explorer** → entrar en `flow-studio` (carpeta NUEVA).
+4. Copiar de la carpeta ANTIGUA (`empresa claude\...\flow-studio`) a la NUEVA: `chrome-profile`, `node_modules`, `jobs`, `memory`, `output`, `downloads`.
+5. Doble clic en `abrir` de la carpeta NUEVA (hacer acceso directo en el escritorio) → "Golden milk v2" → **▶ Continuar**.
+6. Desde entonces, para actualizar: cerrar ventana negra → GitHub Desktop **Fetch origin** → **Pull origin** → `abrir`.
+
 ## Al volver
 1. Cerrar la ventana negra.
 2. Actualizar: descargar ZIP de la rama y copiar/reemplazar `lib`, `public`, `workers`, `prompts`, `tools`, `product`, `server`, `config.json`, `abrir`.
