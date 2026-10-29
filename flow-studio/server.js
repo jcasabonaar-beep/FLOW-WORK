@@ -8,6 +8,7 @@ const claude = require('./lib/claude');
 const config = require('./config.json');
 const { ffmpeg } = require('./lib/ff');
 const flow = require('./workers/flow');
+const research = require('./workers/research');
 
 const PUB = path.join(__dirname, 'public');
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.mp4': 'video/mp4', '.json': 'application/json', '.log': 'text/plain; charset=utf-8', '.md': 'text/plain; charset=utf-8' };
@@ -88,6 +89,19 @@ async function api(req, res, url) {
   const parts = url.pathname.split('/').filter(Boolean); // api, jobs, id, action, n
   const method = req.method;
   if (parts[1] === 'config') return send(res, 200, { settings: Object.keys(config.settings), avatar: config.avatar, flowMode: config.flowMode });
+  if (parts[1] === 'research') {
+    const r = research.rjob();
+    if (method === 'GET') return send(res, 200, { ...r, running: research.isRunning() });
+    const body = JSON.parse((await readBody(req)).toString() || '{}');
+    if (parts[2] === 'accounts') {
+      r.accounts = (body.accounts || []).map((a) => a.trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/.*$/, '')).filter(Boolean);
+      store.save(r);
+      return send(res, 200, { accounts: r.accounts });
+    }
+    if (parts[2] === 'run') { research.run(); return send(res, 200, { ok: true }); }
+    if (parts[2] === 'stop') return send(res, 200, { ok: claude.stop(research.RID, 'research') });
+    return send(res, 404, { error: 'ruta' });
+  }
   if (parts[1] !== 'jobs') return send(res, 404, { error: 'ruta' });
 
   if (parts.length === 2 && method === 'GET') {

@@ -41,6 +41,7 @@ async function loadList() {
 const stageName = (s) => (STAGES.find((x) => x[0] === s) || [, s])[1];
 
 async function open(id) {
+  $('#ideas').hidden = true;
   current = id;
   panelSig = '';
   location.hash = id;
@@ -50,6 +51,7 @@ async function open(id) {
 
 async function refresh() {
   if (!current) return;
+  if (current === 'ideas') return refreshIdeas();
   job = await api('jobs/' + current);
   $('#empty').hidden = true;
   $('#job').hidden = false;
@@ -99,7 +101,7 @@ async function refresh() {
 // ---------- Oficina visual ----------
 let viewMode = 'floor';
 try { viewMode = localStorage.getItem('viewMode') || 'floor'; } catch {}
-const COLORS = { capture: '#f59e0b', director: '#a855f7', frames: '#22c55e', clips: '#3b82f6', editor: '#ec4899', boss: '#94a3b8' };
+const COLORS = { capture: '#f59e0b', director: '#a855f7', frames: '#22c55e', clips: '#3b82f6', editor: '#ec4899', boss: '#94a3b8', research: '#14b8a6' };
 const PROPS = { idle: '☕', waiting_you: '✋', error: '💨', paused: '⏸️', done: '✅', limit: '💤' };
 
 function bossState() {
@@ -354,6 +356,7 @@ $('#dlgOffice').onclose = () => { delete $('#dlgOffice').dataset.w; };
 let pending = null;
 const es = new EventSource('/api/events');
 es.onmessage = (e) => {
+  if (e.data === '_investigador') { if (current === 'ideas') refreshIdeas(); return; }
   if (e.data !== current) { loadList(); return; }
   clearTimeout(pending);
   pending = setTimeout(() => { refresh(); loadList(); }, 250);
@@ -361,3 +364,48 @@ es.onmessage = (e) => {
 
 current = location.hash.slice(1) || null;
 loadList().then(() => current && refresh());
+
+// ---------- Ideas virales ----------
+const fmt = (n) => n >= 1e6 ? (n / 1e6).toFixed(1).replace('.0', '') + ' M' : n >= 1e3 ? Math.round(n / 1e3) + ' mil' : String(n);
+let ideasSig = '';
+async function refreshIdeas() {
+  const r = await api('research');
+  $('#empty').hidden = true; $('#job').hidden = true; $('#ideas').hidden = false;
+  if (document.activeElement !== $('#inAccounts')) $('#inAccounts').value = (r.accounts || []).join('\n');
+  const w = r.workers.research;
+  const st = r.running ? 'working' : w.state;
+  $('#btnRunIdeas').disabled = r.running;
+  $('#btnStopIdeas').hidden = !r.running;
+  $('#iMeta').textContent = r.lastRun ? `Última búsqueda: ${new Date(r.lastRun).toLocaleString()} · cuenta @${'laabuelaemma'}` : 'Todavía no has buscado. Añade cuentas y pulsa Sugerir.';
+  $('#iRoom').innerHTML = room('research', '🔎', 'Investigador', st, st === 'working' || st === 'error' ? w.action : (w.action || 'Listo para buscar')) + `<pre class="log">${esc(w.log.slice(-8).join('\n'))}</pre>`;
+  const sig = JSON.stringify([r.lastRun, (r.suggestions || []).length]);
+  if (sig === ideasSig) return;
+  ideasSig = sig;
+  $('#ideaCards').innerHTML = (r.suggestions || []).map((s, i) => `<div class="card">
+    <h3><span>@${esc(s.account)}</span><span class="badge ${s.older ? '' : 'done'}">${s.older ? 'esta semana' : s.ageHours != null ? 'hace ' + s.ageHours + ' h' : ''}</span></h3>
+    <div class="pair"><figure>${s.thumb ? `<img src="/files/_investigador/${s.thumb}">` : '<div class="ph">sin miniatura</div>'}</figure>
+      <div><div style="font-size:22px;font-weight:800">${fmt(s.views)}</div><div class="muted">vistas · <b style="color:#86efac">${s.ratio}×</b> su media (${fmt(s.median)})</div>
+      <p style="margin:10px 0 4px"><b>${esc(s.tema || '')}</b></p><div class="muted">Hook: “${esc(s.hook || '')}”</div>
+      <p style="font-size:12px">${esc(s.porque || '')}</p><a href="${esc(s.url)}" target="_blank" style="color:#93c5fd">Ver en Instagram</a></div></div>
+    <details><summary class="muted">Guion en español</summary><pre>${esc(s.guion || '')}</pre></details>
+    <div class="btns"><button class="good" data-idea="${i}">🎬 Crear video con esta</button></div>
+  </div>`).join('') || (r.lastRun ? '<p class="muted">No hay reels con un salto claro de visitas en esas cuentas. Prueba con más cuentas.</p>' : '');
+  document.querySelectorAll('[data-idea]').forEach((b) => b.onclick = () => newFromIdea(r.suggestions[b.dataset.idea]));
+}
+
+async function newFromIdea(s) {
+  await $('#btnNew').onclick();
+  const f = $('#formNew');
+  f.title.value = s.tema || '';
+  f.url.value = s.url;
+  f.script.value = s.guion || '';
+}
+
+$('#btnIdeas').onclick = () => { current = 'ideas'; location.hash = 'ideas'; ideasSig = ''; refreshIdeas(); loadList(); };
+$('#btnRunIdeas').onclick = async () => {
+  await api('research/accounts', { accounts: $('#inAccounts').value.split(/[\n,]+/) });
+  await api('research/run', {});
+  refreshIdeas();
+};
+$('#btnStopIdeas').onclick = () => api('research/stop', {}).then(refreshIdeas);
+$('#inAccounts').onchange = () => api('research/accounts', { accounts: $('#inAccounts').value.split(/[\n,]+/) });

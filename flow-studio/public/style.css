@@ -173,3 +173,8 @@ label.type:has(input:checked) { border-color: var(--accent); background: #1d2a44
 
 [hidden] { display: none !important; }
 .plate span:empty { display: none; }
+
+.ideas-top { display: grid; grid-template-columns: 1fr 360px; gap: 16px; align-items: start; margin-top: 12px; }
+@media (max-width: 900px) { .ideas-top { grid-template-columns: 1fr; } }
+.room-mini .room { height: 230px; border-radius: 12px; }
+.room-mini .log { margin-top: 8px; max-height: 110px; }

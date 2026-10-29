@@ -59,7 +59,7 @@ function save(job) {
 function list() {
   if (!fs.existsSync(JOBS)) return [];
   return fs.readdirSync(JOBS).filter((d) => fs.existsSync(path.join(JOBS, d, 'job.json')))
-    .map(load).filter(Boolean).sort((a, b) => b.createdAt - a.createdAt);
+    .map(load).filter((j) => j && !j.hidden).sort((a, b) => b.createdAt - a.createdAt);
 }
 
 // Escribe una línea en la "oficina" de un trabajador

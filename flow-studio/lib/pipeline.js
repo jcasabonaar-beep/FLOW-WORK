@@ -8,7 +8,7 @@ const editor = require('../workers/editor');
 const STAGES = ['capture', 'director', 'frames', 'review_frames', 'clips', 'editor', 'review_final', 'done'];
 const STAGE_WORKER = { capture: 'capture', director: 'director', frames: 'frames', clips: 'clips', editor: 'editor' };
 const active = new Set();
-let flowBusy = false; // un solo Chrome: los trabajadores de Flow van de uno en uno
+const lock = require('./lock');
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -25,8 +25,7 @@ async function step(job) {
   if (!worker) return 'stop';
   await gate(job, worker);
   if ((worker === 'frames' || worker === 'clips')) {
-    while (flowBusy) await wait(2000);
-    flowBusy = true;
+    await lock.acquire();
   }
   store.setWorker(job, worker, { state: 'working', startedAt: Date.now(), action: 'Empezando…' });
   const t0 = Date.now();
@@ -38,7 +37,7 @@ async function step(job) {
     if (stage === 'clips') r = await flow.runClips(job);
     if (stage === 'editor') await editor.run(job);
   } finally {
-    if (worker === 'frames' || worker === 'clips') flowBusy = false;
+    if (worker === 'frames' || worker === 'clips') lock.release();
   }
   job.timings[stage] = (job.timings[stage] || 0) + (Date.now() - t0);
   if (r === 'wait') { job.status = 'waiting_you'; store.save(job); return 'stop'; }
@@ -80,7 +79,6 @@ async function drive(id) {
         if (e.message === 'Detenido por ti' || tries >= 2) throw e;
         tries++;
         if (w) store.log(job, w, `⚠️ ${e.message.slice(0, 200)} — reintento ${tries}/2 en 20 s`);
-        if (w === 'frames' || w === 'clips') flowBusy = false;
         await wait(20000);
       }
     }
