@@ -31,15 +31,16 @@
     "size": 92,
     "wordsPerChunk": 3,
     "yPercent": 62,
-    "hookSeconds": 2.6
+    "hookSeconds": 2.6,
+    "ctaBox": false
   },
   "languages": {
     "es": {
-      "name": "natural, neutral Latin American Spanish (no regional slang, no vosotros)",
+      "name": "natural, neutral Latin American Spanish (no regional slang, no vosotros). Very occasionally (at most once per video) drop a common English word that Hispanics in the US use naturally, like okay, Walmart, el mall",
       "audience": "Hispanics living in the United States",
       "speech": "Spoken in Spanish with a neutral Latin American accent",
       "cta": "Escribe \"{{WORD}}\" en los comentarios",
-      "ctaExamples": "RECETA, LIBRO",
+      "ctaExamples": "LIBRO, RECETA, SÍ",
       "whisper": "es"
     },
     "en": {
@@ -55,5 +56,10 @@
     "name": "200 Soluciones Naturales para Problemas Cotidianos",
     "pitch": "En mi libro tengo más de 200 recetas naturales como esta",
     "image": ""
-  }
+  },
+  "ctaWords": [
+    "LIBRO",
+    "RECETA",
+    "SÍ"
+  ]
 }

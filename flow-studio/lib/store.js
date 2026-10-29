@@ -29,7 +29,7 @@ function create({ title, url, script, setting, ctaWord, language }) {
   for (const d of ['frames', 'clips', 'edit', 'logs']) fs.mkdirSync(path.join(jobDir(id), d), { recursive: true });
   const job = {
     id, title: title || 'Video ' + id, url: url || '', script: script || '', setting: setting || 'kitchen',
-    ctaWord: ctaWord || 'RECETA', language: language || require('../config.json').language, createdAt: Date.now(),
+    ctaWord: ctaWord || 'AUTO', language: language || require('../config.json').language, createdAt: Date.now(),
     stage: 'capture', // capture → director → frames → review_frames → clips → editor → review_final → done
     status: 'running', // running | paused | waiting_you | done | error
     workers: Object.fromEntries(WORKERS.map((w) => [w, blankWorker()])),

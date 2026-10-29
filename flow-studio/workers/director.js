@@ -30,6 +30,7 @@ async function run(job) {
     AUDIENCE: lang.audience,
     SPEECH: lang.speech,
     CTA_EXAMPLES: lang.ctaExamples,
+    CTA_WORDS: config.ctaWords.join(', '),
     PRODUCT_NAME: config.product.name,
     PRODUCT_PITCH: config.product.pitch,
   };

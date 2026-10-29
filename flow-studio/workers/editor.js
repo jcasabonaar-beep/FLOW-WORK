@@ -89,7 +89,7 @@ function buildAss(job, words, total) {
     });
   }
   const word = (job.plan && job.plan.ctaWord) || job.ctaWord;
-  lines.push(`Dialogue: 2,${assTime(Math.max(0, total - 3.6))},${assTime(total)},Cta,,0,0,0,,{\\fad(150,0)}${esc(config.languages[job.language || config.language].cta.replace('{{WORD}}', word.toUpperCase()))}`);
+  if (C.ctaBox) lines.push(`Dialogue: 2,${assTime(Math.max(0, total - 3.6))},${assTime(total)},Cta,,0,0,0,,{\\fad(150,0)}${esc(config.languages[job.language || config.language].cta.replace('{{WORD}}', word.toUpperCase()))}`);
   return lines.join('\n') + '\n';
 }
 
