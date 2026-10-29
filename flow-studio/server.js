@@ -139,6 +139,10 @@ async function api(req, res, url) {
       store.save(job);
       return send(res, 200, c);
     }
+    case 'plan':
+      job.plan = { ...(job.plan || {}), ...(body.hook !== undefined ? { hook: body.hook } : {}), ...(body.ctaWord ? { ctaWord: body.ctaWord.trim().toUpperCase() } : {}) };
+      store.save(job);
+      return send(res, 200, job.plan);
     case 'approve-frames': {
       if (job.clips.some((c) => !c.frame && c.frameStatus !== 'regen')) return send(res, 400, { error: 'Faltan frames por generar o subir' });
       const regen = job.clips.some((c) => c.frameStatus === 'regen');

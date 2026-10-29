@@ -160,6 +160,11 @@ function renderPanel() {
     ${review ? '<p class="muted">Para cada frame: <b>Vale</b>, <b>Cambiar</b> (escribe qué cambiar, en español) o <b>Subir el mío</b>. Los marcados en naranja son los que el trabajador ve dudosos.</p>' : ''}
     ${cardsHtml(mode)}
     ${review ? `<div class="bigbar"><button class="good" id="bApproveFrames">${job.clips.some((c) => c.frameStatus === 'regen') ? '↻ Rehacer los marcados' : '✓ Aprobar frames y animar'}</button></div>` : ''}`;
+  if (review) {
+    $('#stagePanel .muted').outerHTML = `<div class="row"><label>Hook (palabras en cursiva entre *asteriscos*)<input id="inHook1" value="${esc(job.plan.hook)}"></label><label>Palabra del CTA<input id="inCta1" value="${esc(job.plan.ctaWord)}"></label></div>`;
+    $('#inHook1').onchange = () => api('jobs/' + job.id + '/plan', { hook: $('#inHook1').value });
+    $('#inCta1').onchange = () => api('jobs/' + job.id + '/plan', { ctaWord: $('#inCta1').value });
+  }
   if (review) $('#bApproveFrames').onclick = () => api('jobs/' + job.id + '/approve-frames', {}).then(refresh);
   bindCards();
 }
