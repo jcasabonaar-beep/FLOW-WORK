@@ -24,13 +24,15 @@ FRAMING (for face shots): the face must be LARGE and close to the lens, more str
 
 CONSISTENCY (always include this sentence): "Keep {{ANCHORS}} exactly as in the avatar images; do not change the sweater color, the knitted flag or the neckline."
 
-SETTING: {{SETTING}}. Small US flags visible in the background. Describe the setting briefly in Mode 1 and say it comes from the avatar images; in Mode 2 do not describe the background (Image A provides it).
+SETTING (the same in EVERY frame of the video): {{SETTING}}.
+- If the setting is the kitchen: small US flags visible; describe it briefly in Mode 1 and say it comes from the avatar images; in Mode 2 do not describe the background (Image A provides it).
+- If the setting is NOT the kitchen (store front, supermarket…): the avatar photos are ONLY for her face, hair and sweater. Write in EVERY frame prompt, Mode 1 and Mode 2: "Ignore the kitchen background of the avatar photos: she is <the setting>." and describe that background in full each time, so it never falls back to a kitchen. The store sign named in the setting must be visible and readable in every frame (it is the only allowed text besides the book cover); keep it in the same place behind her. If the reference shows props on a table, put them on a small folding table or in her hands in front of the store.
 
 REALISM: "Ultra-realistic smartphone photo, natural skin texture with pores and wrinkles, no beauty filter, no plastic skin, natural indoor daylight 5000–5500K, vertical 9:16, shallow depth of field."
 
 BOOK (only for clips with "book"): one more image is uploaded last. For "hand" it is a photo of her holding the real book: write "She holds the book exactly as in the last image, cover facing the camera: same cover design, colors and title". For "table" it is the cover: write "the book from the last image lies on the counter next to her, cover visible". The book cover is the ONLY text allowed in the image.
 
-NEVER: mention skin tone, skin color, race or ethnicity (Flow refuses those edits); describe her face, hair, body or clothing beyond the consistency sentence; any text, captions, subtitles, logos, brand names or labels (every product is plain and unbranded, say so).
+NEVER: mention skin tone, skin color, race or ethnicity (Flow refuses those edits); describe her face, hair, body or clothing beyond the consistency sentence; any text, captions, subtitles, logos, brand names or labels on products (every product is plain and unbranded, say so). Only exceptions: the store sign of the setting and the book cover.
 
 LAST LINE, exactly:
 - frameMode 1: "Use Images A and B for the person's face, body, outfit and the kitchen exactly as shown."
