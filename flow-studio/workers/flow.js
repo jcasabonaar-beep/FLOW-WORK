@@ -86,6 +86,7 @@ async function runFrames(job) {
       const dest = `frames/frame_${pad(c.n)}.png`;
       const it = (st.items || {})[c.n] || {};
       if (fs.existsSync(abs(job, dest))) {
+        if (it.prompt && !c.feedback) c.framePrompt = it.prompt;
         Object.assign(c, { frame: dest, frameStatus: it.ok === false ? 'doubt' : 'done', frameNote: it.note || '', feedback: '', v: Date.now() });
       } else {
         Object.assign(c, { frameStatus: 'manual', frameNote: 'No se pudo generar automáticamente: súbelo tú' });
@@ -107,6 +108,7 @@ async function runClips(job) {
   for (const c of todo) {
     const dest = `clips/clip_${pad(c.n)}.mp4`;
     const it = (st.items || {})[c.n] || {};
+    if (it.prompt) c.clipPrompt = it.prompt.includes(c.line) ? it.prompt.replace(`"${c.line}"`, '{{LINE}}') : c.clipPrompt;
     if (fs.existsSync(abs(job, dest))) Object.assign(c, { clip: dest, clipStatus: 'done', clipNote: it.note || '', v: Date.now() });
     else Object.assign(c, { clipStatus: 'manual', clipNote: 'No se pudo generar automáticamente: súbelo tú' });
   }
