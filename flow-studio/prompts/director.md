@@ -35,6 +35,8 @@ Script sent by the producer (translate or adapt it to the video language if need
 {{OMNI_RULES}}
 
 ## Output
+Work fast: use only the Read tool to look at the images and the Write tool to save the result. Do not use skills, shell commands or scripts (they are blocked and waste time).
+Respect the clip limit ({{MAX_CLIPS}} clips at most): shorten lines instead of adding clips.
 Write the file `plan.json` in the working folder with exactly this shape, and also return the same JSON in a ```json block:
 ```json
 {
