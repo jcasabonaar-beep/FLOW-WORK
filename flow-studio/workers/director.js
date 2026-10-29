@@ -11,6 +11,25 @@ function fill(text, vars) {
   return text.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in vars ? vars[k] : m));
 }
 
+function brolls() {
+  const d = path.join(store.ROOT, config.product.brollDir);
+  return fs.existsSync(d) ? fs.readdirSync(d).filter((f) => /\.(mp4|mov|png|jpe?g|webp)$/i.test(f)) : [];
+}
+
+function typeRules(job) {
+  if (job.videoType !== 'venta') {
+    return `- Goal: maximum views, shares and comments. Do NOT mention or show any book or product.
+- Hook: the strongest curiosity or shock line in the first 2 seconds. Fast pacing, short lines.
+- Ending: ask to comment the CTA word to receive the full recipe (CTA word RECETA or SÍ) and to follow for more. book and broll are always null.`;
+  }
+  const b = brolls();
+  return `- Goal: sell the book "${config.product.name}". The recipe part stays, then the last clips sell the book.
+- The producer APPROVED this pitch, so do not soften it (only shorten it if time is very tight, keeping every fact): "${config.product.pitch}"
+  Usually split it into 2 or 3 clips at the end, then the CTA with the word LIBRO ("Comenta LIBRO y te lo mando personalmente").
+- The book must appear: in the pitch clips she holds it ("book": "hand"). In some videos (vary it: about half of them) also show it lying on the table in 1 or 2 earlier clips ("book": "table").
+- B-roll files available in ${path.join(store.ROOT, config.product.brollDir)}: ${b.length ? b.join(', ') : '(none yet)'}. Look at them with the Read tool (images) and use 1 to 3 of them as cutaways during the pitch ("broll"), 1.5 to 3 seconds each, never covering the CTA words.`;
+}
+
 async function run(job) {
   const dir = store.jobDir(job.id);
   const setting = config.settings[job.setting] || job.setting;
@@ -31,8 +50,9 @@ async function run(job) {
     SPEECH: lang.speech,
     CTA_EXAMPLES: lang.ctaExamples,
     CTA_WORDS: config.ctaWords.join(', '),
-    PRODUCT_NAME: config.product.name,
-    PRODUCT_PITCH: config.product.pitch,
+    VIDEO_TYPE: job.videoType === 'venta' ? 'VENTA (sell the book)' : 'CRECIMIENTO (maximum virality, no selling)',
+    TYPE_RULES: typeRules(job),
+    MAX_CLIPS: config.maxClips[job.videoType] || 7,
   };
   vars.NANO_RULES = fill(P('nano_rules.md'), vars);
   vars.OMNI_RULES = fill(P('omni_rules.md'), vars);
@@ -48,7 +68,7 @@ async function run(job) {
   j.notes = plan.notes || [];
   j.clips = plan.clips.map((c, i) => ({
     n: i + 1, line: c.line, refTime: c.refTime, frameMode: i === 0 ? 1 : 2,
-    framePrompt: c.framePrompt, clipPrompt: c.clipPrompt,
+    framePrompt: c.framePrompt, clipPrompt: c.clipPrompt, book: job.videoType === 'venta' ? (c.book || null) : null, broll: c.broll || null,
     frame: null, frameStatus: 'pending', frameNote: '', feedback: '',
     clip: null, clipStatus: 'pending', clipNote: '',
   }));

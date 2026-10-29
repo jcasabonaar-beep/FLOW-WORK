@@ -18,6 +18,8 @@ SETTING: {{SETTING}}. Small US flags visible in the background. Describe the set
 
 REALISM: "Ultra-realistic smartphone photo, natural skin texture with pores and wrinkles, no beauty filter, no plastic skin, natural indoor daylight 5000–5500K, vertical 9:16, shallow depth of field."
 
+BOOK (only for clips with "book"): one more image is uploaded last = the BOOK. Write: "She holds the book from the last image with the cover facing the camera, exactly as in that image: same cover design, colors and title" (or, for "table": "the book from the last image lies on the counter next to her, cover visible"). The book cover is the ONLY text allowed in the image.
+
 NEVER: mention skin tone, skin color, race or ethnicity (Flow refuses those edits); describe her face, hair, body or clothing beyond the consistency sentence; any text, captions, subtitles, logos, brand names or labels (every product is plain and unbranded, say so).
 
 LAST LINE, exactly:

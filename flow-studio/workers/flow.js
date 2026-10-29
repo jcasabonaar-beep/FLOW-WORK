@@ -20,22 +20,25 @@ function clipPromptFor(c, job) {
 function frameInputs(job, c) {
   const [front, table] = avatarImgs();
   const ref = abs(job, c.ref);
-  if (c.feedback && c.frame) return [abs(job, c.frame), front];
-  if (c.frameMode === 1) return [ref, front, table];
+  const cover = path.join(store.ROOT, config.product.cover);
+  const book = c.book && fs.existsSync(cover) ? [cover] : [];
+  if (c.feedback && c.frame) return [abs(job, c.frame), front, ...book];
+  if (c.frameMode === 1) return [ref, front, table, ...book];
   const first = job.clips[0];
-  return [ref, first.frame ? abs(job, first.frame) : table, front];
+  return [ref, first.frame ? abs(job, first.frame) : table, front, ...book];
 }
+const L = 'ABCDE';
 
 function frameTask(job, c) {
   const dest = abs(job, `frames/frame_${pad(c.n)}.png`);
   const imgs = frameInputs(job, c);
   if (c.feedback && c.frame) {
-    return { dest, text: `### Frame ${c.n} — CORRECTION\nUpload in this order: ${imgs.map((p, i) => `Image ${'AB'[i]} = ${p}`).join(' ; ')}\n` +
+    return { dest, text: `### Frame ${c.n} — CORRECTION\nUpload in this order: ${imgs.map((p, i) => `Image ${L[i]} = ${p}`).join(' ; ')}\n` +
       `The producer wants this change (translate it to a clear English instruction for the image model): "${c.feedback}".\n` +
       `Prompt: "Edit Image A: <the change in English>. Use Image B to keep the face and the sweater exactly as the avatar. Keep everything else the same."\n` +
       `Then download and save to: ${dest}` };
   }
-  return { dest, text: `### Frame ${c.n}\nUpload in this order: ${imgs.map((p, i) => `Image ${'ABC'[i]} = ${p}`).join(' ; ')}\n` +
+  return { dest, text: `### Frame ${c.n}\nUpload in this order: ${imgs.map((p, i) => `Image ${L[i]} = ${p}`).join(' ; ')}\n` +
     `Paste this prompt exactly:\n\`\`\`\n${c.framePrompt}\n\`\`\`\nThen download and save to: ${dest}` };
 }
 
@@ -92,7 +95,7 @@ async function runFrames(job) {
         Object.assign(c, { frame: dest, frameStatus: it.ok === false ? 'doubt' : 'done', frameNote: it.note || '', feedback: '', v: Date.now() });
       } else {
         Object.assign(c, { frameStatus: 'manual', frameNote: it.refused
-          ? `Flow lo rechazó 3 veces. ${it.note || ''} Corrige el prompt y pulsa Reintentar, o sube tu frame.`
+          ? `Flow lo rechazó 4 veces (también con el prompt simple). ${it.note || ''} Corrige el prompt y pulsa Reintentar, o sube tu frame.`
           : (it.note || 'No se pudo generar automáticamente') + ' — corrige el prompt y pulsa Reintentar, o sube tu frame.' });
         if (it.prompt) c.framePrompt = it.prompt;
       }
@@ -113,6 +116,7 @@ async function runClips(job) {
   for (const c of todo) {
     const dest = `clips/clip_${pad(c.n)}.mp4`;
     const it = (st.items || {})[c.n] || {};
+    if (it.line && it.prompt) { c.line = it.line; }
     if (it.prompt) c.clipPrompt = it.prompt.includes(c.line) ? it.prompt.replace(`"${c.line}"`, '{{LINE}}') : c.clipPrompt;
     if (fs.existsSync(abs(job, dest))) Object.assign(c, { clip: dest, clipStatus: 'done', clipNote: it.note || '', v: Date.now() });
     else Object.assign(c, { clipStatus: 'manual', clipNote: 'No se pudo generar automáticamente: súbelo tú' });

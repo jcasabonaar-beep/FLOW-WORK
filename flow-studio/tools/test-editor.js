@@ -21,7 +21,7 @@ const editor = require('../workers/editor');
     await ffmpeg(['-f', 'lavfi', '-i', `color=c=0x${['335577', '553344', '335533'][i]}:s=720x1280:d=8:r=24`,
       '-f', 'lavfi', '-i', 'sine=f=220:d=5', '-filter_complex', '[1:a]adelay=600|600,apad=whole_dur=8[a]',
       '-map', '0:v', '-map', '[a]', '-t', '8', '-c:v', 'libx264', '-c:a', 'aac', path.join(dir, out)]);
-    job.clips.push({ n: i + 1, line: lines[i], clip: out, clipStatus: 'done', frameStatus: 'done' });
+    job.clips.push({ n: i + 1, line: lines[i], clip: out, clipStatus: 'done', frameStatus: 'done', broll: i === 2 && process.env.BROLL ? { file: process.env.BROLL, start: 1, duration: 2 } : null });
   }
   job.stage = 'review_final';
   job.status = 'waiting_you';

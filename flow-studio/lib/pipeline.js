@@ -57,7 +57,21 @@ async function drive(id) {
     job.status = 'running';
     job.error = null;
     store.save(job);
-    while ((await step(job)) === 'next');
+    let tries = 0;
+    for (;;) {
+      try {
+        if ((await step(job)) !== 'next') break;
+        tries = 0;
+      } catch (e) {
+        // Se resuelve solo: reintenta la etapa 2 veces antes de avisarte
+        const w = STAGE_WORKER[job.stage];
+        if (e.message === 'Detenido por ti' || tries >= 2) throw e;
+        tries++;
+        if (w) store.log(job, w, `⚠️ ${e.message.slice(0, 200)} — reintento ${tries}/2 en 20 s`);
+        if (w === 'frames' || w === 'clips') flowBusy = false;
+        await wait(20000);
+      }
+    }
   } catch (e) {
     const w = STAGE_WORKER[job.stage];
     job.status = 'error';

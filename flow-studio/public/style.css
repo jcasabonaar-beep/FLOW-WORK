@@ -93,3 +93,10 @@ dialog::backdrop { background: #000a; }
 .thumbs { display: flex; gap: 6px; margin: 6px 0; }
 .thumbs a img { height: 70px; border-radius: 6px; display: block; }
 @media (max-width: 760px) { body { flex-direction: column; } #side { width: auto; } #main { padding: 16px; } .job-head { flex-direction: column; } }
+
+.type-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+.type-pick > div { grid-column: 1 / -1; }
+label.type { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 12px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; color: var(--text); font-size: 14px; }
+label.type input { width: auto; margin: 0; }
+label.type span { color: var(--muted); font-size: 12px; }
+label.type:has(input:checked) { border-color: var(--accent); background: #1d2a44; }
