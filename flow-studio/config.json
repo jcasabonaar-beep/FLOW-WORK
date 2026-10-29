@@ -9,7 +9,7 @@
   "clipModel": "Omni 1.1 Flash",
   "clipSeconds": 8,
   "maxWordsPerClip": 20,
-  "maxFrameRetries": 2,
+  "maxFrameRetries": 1,
   "avatar": {
     "name": "Grandma",
     "images": [
@@ -72,7 +72,10 @@
     "crecimiento": 7
   },
   "uploadReference": false,
-  "framesPerPrompt": 2,
+  "framesPerPrompt": {
+    "hook": 2,
+    "rest": 1
+  },
   "clipsPerPrompt": 2,
   "hookStyle": "This is the HOOK of the video, so it must be very striking: exaggerate the gestures, the tone of voice and the facial expressions. The camera moves as if a person were filming her by hand, gently pushing in and pulling back."
 }

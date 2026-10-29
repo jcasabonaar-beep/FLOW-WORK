@@ -67,16 +67,18 @@ function lessonsFile() {
 }
 
 const PICK = {
-  frames: (n) => `Each prompt gives ${n} images. Look at both and download ONLY the best one: our avatar's face, same sweater, face large and close, natural and realistic, the action of the scene, no text, good hands. For frame 1 (the HOOK) be extra demanding: it must be the most striking image of the video; if neither is great, generate ${n} more with an improved prompt and pick from all of them.`,
+  frames: () => `Frame 1 is the HOOK: set Flow to ${config.framesPerPrompt.hook} outputs, look at both and download ONLY the best (our avatar's face, same sweater, the composition of the reference, natural, no text, good hands). It must be the most striking image of the video; if neither is great, generate ${config.framesPerPrompt.hook} more with an improved prompt and pick from all.
+Every other frame: set Flow to ${config.framesPerPrompt.rest} output. If it is good at the first try, keep it. If it fails the quality check, regenerate ONCE more with an improved prompt and keep the better one. Do not spend more time on it.
+Speed: upload the avatar photos only once per session and then reuse them from Flow's Uploads/library instead of uploading them again for every frame.`,
   clips: (n) => `Each prompt gives ${n} videos. Watch both (screenshots at several moments) and download BOTH: save the first as <destination>_a.mp4 and the second as <destination>_b.mp4 (replace .mp4 in the destination path). The system listens to them and keeps the one that says the whole line with the same voice as the previous clips. If one is visually broken (face changes, glitches, text on screen), do not download it and write "bad": "a" or "b" for that item.`,
 };
 
 function operatorPrompt(job, role, model, tasks, statusFile, extra = '') {
   const lf = lessonsFile();
   const kind = role.startsWith('FRAMES') ? 'frames' : 'clips';
-  const outs = kind === 'frames' ? config.framesPerPrompt : config.clipsPerPrompt;
+  const outs = kind === 'frames' ? 2 : config.clipsPerPrompt;
   return fill(fs.readFileSync(path.join(store.ROOT, 'prompts', 'flow_operator.md'), 'utf8'), {
-    LESSONS: fs.readFileSync(lf, 'utf8'), LESSONS_FILE: lf, OUTPUTS: outs || 1, PICK_RULES: outs > 1 ? PICK[kind](outs) : 'Only one output per prompt.',
+    LESSONS: fs.readFileSync(lf, 'utf8'), LESSONS_FILE: lf, OUTPUTS: kind === 'frames' ? 'the number of' : (outs || 1), PICK_RULES: outs > 1 ? PICK[kind](outs) : 'Only one output per prompt.',
     ROLE: role, FLOW_URL: config.flowUrl, STATUS_FILE: statusFile, PROJECT: job.title.slice(0, 40),
     MODEL: model, GRAB: path.join(store.ROOT, 'tools', 'grab-latest.js'), RETRIES: config.maxFrameRetries,
     TASKS: extra + tasks.map((t) => t.text).join('\n\n'),

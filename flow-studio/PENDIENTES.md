@@ -23,7 +23,8 @@
 - El director escribe el plan directo (sin scripts), notas en español, máximo de clips.
 
 ## Pendiente
-- **Frames más rápidos**: subir las fotos del avatar una sola vez y reutilizarlas desde "Uploads" de Flow; 2 versiones solo en el hook; menos capturas de pantalla por frame; lanzar todos y revisar al final.
+- ✅ Hecho: hook con 2 versiones; resto 1 versión y 1 solo reintento si sale mal; avatar subido una vez.
+- Frames: menos capturas de pantalla por frame (medir en el próximo video).
 - Decirme qué dice la señora en los 3 clips listos (`cta_comenta_libro`, `libro_presenta_1`, `libro_presenta_2`).
 - Al acabar este video: medir tiempos y recortar (1 versión en frames no-hook, transcripción más rápida, menos capturas, cola de videos).
 - Comparar calidad con un video hecho a mano.
