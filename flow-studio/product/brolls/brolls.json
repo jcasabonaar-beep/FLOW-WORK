@@ -3,8 +3,37 @@
     "duration": 17.8,
     "description": "Libro real abierto sobre una mesa de madera al sol. Una mano recorre una página de receta con foto, lista de ingredientes y pasos; luego se pasan las páginas rápido.",
     "best": [
-      { "from": 0.5, "to": 6.0, "what": "Primer plano de una página de receta: ingredientes, pasos y fotos (ideal para 'cada receta trae la lista de ingredientes...')" },
-      { "from": 12.0, "to": 17.5, "what": "Se pasan las páginas rápido (ideal para 'más de 200 recetas' o 'en el índice tienes todo ordenado')" }
+      {
+        "from": 0.5,
+        "to": 6.0,
+        "what": "Primer plano de una página de receta: ingredientes, pasos y fotos (ideal para 'cada receta trae la lista de ingredientes...')"
+      },
+      {
+        "from": 12.0,
+        "to": 17.5,
+        "what": "Se pasan las páginas rápido (ideal para 'más de 200 recetas' o 'en el índice tienes todo ordenado')"
+      }
+    ]
+  },
+  "broll_02_indice_recetas.mp4": {
+    "duration": 14.5,
+    "description": "Libro real sobre mesa de madera al sol. Se ve el índice por problemas con fotos de cada receta (ej. 'Resfriados, congestión y garganta p.169-170'), y luego una página de receta con ingredientes y pasos.",
+    "best": [
+      {
+        "from": 3.0,
+        "to": 9.5,
+        "what": "Índice ordenado por problemas con fotos y número de página (ideal para 'en el índice tienes toda la información ordenada, solo identificas tu problema')"
+      },
+      {
+        "from": 9.8,
+        "to": 13.2,
+        "what": "Página de receta con ingredientes, pasos y cantidades (ideal para 'cada receta trae la lista de ingredientes con sus medidas exactas')"
+      },
+      {
+        "from": 0.0,
+        "to": 2.4,
+        "what": "Páginas pasando (transición rápida)"
+      }
     ]
   }
 }
