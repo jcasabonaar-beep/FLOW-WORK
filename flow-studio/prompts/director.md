@@ -18,10 +18,12 @@ Script sent by the producer (it may be in Spanish; translate it):
 2. Rewrite the script in natural, punchy spoken American English. Keep the same ideas, steps and order. US units (cups, teaspoons, °F), American words.
 3. SAFETY REVIEW. This niche loses reach (and Amazon Associates can close accounts) for medical claims. Soften any line that promises to cure, treat, detox, "empty completely", melt fat or guarantee results. Keep it as experience and tradition instead ("my grandma swore by this", "it helps me feel lighter"). Write every change you made in `notes` so the producer can approve it.
 4. Split it into clips that fit {{CLIP_SECONDS}} seconds each: at most {{MAX_WORDS}} words per clip, split at natural phrase boundaries, usually 3 to 7 clips. If the script needs more than 7 clips, tighten the wording (never drop the recipe steps or the CTA) and say so in `notes`.
-5. The LAST clip always ends with the CTA: "Comment {{CTA_WORD}} and I'll send you the recipe" (adapt naturally, e.g. "Comment BOOK and I'll send it to you personally").
-6. For each clip pick the reference second (`refTime`) whose thumbnail best matches the action of that line.
-7. Write the frame prompt and the clip prompt for each clip following the rules below.
-8. Write the hook: the first 3 to 6 words of clip 1 as on-screen text, with the 1 or 2 key words wrapped in *asterisks* (they will be shown in elegant italic), e.g. "This is your *gut*".
+   Only soften medical claims. NEVER remove the product pitch (for example "in my book I have 250+ natural recipes like this one"): selling it is the goal of the video. If the script is too long, shorten the pitch to one punchy line instead of cutting it.
+5. The CTA word is always ONE English word in capitals. If the producer wrote it in Spanish, translate it (RECETA → RECIPE, LIBRO → BOOK). Put it in `ctaWord`.
+6. The LAST clip always ends with the CTA: "Comment {{CTA_WORD}} and I'll send you the recipe" (adapt naturally, e.g. "Comment BOOK and I'll send it to you personally").
+7. For each clip pick the reference second (`refTime`) whose thumbnail best matches the action of that line.
+8. Write the frame prompt and the clip prompt for each clip following the rules below.
+9. Write the hook: the first 3 to 6 words of clip 1 as on-screen text, with the 1 or 2 key words wrapped in *asterisks* (they will be shown in elegant italic), e.g. "This is your *gut*".
 
 ## Frame prompt rules (Nano Banana Pro)
 {{NANO_RULES}}
