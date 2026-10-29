@@ -36,7 +36,7 @@ function estimateWords(segments) {
 async function whisperWords(job, audio, segments, est) {
   try {
     const out = path.join(store.jobDir(job.id), 'edit', 'words.json');
-    await exec('python', [path.join(store.ROOT, 'tools', 'transcribe.py'), audio, out]);
+    await exec('python', [path.join(store.ROOT, 'tools', 'transcribe.py'), audio, out, config.languages[job.language || config.language].whisper]);
     const real = JSON.parse(fs.readFileSync(out, 'utf8'));
     const res = [];
     for (const seg of segments) {
@@ -89,7 +89,7 @@ function buildAss(job, words, total) {
     });
   }
   const word = (job.plan && job.plan.ctaWord) || job.ctaWord;
-  lines.push(`Dialogue: 2,${assTime(Math.max(0, total - 3.6))},${assTime(total)},Cta,,0,0,0,,{\\fad(150,0)}${esc(config.cta.replace('{{WORD}}', word.toUpperCase()))}`);
+  lines.push(`Dialogue: 2,${assTime(Math.max(0, total - 3.6))},${assTime(total)},Cta,,0,0,0,,{\\fad(150,0)}${esc(config.languages[job.language || config.language].cta.replace('{{WORD}}', word.toUpperCase()))}`);
   return lines.join('\n') + '\n';
 }
 

@@ -14,6 +14,7 @@ function fill(text, vars) {
 async function run(job) {
   const dir = store.jobDir(job.id);
   const setting = config.settings[job.setting] || job.setting;
+  const lang = config.languages[job.language || config.language];
   const vars = {
     JOB_DIR: dir,
     SHEETS: (job.sheets || []).map((s) => path.join(dir, 'ref', s)).join(', '),
@@ -25,6 +26,10 @@ async function run(job) {
     MAX_WORDS: config.maxWordsPerClip,
     ANCHORS: config.avatar.anchors,
     VOICE: config.avatar.voice,
+    LANG_NAME: lang.name,
+    AUDIENCE: lang.audience,
+    SPEECH: lang.speech,
+    CTA_EXAMPLES: lang.ctaExamples,
   };
   vars.NANO_RULES = fill(P('nano_rules.md'), vars);
   vars.OMNI_RULES = fill(P('omni_rules.md'), vars);

@@ -52,7 +52,7 @@ function promptsFor(job) {
   return job.clips.map((c) => ({
     n: c.n,
     frameInputs: c.ref ? flow.frameInputs(job, c).map((p) => path.relative(store.ROOT, p).replace(/\\/g, '/')) : [],
-    clipPrompt: c.clipPrompt ? flow.clipPromptFor(c) : '',
+    clipPrompt: c.clipPrompt ? flow.clipPromptFor(c, job) : '',
   }));
 }
 

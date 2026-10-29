@@ -10,8 +10,10 @@ const pad = (n) => String(n).padStart(2, '0');
 const abs = (job, rel) => path.join(store.jobDir(job.id), rel);
 const avatarImgs = () => config.avatar.images.map((i) => path.join(store.ROOT, i));
 
-function clipPromptFor(c) {
-  return c.clipPrompt.replace(/\{\{LINE\}\}/g, `"${c.line}"`);
+function clipPromptFor(c, job) {
+  const lang = config.languages[(job && job.language) || config.language];
+  return c.clipPrompt.replace(/\{\{LINE\}\}/g, `"${c.line}"`)
+    .replace(/Spoken in (English|Spanish) with an? [\w ]*?accent/i, lang.speech);
 }
 
 // Qué imágenes se suben para cada frame
@@ -40,7 +42,7 @@ function frameTask(job, c) {
 function clipTask(job, c) {
   const dest = abs(job, `clips/clip_${pad(c.n)}.mp4`);
   return { dest, text: `### Clip ${c.n}\nMode: frames to video (start frame only). Start frame = ${abs(job, c.frame)}\n` +
-    `Paste this prompt exactly:\n\`\`\`\n${clipPromptFor(c)}\n\`\`\`\nThen download the video (MP4, best quality, with audio) and save to: ${dest}` };
+    `Paste this prompt exactly:\n\`\`\`\n${clipPromptFor(c, job)}\n\`\`\`\nThen download the video (MP4, best quality, with audio) and save to: ${dest}` };
 }
 
 function operatorPrompt(job, role, model, tasks, statusFile, extra = '') {

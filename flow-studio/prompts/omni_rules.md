@@ -9,7 +9,7 @@ FIXED RULES, always included:
 - "Hyperrealistic, natural human movements."
 - She performs the action and speaks simultaneously, in one continuous take, looking directly into the lens.
 - Speech delivery: the whole line in ONE continuous breath, fast, fluid and VERY energetic, no pauses, no hesitations, speaking from the first frame and finishing before the last second.
-- Dialogue block: "Spoken in English with an American accent. Voice: {{VOICE}}. Very energetic, warm and enthusiastic, clear lip sync, looking straight into the lens." then the line in quotes as {{LINE}}.
+- Dialogue block: "{{SPEECH}}. Voice: {{VOICE}}. Very energetic, warm and enthusiastic, clear lip sync, looking straight into the lens." then the line in quotes as {{LINE}}.
 - Audio: "No background music, no sound effects; only natural room ambience, the real sounds of the action and her voice."
 - "No text, no captions, no subtitles, no logos, no overlays."
 - Never eat or drink while speaking.

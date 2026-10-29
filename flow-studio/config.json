@@ -1,6 +1,6 @@
 {
   "port": 4000,
-  "language": "en",
+  "language": "es",
   "claudeCmd": "claude",
   "flowMode": "auto",
   "flowUrl": "https://flow.google.com",
@@ -12,9 +12,12 @@
   "maxFrameRetries": 2,
   "avatar": {
     "name": "Grandma",
-    "images": ["avatar/avatar_front.png", "avatar/avatar_table.png"],
+    "images": [
+      "avatar/avatar_front.png",
+      "avatar/avatar_table.png"
+    ],
     "anchors": "the same heather-gray knit crew-neck sweater with the knitted US flag on the chest, the same face with real wrinkles and freckles, the same wavy silver-white shoulder-length hair",
-    "voice": "Warm, energetic American grandmother voice in her seventies, bright and enthusiastic, slightly raspy, fast confident delivery"
+    "voice": "Warm, energetic grandmother voice in her seventies, bright and enthusiastic, slightly raspy, fast confident delivery, always the same voice"
   },
   "settings": {
     "kitchen": "the modern American kitchen from the avatar images: white flat-panel cabinets, light marble-look tile backsplash, stainless steel range hood, white quartz countertop, small US flags on the counter",
@@ -30,5 +33,22 @@
     "yPercent": 62,
     "hookSeconds": 2.6
   },
-  "cta": "Comment \"{{WORD}}\" and I'll send you the recipe"
+  "languages": {
+    "es": {
+      "name": "natural, neutral Latin American Spanish (no regional slang, no vosotros)",
+      "audience": "Hispanics living in the United States",
+      "speech": "Spoken in Spanish with a neutral Latin American accent",
+      "cta": "Escribe \"{{WORD}}\" en los comentarios",
+      "ctaExamples": "RECETA, LIBRO",
+      "whisper": "es"
+    },
+    "en": {
+      "name": "natural, punchy spoken American English",
+      "audience": "an American audience",
+      "speech": "Spoken in English with an American accent",
+      "cta": "Comment \"{{WORD}}\" and I'll send it to you",
+      "ctaExamples": "RECIPE, BOOK",
+      "whisper": "en"
+    }
+  }
 }

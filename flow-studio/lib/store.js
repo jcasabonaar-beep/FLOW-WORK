@@ -23,13 +23,13 @@ function blankWorker() {
   return { state: 'idle', action: '', log: [], paused: false, startedAt: null, endedAt: null };
 }
 
-function create({ title, url, script, setting, ctaWord }) {
+function create({ title, url, script, setting, ctaWord, language }) {
   const id = newId();
   fs.mkdirSync(path.join(jobDir(id), 'ref'), { recursive: true });
   for (const d of ['frames', 'clips', 'edit', 'logs']) fs.mkdirSync(path.join(jobDir(id), d), { recursive: true });
   const job = {
     id, title: title || 'Video ' + id, url: url || '', script: script || '', setting: setting || 'kitchen',
-    ctaWord: ctaWord || 'RECIPE', createdAt: Date.now(),
+    ctaWord: ctaWord || 'RECETA', language: language || require('../config.json').language, createdAt: Date.now(),
     stage: 'capture', // capture → director → frames → review_frames → clips → editor → review_final → done
     status: 'running', // running | paused | waiting_you | done | error
     workers: Object.fromEntries(WORKERS.map((w) => [w, blankWorker()])),
