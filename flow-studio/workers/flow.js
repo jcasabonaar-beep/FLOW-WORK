@@ -195,6 +195,7 @@ async function pickClip(job, c, dest) {
     }
   }
   fs.copyFileSync(best, abs(job, dest));
+  for (const f of cands) fs.unlinkSync(f); // fuera los candidatos descartados
 }
 
 function manual(job, worker, todo) {

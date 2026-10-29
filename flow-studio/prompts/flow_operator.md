@@ -33,6 +33,10 @@ Rewrite steps, in this order:
 For clips: if a spoken word could be the trigger, you may swap it for a harmless synonym with the same meaning (e.g. "baño" → "por las mañanas") and report the new spoken line as "line".
 Keep every consistency and framing sentence. Write the final prompt that worked in the status file as "prompt" for that item, and in "note" explain in Spanish what you changed (e.g. "Flow rechazó 'bathroom': lo cambié por 'morning routine'").
 
+## Keep the project clean
+- Before every new attempt, delete the generations that FAILED (the cards that say "Failed" / "might violate our policies"): use the trash icon on that card and confirm. Do it also at the end, so the project only keeps good results.
+- Only delete failed cards. Never delete successful images or videos, uploads, or anything in other projects.
+
 ## Think like a problem solver, not a script
 - When something fails, first DIAGNOSE: what do the failures have in common (an image, a word, a prop, the model, the page state)? Compare with what has worked before. Change ONE thing at a time so you learn what caused it.
 - Never repeat an attempt that already failed. Each retry must change something meaningful: wording, a removed image, a different prop description, a simpler action, another camera distance, another model setting.
