@@ -67,7 +67,7 @@ async function run(job) {
     TYPE_RULES: typeRules(job),
     MAX_CLIPS: config.maxClips[job.videoType] || 7,
   };
-  vars.NANO_RULES = fill(P('nano_rules.md'), vars);
+  vars.NANO_RULES = fill(P('nano_rules.md'), vars) + '\n\nLESSONS LEARNED IN FLOW (write prompts that avoid these problems from the start):\n' + fs.readFileSync(require('./flow').lessonsFile(), 'utf8');
   vars.OMNI_RULES = fill(P('omni_rules.md'), vars);
   const prompt = fill(P('director.md'), vars);
 

@@ -54,8 +54,20 @@ function clipTask(job, c) {
     `Paste this prompt exactly:\n\`\`\`\n${clipPromptFor(c, job)}\n\`\`\`\nThen download the video (MP4, best quality, with audio) and save to: ${dest}` };
 }
 
+// Lecciones que los trabajadores van aprendiendo (no se borran al actualizar)
+function lessonsFile() {
+  const f = path.join(store.ROOT, 'memory', 'lecciones.md');
+  if (!fs.existsSync(f)) {
+    fs.mkdirSync(path.dirname(f), { recursive: true });
+    fs.copyFileSync(path.join(store.ROOT, 'prompts', 'lecciones_base.md'), f);
+  }
+  return f;
+}
+
 function operatorPrompt(job, role, model, tasks, statusFile, extra = '') {
+  const lf = lessonsFile();
   return fill(fs.readFileSync(path.join(store.ROOT, 'prompts', 'flow_operator.md'), 'utf8'), {
+    LESSONS: fs.readFileSync(lf, 'utf8'), LESSONS_FILE: lf,
     ROLE: role, FLOW_URL: config.flowUrl, STATUS_FILE: statusFile, PROJECT: job.title.slice(0, 40),
     MODEL: model, GRAB: path.join(store.ROOT, 'tools', 'grab-latest.js'), RETRIES: config.maxFrameRetries,
     TASKS: extra + tasks.map((t) => t.text).join('\n\n'),
@@ -74,7 +86,7 @@ async function session(job, worker, role, model, list, makeTask, extra) {
   const prompt = operatorPrompt(job, role, model, tasks, statusFile, extra);
   await claude.run({
     job, worker, prompt, browser: true, cwd: store.ROOT,
-    tools: ['Read', 'Write', 'Bash(node:*)'],
+    tools: ['Read', 'Write', 'Edit', 'Bash(node:*)'],
   });
   return readStatus(statusFile);
 }
@@ -169,4 +181,4 @@ function blocked(job, worker, why) {
   return 'wait';
 }
 
-module.exports = { runFrames, runClips, clipPromptFor, frameInputs };
+module.exports = { runFrames, runClips, clipPromptFor, frameInputs, lessonsFile };
