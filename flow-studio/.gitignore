@@ -1,0 +1,7 @@
+node_modules/
+jobs/*
+!jobs/.gitkeep
+output/
+downloads/
+chrome-profile/
+tools/pw-output/

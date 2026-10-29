@@ -1,0 +1,34 @@
+{
+  "port": 4000,
+  "language": "en",
+  "claudeCmd": "claude",
+  "flowMode": "auto",
+  "flowUrl": "https://labs.google/fx/tools/flow",
+  "chromeDebugPort": 9222,
+  "frameModel": "Nano Banana Pro",
+  "clipModel": "Omni 1.1 Flash",
+  "clipSeconds": 8,
+  "maxWordsPerClip": 20,
+  "maxFrameRetries": 2,
+  "avatar": {
+    "name": "Grandma",
+    "images": ["avatar/avatar_front.png", "avatar/avatar_table.png"],
+    "anchors": "the same heather-gray knit crew-neck sweater with the knitted US flag on the chest, the same natural fair skin tone with real wrinkles and freckles, the same wavy silver-white shoulder-length hair",
+    "voice": "Warm, energetic American grandmother voice in her seventies, bright and enthusiastic, slightly raspy, fast confident delivery"
+  },
+  "settings": {
+    "kitchen": "the modern American kitchen from the avatar images: white flat-panel cabinets, light marble-look tile backsplash, stainless steel range hood, white quartz countertop, small US flags on the counter",
+    "walmart": "standing outside the entrance of a big American discount supermarket with a blue-and-white facade, parking lot and shopping carts behind her, daylight, no readable logos",
+    "target": "standing outside the entrance of a big American supermarket with a red-and-white facade, red spherical bollards and shopping carts, daylight, no readable logos",
+    "supermarket": "inside a bright American supermarket aisle, colorful shelves with plain unbranded products, small US flag in her cart"
+  },
+  "captions": {
+    "font": "Montserrat ExtraBold",
+    "accentFont": "Playfair Display",
+    "size": 92,
+    "wordsPerChunk": 3,
+    "yPercent": 62,
+    "hookSeconds": 2.6
+  },
+  "cta": "Comment \"{{WORD}}\" and I'll send you the recipe"
+}

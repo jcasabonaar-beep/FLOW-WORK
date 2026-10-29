@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Studio</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<aside id="side">
+  <div class="brand">Flow <b>Studio</b></div>
+  <button class="primary wide" id="btnNew">＋ Nuevo video</button>
+  <div class="side-title">Videos</div>
+  <div id="jobList"></div>
+</aside>
+
+<main id="main">
+  <div id="empty" class="empty">
+    <h1>Tus oficinas</h1>
+    <p>Pulsa <b>＋ Nuevo video</b>, pega el link de Instagram y el guion. Los trabajadores hacen el resto y te avisan en las dos paradas: <b>frames</b> y <b>video final</b>.</p>
+  </div>
+  <section id="job" hidden>
+    <header class="job-head">
+      <div>
+        <h1 id="jTitle"></h1>
+        <div class="muted" id="jMeta"></div>
+      </div>
+      <div class="head-actions">
+        <button id="btnPauseAll">⏸ Pausar todo</button>
+        <button id="btnContinue" class="primary">▶ Continuar</button>
+      </div>
+    </header>
+    <ol class="stages" id="stages"></ol>
+    <div id="alert" class="alert" hidden></div>
+    <div class="offices" id="offices"></div>
+    <div id="stagePanel"></div>
+  </section>
+</main>
+
+<dialog id="dlgNew">
+  <form method="dialog" id="formNew">
+    <h2>Nuevo video</h2>
+    <label>Nombre <input name="title" placeholder="Golden milk intestino"></label>
+    <label>Link de Instagram de referencia <input name="url" placeholder="https://www.instagram.com/reel/…"></label>
+    <label>Guion (español o inglés) <textarea name="script" rows="9" required placeholder="Pega aquí el guion"></textarea></label>
+    <div class="row">
+      <label>Escenario <select name="setting" id="selSetting"></select></label>
+      <label>Palabra del CTA <input name="ctaWord" value="RECIPE"></label>
+    </div>
+    <div class="row end">
+      <button value="cancel" formnovalidate>Cancelar</button>
+      <button class="primary" value="ok">Empezar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgOffice">
+  <div class="dlg-head"><h2 id="oTitle"></h2><button onclick="this.closest('dialog').close()">Cerrar</button></div>
+  <pre id="oLog" class="log big"></pre>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>
