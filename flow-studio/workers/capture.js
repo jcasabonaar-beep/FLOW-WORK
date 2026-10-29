@@ -33,10 +33,10 @@ async function run(job) {
   const dur = await duration(video);
   store.log(job, 'capture', `Video de referencia: ${dur.toFixed(1)} s`);
 
-  // Hojas de contacto: 1 miniatura por segundo, 4x3 por hoja, con el segundo escrito
+  // Hojas de contacto: 1 miniatura cada 2 segundos (menos imágenes = menos gasto), 4x3 por hoja, con el segundo escrito
   fs.copyFileSync(path.join(store.ROOT, 'fonts', 'Montserrat-ExtraBold.ttf'), path.join(dir, 'ref', 'font.ttf'));
   await ffmpeg(['-i', 'video.mp4', '-vf',
-    "fps=1,scale=300:-2,drawtext=fontfile=font.ttf:text='%{eif\\:t\\:d}s':x=8:y=8:fontsize=34:fontcolor=yellow:box=1:boxcolor=black@0.6,tile=4x3:padding=4",
+    "fps=1/2,scale=300:-2,drawtext=fontfile=font.ttf:text='%{eif\\:t\\:d}s':x=8:y=8:fontsize=34:fontcolor=yellow:box=1:boxcolor=black@0.6,tile=4x3:padding=4",
     '-q:v', '4', 'sheet_%02d.jpg'], { cwd: path.join(dir, 'ref') });
   const sheets = fs.readdirSync(path.join(dir, 'ref')).filter((f) => /^sheet_\d+\.jpg$/.test(f)).sort();
   job.refDuration = dur;

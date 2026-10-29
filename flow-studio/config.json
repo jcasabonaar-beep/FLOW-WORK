@@ -94,5 +94,24 @@
       "soyclaireholloway"
     ]
   },
-  "scoreModel": "base"
+  "scoreModel": "base",
+  "models": {
+    "_nota": "Modelo y esfuerzo de cada trabajador. Los que manejan Chrome usan uno más ligero para gastar menos límite.",
+    "director": {
+      "model": "",
+      "effort": "medium"
+    },
+    "frames": {
+      "model": "sonnet",
+      "effort": "low"
+    },
+    "clips": {
+      "model": "sonnet",
+      "effort": "low"
+    },
+    "research": {
+      "model": "sonnet",
+      "effort": "low"
+    }
+  }
 }

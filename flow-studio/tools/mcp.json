@@ -4,10 +4,15 @@
       "command": "node",
       "args": [
         "node_modules/@playwright/mcp/cli.js",
-        "--cdp-endpoint", "http://127.0.0.1:9222",
-        "--output-dir", "tools/pw-output",
+        "--cdp-endpoint",
+        "http://127.0.0.1:9222",
+        "--output-dir",
+        "tools/pw-output",
         "--allow-unrestricted-file-access",
-        "--timeout-action", "20000"
+        "--timeout-action",
+        "20000",
+        "--snapshot-mode",
+        "none"
       ]
     }
   }

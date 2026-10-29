@@ -34,6 +34,11 @@ function run({ job, worker, prompt, tools = ['Read', 'Write'], browser = false, 
       allowed.push('mcp__playwright');
     }
     args.push('--allowedTools', allowed.join(','));
+    // Gastar menos: modelo y esfuerzo por trabajador, y sin herramientas que no necesitan
+    const m = (config.models || {})[worker] || {};
+    if (m.model) args.push('--model', m.model);
+    if (m.effort) args.push('--effort', m.effort);
+    args.push('--disallowedTools', 'Skill,Task,Agent,WebSearch,WebFetch,NotebookEdit');
     args.push('--add-dir', store.ROOT);
 
     const promptFile = path.join(store.jobDir(job.id), 'logs', `${worker}-prompt-${Date.now()}.md`);
