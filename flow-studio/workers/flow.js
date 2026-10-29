@@ -27,9 +27,11 @@ function frameInputs(job, c) {
   const bookImg = c.book === 'hand' && inHand.length ? inHand[c.n % inHand.length] : cover;
   const book = c.book && fs.existsSync(bookImg) ? [bookImg] : [];
   if (c.feedback && c.frame) return [abs(job, c.frame), front, ...book];
-  if (c.frameMode === 1) return [ref, front, table, ...book];
+  // Flow rechaza las capturas con personas reales: por defecto la pose va descrita en el prompt
+  const refs = config.uploadReference ? [ref] : [];
+  if (c.frameMode === 1) return [...refs, front, table, ...book];
   const first = job.clips[0];
-  return [ref, first.frame ? abs(job, first.frame) : table, front, ...book];
+  return [...refs, first.frame ? abs(job, first.frame) : table, front, ...book];
 }
 const L = 'ABCDE';
 

@@ -70,5 +70,6 @@
   "maxClips": {
     "venta": 9,
     "crecimiento": 7
-  }
+  },
+  "uploadReference": false
 }
