@@ -76,6 +76,22 @@ async function whisperWords(job, audio, segments, est, pre) {
   }
 }
 
+// Palabra que va en cursiva: la más "importante" (la más larga que no sea una palabra vacía)
+const STOP = new Set('que de la el los las una uno unos unas para con por como pero porque cuando esto esta este eso esa todo toda tienes tengo the and with that this your have you for are'.split(' '));
+function accentIndex(chunk) {
+  let best = -1, len = 4;
+  chunk.forEach((w, j) => { const t = norm(w.w); if (!STOP.has(t) && t.length > len) { best = j; len = t.length; } });
+  return best;
+}
+// Dónde parte la frase en dos líneas (equilibrando letras)
+function lineBreak(chunk) {
+  if (chunk.length < 3) return -1;
+  const total = chunk.reduce((a, w) => a + w.w.length, 0);
+  let acc = 0;
+  for (let j = 0; j < chunk.length - 1; j++) { acc += chunk[j].w.length; if (acc >= total / 2) return j + 1; }
+  return chunk.length - 1;
+}
+
 function hookText(hook) {
   return esc(hook).replace(/\*([^*]+)\*/g, `{\\fn${C.accentFont}\\i1\\fs${Math.round(C.size * 1.45)}}$1{\\fn${C.font}\\i0\\fs${Math.round(C.size * 1.05)}}`);
 }
@@ -86,7 +102,7 @@ function buildAss(job, words, total) {
     '[Script Info]', 'ScriptType: v4.00+', 'PlayResX: 1080', 'PlayResY: 1920', 'WrapStyle: 0', '',
     '[V4+ Styles]',
     'Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding',
-    `Style: Cap,${C.font},${C.size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,0,0,0,0,100,100,0,0,1,2.5,3,5,80,80,0,1`,
+    `Style: Cap,${C.font},${C.size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H8C000000,0,0,0,0,100,100,-1,0,1,0,3,5,60,60,0,1`,
     `Style: Hook,${C.font},${Math.round(C.size * 1.05)},&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,0,0,0,0,100,100,0,0,1,2.5,4,5,70,70,0,1`,
     `Style: Cta,${C.font},${Math.round(C.size * 0.8)},&H00111111,&H00111111,&H0033D7FF,&H0033D7FF,0,0,0,0,100,100,0,0,3,18,0,8,80,80,260,1`,
     '', '[Events]', 'Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text',
@@ -94,22 +110,31 @@ function buildAss(job, words, total) {
   const hookEnd = job.plan && job.plan.hook ? C.hookSeconds : 0;
   if (hookEnd) lines.push(`Dialogue: 1,${assTime(0)},${assTime(hookEnd)},Hook,,0,0,0,,{\\pos(540,${Math.round(1920 * 0.47)})\\fad(80,120)}${hookText(job.plan.hook)}`);
 
-  // Subtítulos palabra por palabra, en grupos de N palabras
+  // Subtítulos estilo "I have *healthy* alternatives": frase de 3-4 palabras en 2 líneas,
+  // la palabra clave en cursiva elegante y más grande; las palabras aparecen según las dice
   const visible = words.filter((w) => w.e > hookEnd);
-  for (let i = 0; i < visible.length; i += C.wordsPerChunk) {
-    const chunk = visible.slice(i, i + C.wordsPerChunk);
+  const N = C.wordsPerChunk || 4;
+  for (let i = 0; i < visible.length; i += N) {
+    const chunk = visible.slice(i, i + N);
+    const acc = accentIndex(chunk);
+    const brk = lineBreak(chunk);
+    const clip = job.clips.find((c) => c.n === chunk[0].clip) || {};
+    // Si ella sostiene el libro en ese clip, los subtítulos suben para no tapar la portada
+    const yy = clip.book === 'hand' || clip.readyClip || clip.frameFrom ? Math.round(1920 * (C.yPercentBook || 49) / 100) : y;
     chunk.forEach((w, k) => {
       const start = Math.max(w.s, hookEnd);
-      const end = k < chunk.length - 1 ? chunk[k + 1].s : (visible[i + C.wordsPerChunk] ? visible[i + C.wordsPerChunk].s : w.e + 0.35);
+      const end = k < chunk.length - 1 ? chunk[k + 1].s : (visible[i + N] ? visible[i + N].s : w.e + 0.35);
       if (end <= start) return;
-      const txt = chunk.slice(0, k + 1).map((x) => esc(x.w)).join(' ');
-      const pop = k === 0 ? '\\fscx88\\fscy88\\t(0,90,\\fscx100\\fscy100)' : '';
-      // Si ella sostiene el libro en ese clip, los subtítulos suben para no tapar la portada
-      const clip = job.clips.find((c) => c.n === w.clip) || {};
-      const yy = clip.book === 'hand' || clip.readyClip || clip.frameFrom ? Math.round(1920 * (C.yPercentBook || 49) / 100) : y;
+      const txt = chunk.map((x, j) => {
+        const hide = j > k ? '{\\alpha&HFF&}' : '{\\alpha&H00&}';
+        const word = j === acc ? `{\\fn${C.accentFont}\\i1\\fs${Math.round(C.size * 1.5)}}${esc(x.w)}{\\fn${C.font}\\i0\\fs${C.size}}` : esc(x.w);
+        return (j === brk ? '\\N' : j ? ' ' : '') + hide + word;
+      }).join('');
+      const pop = k === 0 ? '\\fscx90\\fscy90\\t(0,100,\\fscx100\\fscy100)' : '';
       lines.push(`Dialogue: 0,${assTime(start)},${assTime(end)},Cap,,0,0,0,,{\\pos(540,${yy})${pop}}${txt}`);
     });
   }
+
   // Nunca dos subtítulos a la vez: cada uno termina cuando empieza el siguiente
   const caps = lines.filter((l) => l.startsWith('Dialogue: 0,'));
   const t2s = (t) => { const [h, m, x] = t.split(':'); return +h * 3600 + +m * 60 + +x; };

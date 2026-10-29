@@ -28,8 +28,8 @@
   "captions": {
     "font": "Montserrat ExtraBold",
     "accentFont": "Playfair Display",
-    "size": 92,
-    "wordsPerChunk": 3,
+    "size": 78,
+    "wordsPerChunk": 4,
     "yPercent": 62,
     "hookSeconds": 2.6,
     "ctaBox": false,
