@@ -91,7 +91,7 @@ async function run() {
     const viral = findViral(data).filter((v) => !seen.has(v.url));
     j.seen = [...seen, ...viral.map((v) => v.url)].slice(-500);
     store.log(j, 'research', `📈 ${viral.length} reels nuevos con un salto claro de visitas (los que ya te sugerí no se repiten)`);
-    if (!viral.length) { j.suggestions = []; j.lastRun = Date.now(); store.save(j); setW({ state: 'done', action: 'No hay ningún reel viral nuevo en esas cuentas desde la última búsqueda' }); return; }
+    if (!viral.length) { j.lastRun = Date.now(); store.save(j); setW({ state: 'done', action: 'No hay ningún reel viral nuevo en esas cuentas desde la última búsqueda' }); return; }
 
     for (const [i, item] of viral.entries()) {
       setW({ action: `Descargando y transcribiendo ${i + 1}/${viral.length}…` });
