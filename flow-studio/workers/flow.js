@@ -135,7 +135,8 @@ async function runFrames(job) {
   for (const batch of batches) {
     if (!batch.length) continue;
     store.setWorker(job, 'frames', { action: `Generando frames ${batch.map((c) => c.n).join(', ')} en Flow…` });
-    const st = await session(job, 'frames', 'FRAMES worker', `${config.frameModel} (image generation)`, batch, frameTask);
+    const speed = batch.length > 1 ? 'SPEED: submit ALL the frames of this list one after another without waiting (Flow generates them in parallel), then review and download each one as it finishes. Do not take a screenshot after every click: use snapshots, and screenshots only to judge results.\n\n' : '';
+    const st = await session(job, 'frames', 'FRAMES worker', `${config.frameModel} (image generation)`, batch, frameTask, speed);
     if (st.blocked) return blocked(job, 'frames', st.blocked);
     for (const c of batch) {
       const dest = `frames/frame_${pad(c.n)}.png`;
