@@ -71,7 +71,7 @@ function run({ job, worker, prompt, tools = ['Read', 'Write'], browser = false, 
         }
         if (ev.type === 'result') {
           result = ev.result || '';
-          if (ev.is_error) errText = result || 'error';
+          if (ev.is_error) { errText = result || 'error'; result = ''; }
         }
       }
     });

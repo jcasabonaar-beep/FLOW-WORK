@@ -65,7 +65,7 @@ async function refresh() {
   $('#stages').innerHTML = STAGES.map((s, i) => `<li class="${i < si ? 'done' : i === si ? 'now' : ''} ${s[2] ? 'stop' : ''}">${i < si ? '✓ ' : ''}${s[1]}</li>`).join('');
 
   const al = $('#alert');
-  if (job.error) { al.hidden = false; al.className = 'alert'; al.textContent = '⚠️ ' + job.error; }
+  if (job.error) { al.hidden = false; al.className = job.status === 'waiting_limit' ? 'alert info' : 'alert'; al.textContent = (job.status === 'waiting_limit' ? '⏳ ' : '⚠️ ') + job.error; }
   else if (job.status === 'waiting_you') { al.hidden = false; al.className = 'alert info'; al.textContent = '✋ ' + waitingText(); }
   else al.hidden = true;
 

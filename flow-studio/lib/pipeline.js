@@ -65,6 +65,18 @@ async function drive(id) {
       } catch (e) {
         // Se resuelve solo: reintenta la etapa 2 veces antes de avisarte
         const w = STAGE_WORKER[job.stage];
+        // Límite de uso de Claude: espera y sigue solo cuando se renueve
+        if (/usage limit|limit reached|rate limit|hit your limit|out of extra usage|resets? (at|in)/i.test(e.message)) {
+          job.status = 'waiting_limit';
+          job.error = 'Se acabó el límite de uso de Claude. Sigo solo cuando se renueve (lo intento cada 10 min).';
+          if (w) store.setWorker(job, w, { state: 'paused', action: '⏳ Esperando a que se renueve el límite de Claude' });
+          store.save(job);
+          await wait(10 * 60 * 1000);
+          job.status = 'running';
+          job.error = null;
+          store.save(job);
+          continue;
+        }
         if (e.message === 'Detenido por ti' || tries >= 2) throw e;
         tries++;
         if (w) store.log(job, w, `⚠️ ${e.message.slice(0, 200)} — reintento ${tries}/2 en 20 s`);
