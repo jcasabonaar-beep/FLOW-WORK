@@ -1,0 +1,10 @@
+{
+  "broll_01_libro_paginas.mp4": {
+    "duration": 17.8,
+    "description": "Libro real abierto sobre una mesa de madera al sol. Una mano recorre una página de receta con foto, lista de ingredientes y pasos; luego se pasan las páginas rápido.",
+    "best": [
+      { "from": 0.5, "to": 6.0, "what": "Primer plano de una página de receta: ingredientes, pasos y fotos (ideal para 'cada receta trae la lista de ingredientes...')" },
+      { "from": 12.0, "to": 17.5, "what": "Se pasan las páginas rápido (ideal para 'más de 200 recetas' o 'en el índice tienes todo ordenado')" }
+    ]
+  }
+}

@@ -54,5 +54,5 @@ Write the file `plan.json` in the working folder with exactly this shape, and al
   ]
 }
 ```
-`book` is null, "hand" (she holds the book, cover facing the camera) or "table" (the book lies on the counter/table next to her, cover visible). `broll` is null or {"file": "<file name from the b-roll list>", "start": <seconds into the clip>, "duration": <seconds>} to cut away to that b-roll while her voice keeps playing.
+`book` is null, "hand" (she holds the book, cover facing the camera) or "table" (the book lies on the counter/table next to her, cover visible). `broll` is null or {"file": "<file name from the b-roll list>", "from": <second of the b-roll file to start from>, "start": <seconds into the clip>, "duration": <seconds>} to cut away to that b-roll while her voice keeps playing.
 `clipPrompt` must contain the literal placeholder {{LINE}} (with the double braces) where the spoken line goes, so the producer can edit the line later without rewriting the prompt.

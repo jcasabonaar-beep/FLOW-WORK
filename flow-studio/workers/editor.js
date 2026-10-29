@@ -113,7 +113,7 @@ async function run(job) {
       const bf = path.join(store.ROOT, config.product.brollDir, c.broll.file);
       const bs = Math.max(0, Math.min(len - 0.8, Number(c.broll.start) || 0));
       const bd = Math.max(0.8, Math.min(len - bs, Number(c.broll.duration) || 2));
-      if (fs.existsSync(bf)) broll = { file: bf, start: bs, dur: bd, image: /\.(png|jpe?g|webp)$/i.test(bf) };
+      if (fs.existsSync(bf)) broll = { file: bf, from: Math.max(0, Number(c.broll.from) || 0), start: bs, dur: bd, image: /\.(png|jpe?g|webp)$/i.test(bf) };
     }
     segments.push({ n: c.n, file, line: c.line, start: t, len, cut: [start, end], speechStart: t + (s - start), speechEnd: t + (e - start), audio: await hasAudio(file), broll });
     store.log(job, 'editor', `Clip ${c.n}: voz ${s.toFixed(2)}–${e.toFixed(2)} s de ${dur.toFixed(1)} s`);
@@ -136,7 +136,7 @@ async function run(job) {
       else args.push('-i', sg.broll.file);
       const st = sg.broll.start.toFixed(3), en = (sg.broll.start + sg.broll.dur).toFixed(3);
       parts.push(`[${i}:v]trim=${a.toFixed(3)}:${b.toFixed(3)},setpts=PTS-STARTPTS,${fit}[vb${i}]`);
-      parts.push(`[${k}:v]trim=0:${sg.broll.dur.toFixed(3)},setpts=PTS-STARTPTS+${st}/TB,${fit}${sg.broll.image ? ",zoompan=z='min(zoom+0.0012,1.08)':d=1:s=1080x1920:fps=30" : ''}[br${i}]`);
+      parts.push(`[${k}:v]trim=${sg.broll.image ? 0 : sg.broll.from.toFixed(3)}:${((sg.broll.image ? 0 : sg.broll.from) + sg.broll.dur).toFixed(3)},setpts=PTS-STARTPTS+${st}/TB,${fit}${sg.broll.image ? ",zoompan=z='min(zoom+0.0012,1.08)':d=1:s=1080x1920:fps=30" : ''}[br${i}]`);
       parts.push(`[vb${i}][br${i}]overlay=enable='between(t,${st},${en})':eof_action=pass[v${i}]`);
     } else {
       parts.push(`[${i}:v]trim=${a.toFixed(3)}:${b.toFixed(3)},setpts=PTS-STARTPTS,${fit}[v${i}]`);

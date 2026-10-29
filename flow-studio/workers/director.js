@@ -13,7 +13,11 @@ function fill(text, vars) {
 
 function brolls() {
   const d = path.join(store.ROOT, config.product.brollDir);
-  return fs.existsSync(d) ? fs.readdirSync(d).filter((f) => /\.(mp4|mov|png|jpe?g|webp)$/i.test(f)) : [];
+  if (!fs.existsSync(d)) return [];
+  let info = {};
+  try { info = JSON.parse(fs.readFileSync(path.join(d, 'brolls.json'), 'utf8')); } catch {}
+  return fs.readdirSync(d).filter((f) => /\.(mp4|mov|png|jpe?g|webp)$/i.test(f))
+    .map((f) => info[f] ? `${f} (${info[f].duration} s: ${info[f].description} Best parts: ${info[f].best.map((b) => `${b.from}-${b.to} s ${b.what}`).join('; ')})` : f);
 }
 
 function typeRules(job) {
@@ -27,7 +31,7 @@ function typeRules(job) {
 - The producer APPROVED this pitch, so do not soften it (only shorten it if time is very tight, keeping every fact): "${config.product.pitch}"
   Usually split it into 2 or 3 clips at the end, then the CTA with the word LIBRO ("Comenta LIBRO y te lo mando personalmente").
 - The book must appear: in the pitch clips she holds it ("book": "hand"). In some videos (vary it: about half of them) also show it lying on the table in 1 or 2 earlier clips ("book": "table").
-- B-roll files available in ${path.join(store.ROOT, config.product.brollDir)}: ${b.length ? b.join(', ') : '(none yet)'}. Look at them with the Read tool (images) and use 1 to 3 of them as cutaways during the pitch ("broll"), 1.5 to 3 seconds each, never covering the CTA words.`;
+- B-roll files available in ${path.join(store.ROOT, config.product.brollDir)}: ${b.length ? b.join(' | ') : '(none yet)'}. Use 1 to 3 cutaways during the pitch ("broll"), 1.5 to 3 seconds each, never covering the CTA words. Set "from" to the second of the b-roll file where the cutaway should start (pick from its best parts).`;
 }
 
 async function run(job) {
