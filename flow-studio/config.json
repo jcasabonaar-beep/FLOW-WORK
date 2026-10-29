@@ -56,7 +56,11 @@
     "name": "200 Soluciones Naturales para Problemas Cotidianos",
     "pitch": "En mi libro tienes más de 200 recetas naturales como esta. Funciona como un botiquín natural para resolver problemas: en el índice tienes toda la información ordenada, solo identificas tu problema y eliges la solución que necesitas. Cada receta trae la lista de ingredientes con sus medidas exactas, instrucciones paso a paso, dosis recomendada y notas adicionales.",
     "cover": "product/portada.png",
-    "brollDir": "product/brolls"
+    "brollDir": "product/brolls",
+    "bookInHand": [
+      "product/libro_en_mano_1.png",
+      "product/libro_en_mano_2.png"
+    ]
   },
   "ctaWords": [
     "LIBRO",

@@ -20,8 +20,11 @@ function clipPromptFor(c, job) {
 function frameInputs(job, c) {
   const [front, table] = avatarImgs();
   const ref = abs(job, c.ref);
+  // Libro: en la mano usa una foto de la señora con el libro; en la mesa, la portada
+  const inHand = (config.product.bookInHand || []).map((f) => path.join(store.ROOT, f)).filter((f) => fs.existsSync(f));
   const cover = path.join(store.ROOT, config.product.cover);
-  const book = c.book && fs.existsSync(cover) ? [cover] : [];
+  const bookImg = c.book === 'hand' && inHand.length ? inHand[c.n % inHand.length] : cover;
+  const book = c.book && fs.existsSync(bookImg) ? [bookImg] : [];
   if (c.feedback && c.frame) return [abs(job, c.frame), front, ...book];
   if (c.frameMode === 1) return [ref, front, table, ...book];
   const first = job.clips[0];
@@ -75,6 +78,19 @@ async function session(job, worker, role, model, list, makeTask, extra) {
 
 // Genera los frames pendientes. Devuelve 'ok' | 'wait'
 async function runFrames(job) {
+  // Frames "tal cual": el director puede usar directamente una foto del libro en mano
+  for (const c of job.clips) {
+    if (c.frameFrom && ['pending'].includes(c.frameStatus)) {
+      const src = path.join(store.ROOT, 'product', path.basename(c.frameFrom));
+      if (fs.existsSync(src)) {
+        const dest = `frames/frame_${pad(c.n)}.png`;
+        fs.copyFileSync(src, abs(job, dest));
+        Object.assign(c, { frame: dest, frameStatus: 'done', frameNote: 'Foto del libro usada tal cual', v: Date.now() });
+        store.log(job, 'frames', `📗 Frame ${c.n}: uso ${path.basename(src)} tal cual`);
+      }
+    }
+  }
+  store.save(job);
   const todo = job.clips.filter((c) => ['pending', 'regen'].includes(c.frameStatus));
   if (!todo.length) return job.clips.some((c) => c.frameStatus === 'manual') ? 'wait' : 'ok';
   if (config.flowMode !== 'auto') return manual(job, 'frames', todo);

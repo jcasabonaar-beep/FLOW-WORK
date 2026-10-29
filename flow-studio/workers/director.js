@@ -31,6 +31,7 @@ function typeRules(job) {
 - The producer APPROVED this pitch, so do not soften it (only shorten it if time is very tight, keeping every fact): "${config.product.pitch}"
   Usually split it into 2 or 3 clips at the end, then the CTA with the word LIBRO ("Comenta LIBRO y te lo mando personalmente").
 - The book must appear: in the pitch clips she holds it ("book": "hand"). In some videos (vary it: about half of them) also show it lying on the table in 1 or 2 earlier clips ("book": "table").
+- Ready-made frames of her holding the real book: ${(config.product.bookInHand || []).map((f) => path.basename(f)).join(', ')}. For 1 pitch clip you may set "frameFrom": "<one of those file names>" to use it as the start frame as is (fast and the cover is perfect); vary which one.
 - B-roll files available in ${path.join(store.ROOT, config.product.brollDir)}: ${b.length ? b.join(' | ') : '(none yet)'}. Use 1 to 3 cutaways during the pitch ("broll"), 1.5 to 3 seconds each, never covering the CTA words. Set "from" to the second of the b-roll file where the cutaway should start (pick from its best parts).`;
 }
 
@@ -72,7 +73,7 @@ async function run(job) {
   j.notes = plan.notes || [];
   j.clips = plan.clips.map((c, i) => ({
     n: i + 1, line: c.line, refTime: c.refTime, frameMode: i === 0 ? 1 : 2,
-    framePrompt: c.framePrompt, clipPrompt: c.clipPrompt, book: job.videoType === 'venta' ? (c.book || null) : null, broll: c.broll || null,
+    framePrompt: c.framePrompt, clipPrompt: c.clipPrompt, book: job.videoType === 'venta' ? (c.book || null) : null, broll: c.broll || null, frameFrom: job.videoType === 'venta' ? (c.frameFrom || null) : null,
     frame: null, frameStatus: 'pending', frameNote: '', feedback: '',
     clip: null, clipStatus: 'pending', clipNote: '',
   }));
