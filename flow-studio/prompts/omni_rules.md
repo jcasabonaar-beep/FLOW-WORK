@@ -13,6 +13,7 @@ FIXED RULES, always included:
 - Audio: "No background music, no sound effects; only natural room ambience, the real sounds of the action and her voice."
 - "No text, no captions, no subtitles, no logos, no overlays."
 - Never eat or drink while speaking.
+- "She says the line exactly once, word for word: no repeated words, no extra words before or after it."
 
 HOOK (clip 1, always) and up to 2 other key moments of the script (a reveal, a surprise, the strongest claim): add exactly this, translated into the action you describe: "{{HOOK_STYLE}}" For those clips the camera is handheld with that gentle push-in and pull-back instead of static. Mark them with "hookStyle": true.
 

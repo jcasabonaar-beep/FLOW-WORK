@@ -96,21 +96,81 @@ function buildAss(job, words, total) {
   return lines.join('\n') + '\n';
 }
 
+// Palabras que dice cada clip (si está instalada la transcripción)
+async function clipWords(job) {
+  const dir = store.jobDir(job.id);
+  const out = path.join(dir, 'edit', 'clip_words.json');
+  const files = job.clips.map((c) => path.join(dir, c.clip));
+  try {
+    await exec('python', [path.join(store.ROOT, 'tools', 'words_clips.py'), out, config.languages[job.language || config.language].whisper, config.scoreModel || 'base', ...files]);
+    return JSON.parse(fs.readFileSync(out, 'utf8'));
+  } catch {
+    store.log(job, 'editor', 'No pude transcribir los clips: no quito repeticiones');
+    return {};
+  }
+}
+
+const norm = (w) => w.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9ñ]/g, '');
+const same = (a, b) => a.length === b.length && a.every((w, i) => norm(w.w) === norm(b[i].w));
+
+// Qué trozos del clip se quedan: quita lo que repite el final del clip anterior y las palabras dichas dos veces seguidas
+function cleanRanges(start, end, words, prevWords) {
+  const notes = [];
+  if (!words || !words.length) return { ranges: [[start, end]], notes };
+  const ws = words.filter((w) => w.e > start && w.s < end);
+  if (prevWords && prevWords.length) {
+    for (let k = Math.min(5, ws.length, prevWords.length); k >= 1; k--) {
+      const tail = prevWords.slice(-k);
+      const head = ws.slice(0, k);
+      if (same(tail, head) && (k > 1 || norm(head[0].w).length > 3)) {
+        start = Math.max(start, head[k - 1].e + 0.03);
+        notes.push(`repetía "${head.map((w) => w.w).join(' ')}" del clip anterior: lo corto`);
+        ws.splice(0, k);
+        break;
+      }
+    }
+  }
+  const cuts = [];
+  for (let i = 0; i < ws.length; i++) {
+    for (let n = 4; n >= 1; n--) {
+      const a = ws.slice(i, i + n), b = ws.slice(i + n, i + 2 * n);
+      if (b.length === n && same(a, b) && (n > 1 || norm(a[0].w).length > 2)) {
+        cuts.push([Math.max(start, a[0].s - 0.02), b[0].s - 0.02]);
+        notes.push(`decía dos veces "${a.map((w) => w.w).join(' ')}": quito la primera`);
+        i += n - 1;
+        break;
+      }
+    }
+  }
+  const ranges = [];
+  let cur = start;
+  for (const [a, b] of cuts) { if (a - cur > 0.15) ranges.push([cur, a]); cur = Math.max(cur, b); }
+  if (end - cur > 0.15) ranges.push([cur, end]);
+  return { ranges: ranges.length ? ranges : [[start, end]], notes };
+}
+
 async function run(job) {
   const dir = store.jobDir(job.id);
   const edit = path.join(dir, 'edit');
   fs.mkdirSync(path.join(edit, 'fonts'), { recursive: true });
   for (const f of fs.readdirSync(path.join(store.ROOT, 'fonts'))) fs.copyFileSync(path.join(store.ROOT, 'fonts', f), path.join(edit, 'fonts', f));
 
-  // 1) Medir la voz de cada clip
+  // 1) Medir la voz de cada clip y buscar palabras repetidas
+  const heard = await clipWords(job);
   const segments = [];
   let t = 0;
+  let prevWords = null;
   for (const c of job.clips) {
     const file = path.join(dir, c.clip);
     const [s, e, dur] = await speechBounds(file);
-    const start = Math.max(0, s - 0.12);
+    let start = Math.max(0, s - 0.12);
     const end = Math.min(dur, e + 0.22);
-    const len = Math.max(0.8, end - start);
+    const words = heard[file] || null;
+    const { ranges, notes } = cleanRanges(start, end, words, prevWords);
+    for (const n of notes) store.log(job, 'editor', `✂️ Clip ${c.n}: ${n}`);
+    prevWords = words;
+    start = ranges[0][0];
+    const len = Math.max(0.8, ranges.reduce((a, r) => a + r[1] - r[0], 0));
     let broll = null;
     if (c.broll && c.broll.file) {
       const bf = path.join(store.ROOT, config.product.brollDir, c.broll.file);
@@ -118,7 +178,7 @@ async function run(job) {
       const bd = Math.max(0.8, Math.min(len - bs, Number(c.broll.duration) || 2));
       if (fs.existsSync(bf)) broll = { file: bf, from: Math.max(0, Number(c.broll.from) || 0), start: bs, dur: bd, image: /\.(png|jpe?g|webp)$/i.test(bf) };
     }
-    segments.push({ n: c.n, file, line: c.line, start: t, len, cut: [start, end], speechStart: t + (s - start), speechEnd: t + (e - start), audio: await hasAudio(file), broll });
+    segments.push({ n: c.n, file, line: c.line, start: t, len, cut: [start, end], ranges, speechStart: t + Math.max(0, s - start), speechEnd: t + len - 0.22, audio: await hasAudio(file), broll });
     store.log(job, 'editor', `Clip ${c.n}: voz ${s.toFixed(2)}–${e.toFixed(2)} s de ${dur.toFixed(1)} s`);
     t += len;
   }
@@ -130,23 +190,34 @@ async function run(job) {
   segments.forEach((sg) => args.push('-i', sg.file));
   let extra = segments.length;
   segments.forEach((sg, i) => {
-    const [a, b] = sg.cut;
     const fit = 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,setsar=1';
+    // Trozos que se quedan del clip (sin las palabras repetidas)
+    const R = sg.ranges;
+    const vOut = sg.broll ? `vb${i}` : `v${i}`;
+    if (R.length === 1) {
+      parts.push(`[${i}:v]trim=${R[0][0].toFixed(3)}:${R[0][1].toFixed(3)},setpts=PTS-STARTPTS,${fit}[${vOut}]`);
+    } else {
+      parts.push(`[${i}:v]split=${R.length}${R.map((_, k) => `[s${i}_${k}]`).join('')}`);
+      R.forEach((r, k) => parts.push(`[s${i}_${k}]trim=${r[0].toFixed(3)}:${r[1].toFixed(3)},setpts=PTS-STARTPTS,${fit}[p${i}_${k}]`));
+      parts.push(`${R.map((_, k) => `[p${i}_${k}]`).join('')}concat=n=${R.length}:v=1:a=0[${vOut}]`);
+    }
     if (sg.broll) {
       // Recorte del b-roll encima del clip, la voz sigue sonando
       const k = extra++;
       if (sg.broll.image) args.push('-loop', '1', '-t', sg.broll.dur.toFixed(3), '-i', sg.broll.file);
       else args.push('-i', sg.broll.file);
       const st = sg.broll.start.toFixed(3), en = (sg.broll.start + sg.broll.dur).toFixed(3);
-      parts.push(`[${i}:v]trim=${a.toFixed(3)}:${b.toFixed(3)},setpts=PTS-STARTPTS,${fit}[vb${i}]`);
       parts.push(`[${k}:v]trim=${sg.broll.image ? 0 : sg.broll.from.toFixed(3)}:${((sg.broll.image ? 0 : sg.broll.from) + sg.broll.dur).toFixed(3)},setpts=PTS-STARTPTS+${st}/TB,${fit}${sg.broll.image ? ",zoompan=z='min(zoom+0.0012,1.08)':d=1:s=1080x1920:fps=30" : ''}[br${i}]`);
       parts.push(`[vb${i}][br${i}]overlay=enable='between(t,${st},${en})':eof_action=pass[v${i}]`);
-    } else {
-      parts.push(`[${i}:v]trim=${a.toFixed(3)}:${b.toFixed(3)},setpts=PTS-STARTPTS,${fit}[v${i}]`);
     }
-    parts.push(sg.audio
-      ? `[${i}:a]atrim=${a.toFixed(3)}:${b.toFixed(3)},asetpts=PTS-STARTPTS,aresample=48000,aformat=channel_layouts=stereo,afade=t=in:d=0.03,afade=t=out:st=${Math.max(0, b - a - 0.05).toFixed(3)}:d=0.05[a${i}]`
-      : `anullsrc=r=48000:cl=stereo,atrim=0:${(b - a).toFixed(3)}[a${i}]`);
+    const afmt = (r) => `atrim=${r[0].toFixed(3)}:${r[1].toFixed(3)},asetpts=PTS-STARTPTS,aresample=48000,aformat=channel_layouts=stereo,afade=t=in:d=0.03,afade=t=out:st=${Math.max(0, r[1] - r[0] - 0.05).toFixed(3)}:d=0.05`;
+    if (!sg.audio) parts.push(`anullsrc=r=48000:cl=stereo,atrim=0:${sg.len.toFixed(3)}[a${i}]`);
+    else if (R.length === 1) parts.push(`[${i}:a]${afmt(R[0])}[a${i}]`);
+    else {
+      parts.push(`[${i}:a]asplit=${R.length}${R.map((_, k) => `[as${i}_${k}]`).join('')}`);
+      R.forEach((r, k) => parts.push(`[as${i}_${k}]${afmt(r)}[ap${i}_${k}]`));
+      parts.push(`${R.map((_, k) => `[ap${i}_${k}]`).join('')}concat=n=${R.length}:v=0:a=1[a${i}]`);
+    }
   });
   const joined = segments.map((_, i) => `[v${i}][a${i}]`).join('');
   parts.push(`${joined}concat=n=${segments.length}:v=1:a=1[vc][ac]`);
@@ -170,4 +241,4 @@ async function run(job) {
   store.save(job);
 }
 
-module.exports = { run, buildAss, estimateWords };
+module.exports = { run, buildAss, estimateWords, cleanRanges };
