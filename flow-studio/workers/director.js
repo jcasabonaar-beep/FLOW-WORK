@@ -82,7 +82,7 @@ async function run(job) {
   j.notes = plan.notes || [];
   j.clips = plan.clips.map((c, i) => ({
     n: i + 1, line: c.line, refTime: c.refTime, frameMode: i === 0 ? 1 : 2,
-    framePrompt: c.framePrompt, clipPrompt: c.clipPrompt, book: job.videoType === 'venta' ? (c.book || null) : null, broll: c.broll || null, frameFrom: job.videoType === 'venta' ? (c.frameFrom || null) : null, readyClip: job.videoType === 'venta' ? (c.readyClip || null) : null,
+    framePrompt: c.framePrompt, clipPrompt: c.clipPrompt, book: job.videoType === 'venta' ? (c.book || null) : null, broll: c.broll || null, frameFrom: job.videoType === 'venta' ? (c.frameFrom || null) : null, readyClip: job.videoType === 'venta' ? (c.readyClip || null) : null, sameFrameAs: c.sameFrameAs && c.sameFrameAs < i + 1 ? c.sameFrameAs : null,
     frame: null, frameStatus: 'pending', frameNote: '', feedback: '',
     clip: null, clipStatus: 'pending', clipNote: '',
   }));
@@ -95,7 +95,7 @@ async function run(job) {
 // Segunda pasada: mira cada referencia a tamaño completo y ajusta la composición del prompt
 async function layout(job) {
   const dir = store.jobDir(job.id);
-  const list = job.clips.filter((c) => c.ref && !c.frameFrom && !c.readyClip);
+  const list = job.clips.filter((c) => c.ref && !c.frameFrom && !c.readyClip && !c.sameFrameAs);
   if (!list.length) return;
   const clips = list.map((c) => `### Clip ${c.n}\nReference: ${path.join(dir, c.ref)}\nCurrent prompt:\n${c.framePrompt}`).join('\n\n');
   store.log(job, 'director', '📐 Ajustando tamaños y distancias de cada escena con las referencias a tamaño completo…');

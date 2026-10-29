@@ -102,6 +102,19 @@ async function session(job, worker, role, model, list, makeTask, extra) {
   return readStatus(statusFile);
 }
 
+// Clips que siguen el mismo plano: copian el frame del primero en vez de generar otro
+function shareFrames(job) {
+  for (const c of job.clips) {
+    if (!c.sameFrameAs || c.frameStatus !== 'pending') continue;
+    const src = job.clips.find((x) => x.n === c.sameFrameAs);
+    if (src && src.frame && fs.existsSync(abs(job, src.frame))) {
+      const dest = `frames/frame_${pad(c.n)}.png`;
+      fs.copyFileSync(abs(job, src.frame), abs(job, dest));
+      Object.assign(c, { frame: dest, frameStatus: 'done', frameNote: `Mismo frame que el clip ${src.n}`, v: Date.now() });
+    }
+  }
+}
+
 // Genera los frames pendientes. Devuelve 'ok' | 'wait'
 async function runFrames(job) {
   // Clips ya hechos: se usan tal cual (frame = su primer fotograma)
@@ -128,8 +141,9 @@ async function runFrames(job) {
       }
     }
   }
+  shareFrames(job);
   store.save(job);
-  const todo = job.clips.filter((c) => ['pending', 'regen'].includes(c.frameStatus));
+  const todo = job.clips.filter((c) => ['pending', 'regen'].includes(c.frameStatus) && !(c.sameFrameAs && c.frameStatus === 'pending'));
   if (!todo.length) return job.clips.some((c) => c.frameStatus === 'manual') ? 'wait' : 'ok';
   if (config.flowMode !== 'auto') return manual(job, 'frames', todo);
 
@@ -155,8 +169,10 @@ async function runFrames(job) {
         if (it.prompt) c.framePrompt = it.prompt;
       }
     }
+    shareFrames(job);
     store.save(job);
   }
+  shareFrames(job);
   return job.clips.some((c) => c.frameStatus === 'manual') ? 'wait' : 'ok';
 }
 
@@ -216,4 +232,4 @@ function blocked(job, worker, why) {
   return 'wait';
 }
 
-module.exports = { runFrames, runClips, clipPromptFor, frameInputs, lessonsFile };
+module.exports = { shareFrames, runFrames, runClips, clipPromptFor, frameInputs, lessonsFile };

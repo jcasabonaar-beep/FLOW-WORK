@@ -58,4 +58,5 @@ Write the file `plan.json` in the working folder with exactly this shape, and al
 }
 ```
 `book` is null, "hand" (she holds the book, cover facing the camera) or "table" (the book lies on the counter/table next to her, cover visible). `broll` is null or {"file": "<file name from the b-roll list>", "from": <second of the b-roll file to start from>, "start": <seconds into the clip>, "duration": <seconds>} to cut away to that b-roll while her voice keeps playing.
+If several clips continue the SAME shot of the reference (same pose and framing, e.g. the 3-4 pitch clips where she keeps holding the book), they must share one start frame: give the first of them its frame normally and set "sameFrameAs": <n of that first clip> on the others (no new image is generated for them; each one still gets its own clipPrompt for its own line).
 `clipPrompt` must contain the literal placeholder {{LINE}} (with the double braces) where the spoken line goes, so the producer can edit the line later without rewriting the prompt.

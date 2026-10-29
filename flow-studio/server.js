@@ -135,6 +135,13 @@ async function api(req, res, url) {
       for (const k of ['line', 'framePrompt', 'clipPrompt', 'feedback']) if (k in body) c[k] = body[k];
       if (body.regenFrame) c.frameStatus = 'regen';
       if (body.keepFrame) { c.frameStatus = 'done'; c.feedback = ''; }
+      if (body.copyFrameFrom) {
+        const src = job.clips.find((x) => x.n === parseInt(body.copyFrameFrom, 10));
+        if (!src || !src.frame) return send(res, 400, { error: 'Ese clip todavía no tiene frame' });
+        const dest = `frames/frame_${pad(c.n)}.png`;
+        fs.copyFileSync(path.join(store.jobDir(job.id), src.frame), path.join(store.jobDir(job.id), dest));
+        Object.assign(c, { frame: dest, frameStatus: 'done', feedback: '', frameNote: `Mismo frame que el clip ${src.n}`, v: Date.now() });
+      }
       if (body.freshFrame) Object.assign(c, { frameStatus: 'regen', feedback: '', frame: null, frameNote: 'Se rehace desde cero' });
       if ('regenClip' in body) c.clipStatus = body.regenClip ? 'regen' : (c.clip ? 'done' : c.clipStatus);
       store.save(job);

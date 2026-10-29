@@ -260,6 +260,7 @@ function cardsHtml(mode) {
           <button class="small ${c.frameStatus !== 'regen' ? 'good' : ''}" data-ok="${c.n}">✓ Vale</button>
           <button class="small ${c.frameStatus === 'regen' ? 'primary' : ''}" data-chg="${c.n}">✎ Cambiar</button>
           <button class="small" data-fresh="${c.n}">↻ Desde cero</button>
+          <select class="small" data-same="${c.n}" style="width:auto"><option value="">⧉ Igual que…</option>${job.clips.filter((x) => x.n !== c.n && x.frame).map((x) => `<option value="${x.n}">clip ${x.n}</option>`).join('')}</select>
           <label class="small" style="margin:0"><button class="small" onclick="this.nextElementSibling.click()">⬆ Subir el mío</button><input type="file" accept="image/*" hidden data-up="frame" data-n="${c.n}"></label>
         </div>
         <textarea rows="2" data-fb="${c.n}" placeholder="Qué cambiar: ej. la cara más cerca, quita el texto del bote…" ${c.frameStatus === 'regen' ? '' : 'hidden'}>${esc(c.feedback)}</textarea>` : ''}
@@ -287,6 +288,7 @@ function bindCards() {
     panelSig = '';
     refresh();
   });
+  document.querySelectorAll('[data-same]').forEach((sel) => sel.onchange = () => sel.value && api(`jobs/${job.id}/clip/${n(sel, 'same')}`, { copyFrameFrom: sel.value }).then(() => { panelSig = ''; refresh(); }));
   document.querySelectorAll('[data-fresh]').forEach((b) => b.onclick = () => api(`jobs/${job.id}/clip/${n(b, 'fresh')}`, { freshFrame: true }).then(() => { panelSig = ''; refresh(); }));
   document.querySelectorAll('[data-chg]').forEach((b) => b.onclick = () => {
     const ta = document.querySelector(`[data-fb="${n(b, 'chg')}"]`);
