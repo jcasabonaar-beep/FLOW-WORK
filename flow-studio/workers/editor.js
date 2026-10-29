@@ -92,11 +92,29 @@ function lineBreak(chunk) {
   return chunk.length - 1;
 }
 
+// Gráfico "versus": línea en el centro, dos etiquetas y las pegatinas que van apareciendo a cada lado
+function versusLayout(job, segments) {
+  const ov = job.plan && job.plan.overlay;
+  if (!ov || ov.type !== 'versus' || !ov.items || !ov.items.length) return null;
+  const size = 160, top = 1110, gap = 215;
+  const count = { left: 0, right: 0 };
+  const items = ov.items.map((it) => {
+    const seg = segments.find((sg) => sg.n === it.clip) || segments[0];
+    const side = it.side === 'left' ? 'left' : 'right';
+    const idx = count[side]++;
+    const col = idx % 2, row = Math.floor(idx / 2);
+    const x = side === 'left' ? [400, 215][col] : [680, 865][col];
+    return { ...it, side, x, y: top + row * gap, t: seg.start + 0.3 };
+  });
+  const rows = Math.max(Math.ceil(count.left / 2), Math.ceil(count.right / 2), 1);
+  return { ...ov, items, size, t0: Math.min(...items.map((i) => i.t)), lineTop: 990, lineH: 140 + rows * gap, captionY: Math.min(1840, top + rows * gap + 40) };
+}
+
 function hookText(hook) {
   return esc(hook).replace(/\*([^*]+)\*/g, `{\\fn${C.accentFont}\\i1\\fs${Math.round(C.size * 1.45)}}$1{\\fn${C.font}\\i0\\fs${Math.round(C.size * 1.05)}}`);
 }
 
-function buildAss(job, words, total) {
+function buildAss(job, words, total, segs) {
   const y = Math.round(1920 * C.yPercent / 100);
   const lines = [
     '[Script Info]', 'ScriptType: v4.00+', 'PlayResX: 1080', 'PlayResY: 1920', 'WrapStyle: 0', '',
@@ -108,6 +126,16 @@ function buildAss(job, words, total) {
     '', '[Events]', 'Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text',
   ];
   const hookEnd = job.plan && job.plan.hook ? C.hookSeconds : 0;
+  const ov = versusLayout(job, segs || []);
+  if (ov) {
+    lines.splice(lines.indexOf('[Events]'), 0,
+      `Style: VsL,${C.font},62,&H00FFFFFF,&H00FFFFFF,&H003030E0,&H003030E0,0,0,0,0,100,100,0,0,3,14,0,5,0,0,0,1`,
+      `Style: VsR,${C.font},62,&H00FFFFFF,&H00FFFFFF,&H0040B030,&H0040B030,0,0,0,0,100,100,0,0,3,14,0,5,0,0,0,1`,
+      `Style: VsItem,${C.font},34,&H00FFFFFF,&H00FFFFFF,&H00000000,&H8C000000,0,0,0,0,100,100,0,0,1,2,2,5,0,0,0,1`, '');
+    lines.push(`Dialogue: 3,${assTime(ov.t0)},${assTime(total)},VsL,,0,0,0,,{\\pos(330,1040)\\fad(150,0)}${esc(ov.left || '')}`);
+    lines.push(`Dialogue: 3,${assTime(ov.t0)},${assTime(total)},VsR,,0,0,0,,{\\pos(750,1040)\\fad(150,0)}${esc(ov.right || '')}`);
+    for (const it of ov.items) lines.push(`Dialogue: 3,${assTime(it.t)},${assTime(total)},VsItem,,0,0,0,,{\\pos(${it.x},${it.y + ov.size + 22})\\fad(120,0)}${esc(it.label || '')}`);
+  }
   if (hookEnd) lines.push(`Dialogue: 1,${assTime(0)},${assTime(hookEnd)},Hook,,0,0,0,,{\\pos(540,${Math.round(1920 * 0.47)})\\fad(80,120)}${hookText(job.plan.hook)}`);
 
   // Subtítulos estilo "I have *healthy* alternatives": frase de 3-4 palabras en 2 líneas,
@@ -120,7 +148,7 @@ function buildAss(job, words, total) {
     const brk = lineBreak(chunk);
     const clip = job.clips.find((c) => c.n === chunk[0].clip) || {};
     // Si ella sostiene el libro en ese clip, los subtítulos suben para no tapar la portada
-    const yy = clip.book === 'hand' || clip.readyClip || clip.frameFrom ? Math.round(1920 * (C.yPercentBook || 49) / 100) : y;
+    const yy = ov && chunk[0].s >= ov.t0 - 0.5 ? ov.captionY : clip.book === 'hand' || clip.readyClip || clip.frameFrom ? Math.round(1920 * (C.yPercentBook || 49) / 100) : y;
     chunk.forEach((w, k) => {
       const start = Math.max(w.s, hookEnd);
       const end = k < chunk.length - 1 ? chunk[k + 1].s : (visible[i + N] ? visible[i + N].s : w.e + 0.35);
@@ -292,11 +320,27 @@ async function run(job) {
   const est = estimateWords(segments);
   // Reutiliza la transcripción de los clips (no vuelve a transcribir el video entero)
   const words = await whisperWords(job, path.join(edit, 'joined.mp4'), segments, est, wordsOnTimeline(segments, heard));
-  fs.writeFileSync(path.join(edit, 'captions.ass'), buildAss(job, words, total));
+  fs.writeFileSync(path.join(edit, 'captions.ass'), buildAss(job, words, total, segments));
 
-  // 4) Quemar hook + subtítulos + CTA
-  store.setWorker(job, 'editor', { action: 'Poniendo hook, subtítulos y CTA…' });
-  await ffmpeg(['-i', 'joined.mp4', '-vf', 'ass=captions.ass:fontsdir=fonts', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18',
+  // 4) Quemar gráficos (si los hay) + hook + subtítulos
+  store.setWorker(job, 'editor', { action: 'Poniendo gráficos, hook y subtítulos…' });
+  const ov = versusLayout(job, segments);
+  const inputs = ['-i', 'joined.mp4'];
+  const fc = [];
+  let last = '0:v';
+  if (ov) {
+    fc.push(`[0:v]drawbox=x=537:y=${ov.lineTop}:w=6:h=${ov.lineH}:color=white@0.95:t=fill:enable='gte(t,${ov.t0.toFixed(2)})'[g0]`);
+    last = 'g0';
+    ov.items.filter((it) => it.image).forEach((it, k) => {
+      inputs.push('-i', path.join(dir, it.image));
+      const r = ov.size / 2;
+      fc.push(`[${k + 1}:v]scale=${ov.size}:${ov.size}:force_original_aspect_ratio=increase,crop=${ov.size}:${ov.size},format=rgba,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='if(lte(hypot(X-${r},Y-${r}),${r - 2}),255,0)'[st${k}]`);
+      fc.push(`[${last}][st${k}]overlay=x=${it.x - r}:y=${it.y}:enable='gte(t,${it.t.toFixed(2)})'[g${k + 1}]`);
+      last = `g${k + 1}`;
+    });
+  }
+  fc.push(`[${last}]ass=captions.ass:fontsdir=fonts[vout]`);
+  await ffmpeg([...inputs, '-filter_complex', fc.join(';'), '-map', '[vout]', '-map', '0:a', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18',
     '-pix_fmt', 'yuv420p', '-c:a', 'copy', '-movflags', '+faststart', 'final.mp4'], { cwd: edit });
   job.output = 'edit/final.mp4';
   job.outputV = Date.now();

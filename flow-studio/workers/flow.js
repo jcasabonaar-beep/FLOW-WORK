@@ -117,6 +117,27 @@ function shareFrames(job) {
   }
 }
 
+// Pegatinas para los gráficos de edición (p. ej. la comida de "Engorda / Adelgaza")
+async function runStickers(job) {
+  const ov = job.plan && job.plan.overlay;
+  if (!ov || !ov.items) return;
+  fs.mkdirSync(abs(job, 'stickers'), { recursive: true });
+  const todo = ov.items.map((it, k) => ({ it, k, dest: abs(job, `stickers/item_${pad(k + 1)}.png`) })).filter((x) => !fs.existsSync(x.dest));
+  if (!todo.length) return;
+  store.setWorker(job, 'frames', { action: `Haciendo ${todo.length} pegatinas para los gráficos…` });
+  const tasks = todo.map(({ it, dest }) => ({ dest, text: `### Sticker ${it.label}\nNo images to upload. Aspect ratio 1:1 (square), 1 output.\nPrompt: "Appetizing product photo of ${it.sticker}, centered, filling the frame, isolated on a plain pure white background, soft studio light, no text, no logos."\nThen download and save to: ${dest}` }));
+  const statusFile = abs(job, 'stickers/status.json');
+  const prompt = operatorPrompt(job, 'FRAMES worker', `${config.frameModel} (image generation)`, tasks, statusFile, 'Submit all stickers one after another, then download each from the grid. These are simple images: no quality retries needed.\n\n');
+  try {
+    await require('../lib/chrome').ensure(job, 'frames');
+    await claude.run({ job, worker: 'frames', prompt, browser: true, cwd: store.ROOT, tools: ['Read', 'Write', 'Edit', 'Bash(node:*)'] });
+  } catch (e) {
+    store.log(job, 'frames', '⚠️ No pude hacer las pegatinas (pondré solo el texto): ' + e.message.slice(0, 100));
+  }
+  for (const k of ov.items.keys()) if (fs.existsSync(abs(job, `stickers/item_${pad(k + 1)}.png`))) ov.items[k].image = `stickers/item_${pad(k + 1)}.png`;
+  store.save(job);
+}
+
 // Genera los frames pendientes. Devuelve 'ok' | 'wait'
 async function runFrames(job) {
   // Clips ya hechos: se usan tal cual (frame = su primer fotograma)
@@ -175,6 +196,7 @@ async function runFrames(job) {
     store.save(job);
   }
   shareFrames(job);
+  await runStickers(job);
   return job.clips.some((c) => c.frameStatus === 'manual') ? 'wait' : 'ok';
 }
 

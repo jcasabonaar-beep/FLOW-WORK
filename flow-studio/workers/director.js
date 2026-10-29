@@ -79,7 +79,7 @@ async function run(job) {
   const plan = fs.existsSync(planFile) ? JSON.parse(fs.readFileSync(planFile, 'utf8')) : claude.extractJson(text);
 
   const j = store.load(job.id);
-  j.plan = { hook: plan.hook, ctaWord: plan.ctaWord || job.ctaWord };
+  j.plan = { hook: plan.hook, ctaWord: plan.ctaWord || job.ctaWord, overlay: plan.overlay && plan.overlay.items && plan.overlay.items.length ? plan.overlay : null };
   j.notes = plan.notes || [];
   j.clips = plan.clips.map((c, i) => ({
     n: i + 1, line: c.line, refTime: c.refTime, frameMode: i === 0 ? 1 : 2,

@@ -60,6 +60,8 @@ async function refresh() {
   $('#jMeta').textContent = `${job.videoType === 'venta' ? '💰 Venta' : '🚀 Crecimiento'} · ${new Date(job.createdAt).toLocaleString()} · ${job.clips.length || '?'} clips · ${mins} min de trabajo${job.url ? ' · ' : ''}`;
   if (job.url) $('#jMeta').insertAdjacentHTML('beforeend', `<a href="${esc(job.url)}" target="_blank" style="color:#93c5fd">referencia</a>`);
   $('#btnPauseAll').textContent = job.paused || job.status === 'paused' ? '▶ Reanudar' : '⏹ Parar ahora';
+  $('#btnResetFrames').hidden = job.running || !job.clips.length;
+  $('#btnResetPlan').hidden = job.running || !job.clips.length;
   $('#btnPauseAll').hidden = !job.paused && job.status !== 'paused' && !job.running;
   const canContinue = !job.running && ['error', 'stopped', 'waiting_you'].includes(job.status) && !['review_frames', 'review_final', 'done'].includes(job.stage);
   $('#btnContinue').hidden = !canContinue;
@@ -413,3 +415,6 @@ $('#btnRunIdeas').onclick = async () => {
 };
 $('#btnStopIdeas').onclick = () => api('research/stop', {}).then(refreshIdeas);
 $('#inAccounts').onchange = () => api('research/accounts', { accounts: $('#inAccounts').value.split(/[\n,]+/) });
+
+$('#btnResetFrames').onclick = () => confirm('¿Borrar TODOS los frames y clips de este video y hacerlos de nuevo con el mismo plan?') && api('jobs/' + job.id + '/reset', { from: 'frames' }).then(() => { panelSig = ''; refresh(); });
+$('#btnResetPlan').onclick = () => confirm('¿Borrar el plan, los frames y los clips y que el Director lo rehaga con las reglas nuevas? (el guion y la referencia se mantienen)') && api('jobs/' + job.id + '/reset', { from: 'director' }).then(() => { panelSig = ''; refresh(); });

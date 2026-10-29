@@ -35,6 +35,12 @@ Script sent by the producer (translate or adapt it to the video language if need
 9. The hook is the most important part of the video: clip 1 (frame and clip) must be the most striking image and line of the whole video.
 10. Write the hook in the video language: the first 3 to 6 words of clip 1 as on-screen text, with the 1 or 2 key words wrapped in *asterisks* (they will be shown in elegant italic), e.g. "Así es tu *intestino*".
 
+## Edit graphics in the reference
+Look carefully: many references add GRAPHICS in editing (stickers of food, labels like "Engorda / Adelgaza", a dividing line, arrows, emojis, checkmarks). Those are NOT part of the scene: never put them in the frame prompts and never make her hold those objects unless she physically holds them in the reference. In those clips she simply talks to the camera in the setting.
+If the reference uses a two-column comparison (a center line with two labels and small images placed on each side as each item is mentioned), describe it in `overlay` so our editor rebuilds it:
+"overlay": {"type": "versus", "left": "Engorda", "right": "Adelgaza", "items": [{"clip": 1, "side": "right", "label": "Arroz blanco", "sticker": "a ceramic bowl of cooked white rice"}]}
+(`side` is "left" or "right" as in the reference; `sticker` is a short English description to generate the small image; one item per food, in order.) If there are no edit graphics, set "overlay": null.
+
 ## Frame prompt rules (Nano Banana Pro)
 {{NANO_RULES}}
 
@@ -50,6 +56,7 @@ Write the file `plan.json` in the working folder with exactly this shape, and al
   "hook": "Así es tu *intestino*",
   "ctaWord": "{{CTA_WORD}}",
   "notes": ["Changed 'empties completely' to 'helps me feel lighter' (health claim)"],
+  "overlay": null,
   "clips": [
     {
       "n": 1,

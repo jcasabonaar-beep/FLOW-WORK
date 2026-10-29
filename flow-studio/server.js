@@ -136,6 +136,30 @@ async function api(req, res, url) {
       store.save(job);
       if (!pipeline.active.has(job.id) && !['review_frames', 'review_final', 'done'].includes(job.stage)) pipeline.drive(job.id);
       return send(res, 200, { ok: true });
+    case 'reset': {
+      // Rehacer desde cero los frames (con el mismo plan) o el plan entero con las reglas nuevas
+      if (pipeline.active.has(job.id)) return send(res, 400, { error: 'Primero pulsa Parar ahora' });
+      const dir = store.jobDir(job.id);
+      for (const sub of ['frames', 'clips', 'edit']) {
+        const d = path.join(dir, sub);
+        if (fs.existsSync(d)) for (const f of fs.readdirSync(d)) { const p2 = path.join(d, f); if (fs.statSync(p2).isFile()) fs.unlinkSync(p2); }
+      }
+      if (body.from === 'director') {
+        for (const f of ['plan.json', 'layout.json']) if (fs.existsSync(path.join(dir, f))) fs.unlinkSync(path.join(dir, f));
+        if (fs.existsSync(path.join(dir, 'stickers'))) for (const f of fs.readdirSync(path.join(dir, 'stickers'))) fs.unlinkSync(path.join(dir, 'stickers', f));
+        Object.assign(job, { clips: [], plan: null, notes: [], stage: 'director' });
+        store.log(job, 'director', '↻ Plan borrado: lo rehago con las reglas nuevas');
+      } else {
+        for (const c of job.clips) Object.assign(c, { frame: null, frameStatus: 'pending', frameNote: '', feedback: '', clip: null, clipStatus: 'pending', clipNote: '', clipRetried: false, skip: false });
+        job.stage = 'frames';
+        store.log(job, 'frames', '↻ Frames borrados: los hago de nuevo');
+      }
+      for (const w of ['frames', 'clips', 'editor']) Object.assign(job.workers[w], { state: 'idle', action: '' });
+      Object.assign(job, { output: null, finalFile: null, error: null, paused: false, status: 'running' });
+      store.save(job);
+      pipeline.drive(job.id);
+      return send(res, 200, { ok: true });
+    }
     case 'stop-all':
       // Parar ya: pausa el video y corta al trabajador que esté en marcha
       job.paused = true;
