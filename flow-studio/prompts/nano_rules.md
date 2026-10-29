@@ -11,7 +11,14 @@ ANALYZE the reference screenshot (you saw it in the contact sheet) and describe 
 - Objects: what she holds, the foreground, the food and its exact state. Re-create the props of the reference (glass jars, a clear tube showing layers, a pot of milk, spices) as plain, unbranded American kitchen items.
 - Lighting only if it changes.
 
-FRAMING (most important): the face must be LARGE and close to the lens, more striking than the reference. State it with numbers: head width 55–70% of frame width, eyes at about 30% from the top, chin at about 55–60%, the top of the hair slightly cropped by the upper edge. Add: "This is NOT a medium shot and NOT a waist-up shot. Do not leave empty space above the head." End with a one-line "Reminder:" repeating the framing. If the reference shot is a hands-only or object close-up, keep that framing and put her face partially in the background, still recognizable.
+COMPOSITION FIRST (the reference is not uploaded, so your words must rebuild it): describe the layout of the screenshot like a set plan, with numbers:
+- For each main element (her head, her hands, the main prop, the table or floor), its position and size as % of the frame: left/right edge, top/bottom edge, width and height. Example: "the clear glass tube fills the left 45% of the frame, from above the top edge down to 80% of the height, 30 cm from the lens".
+- Depth order and distances: what is in the foreground, how far she is behind it, what is cut by the frame edges.
+- Camera height and angle (e.g. low, at tube height, slightly upward), lens feel (wide, close to the prop).
+- Her pose (kneeling, leaning in, pointing at X) and where her eyes look.
+If the reference is a face shot, apply the FRAMING rule below. If a prop dominates the reference shot, keep the reference composition and proportions; only make her face as large as the composition allows.
+
+FRAMING (for face shots): the face must be LARGE and close to the lens, more striking than the reference. State it with numbers: head width 55–70% of frame width, eyes at about 30% from the top, chin at about 55–60%, the top of the hair slightly cropped by the upper edge. Add: "This is NOT a medium shot and NOT a waist-up shot. Do not leave empty space above the head." End with a one-line "Reminder:" repeating the framing. If the reference shot is a hands-only or object close-up, keep that framing and put her face partially in the background, still recognizable.
 
 CONSISTENCY (always include this sentence): "Keep {{ANCHORS}} exactly as in the avatar images; do not change the sweater color, the knitted flag or the neckline."
 

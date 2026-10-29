@@ -38,13 +38,15 @@ const L = 'ABCDE';
 function frameTask(job, c) {
   const dest = abs(job, `frames/frame_${pad(c.n)}.png`);
   const imgs = frameInputs(job, c);
+  const look = c.ref ? `Reference shot to copy (do NOT upload it, Flow refuses real people; only look at it with the Read tool): ${abs(job, c.ref)}\n` +
+    'Before pasting, compare the prompt with this reference: sizes, positions and distances of her, the props and the camera must match it. If the prompt does not describe the layout precisely, improve its numbers first. After generating, reject results whose composition is clearly different from the reference.\n' : '';
   if (c.feedback && c.frame) {
-    return { dest, text: `### Frame ${c.n} — CORRECTION\nUpload in this order: ${imgs.map((p, i) => `Image ${L[i]} = ${p}`).join(' ; ')}\n` +
+    return { dest, text: `### Frame ${c.n} — CORRECTION\n${look}Upload in this order: ${imgs.map((p, i) => `Image ${L[i]} = ${p}`).join(' ; ')}\n` +
       `The producer wants this change (translate it to a clear English instruction for the image model): "${c.feedback}".\n` +
       `Prompt: "Edit Image A: <the change in English>. Use Image B to keep the face and the sweater exactly as the avatar. Keep everything else the same."\n` +
       `Then download and save to: ${dest}` };
   }
-  return { dest, text: `### Frame ${c.n}\nUpload in this order: ${imgs.map((p, i) => `Image ${L[i]} = ${p}`).join(' ; ')}\n` +
+  return { dest, text: `### Frame ${c.n}\n${look}Upload in this order: ${imgs.map((p, i) => `Image ${L[i]} = ${p}`).join(' ; ')}\n` +
     `Paste this prompt exactly:\n\`\`\`\n${c.framePrompt}\n\`\`\`\nThen download and save to: ${dest}` };
 }
 
