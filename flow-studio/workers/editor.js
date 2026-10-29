@@ -66,6 +66,7 @@ async function whisperWords(job, audio, segments, est, pre) {
         res.push({ ...w, s: h.s, e: h.e });
       });
     }
+    for (let i = 1; i < res.length; i++) if (res[i].s < res[i - 1].s) res[i].s = res[i - 1].s + 0.01; // siempre hacia delante
     for (let i = 0; i < res.length - 1; i++) if (res[i].e > res[i + 1].s) res[i].e = res[i + 1].s;
     store.log(job, 'editor', '🎧 Subtítulos sincronizados con la voz real (whisper)');
     return res;
@@ -109,6 +110,14 @@ function buildAss(job, words, total) {
       lines.push(`Dialogue: 0,${assTime(start)},${assTime(end)},Cap,,0,0,0,,{\\pos(540,${yy})${pop}}${txt}`);
     });
   }
+  // Nunca dos subtítulos a la vez: cada uno termina cuando empieza el siguiente
+  const caps = lines.filter((l) => l.startsWith('Dialogue: 0,'));
+  const t2s = (t) => { const [h, m, x] = t.split(':'); return +h * 3600 + +m * 60 + +x; };
+  const parsed = caps.map((l) => { const p = l.split(','); return { l, s: t2s(p[1]), e: t2s(p[2]) }; }).sort((a, b) => a.s - b.s);
+  parsed.forEach((c, i) => { if (parsed[i + 1] && c.e > parsed[i + 1].s) c.e = parsed[i + 1].s; });
+  const others = lines.filter((l) => !l.startsWith('Dialogue: 0,'));
+  lines.length = 0;
+  lines.push(...others, ...parsed.filter((c) => c.e - c.s > 0.04).map((c) => { const p = c.l.split(','); p[2] = assTime(c.e); return p.join(','); }));
   const word = (job.plan && job.plan.ctaWord) || job.ctaWord;
   if (C.ctaBox) lines.push(`Dialogue: 2,${assTime(Math.max(0, total - 3.6))},${assTime(total)},Cta,,0,0,0,,{\\fad(150,0)}${esc(config.languages[job.language || config.language].cta.replace('{{WORD}}', word.toUpperCase()))}`);
   return lines.join('\n') + '\n';
@@ -189,7 +198,8 @@ async function run(job) {
   for (const c of job.clips) {
     const file = path.join(dir, c.clip);
     const [s, e, dur] = await speechBounds(file);
-    let start = Math.max(0, s - 0.12);
+    // El hook arranca hablando desde el primer fotograma
+    let start = Math.max(0, s - (c.n === job.clips[0].n ? 0.04 : 0.12));
     const end = Math.min(dur, e + 0.22);
     const words = heard[file] || null;
     const { ranges, notes } = cleanRanges(start, end, words, prevWords);
