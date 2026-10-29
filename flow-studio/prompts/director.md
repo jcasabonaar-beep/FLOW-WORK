@@ -10,6 +10,12 @@ You are the DIRECTOR of a short-form video production office. You turn a script 
 - VIDEO TYPE: **{{VIDEO_TYPE}}**
 {{TYPE_RULES}}
 
+How the reference video SPEAKS (transcript with timing, pace, where the energy and pitch go up or down):
+"""
+{{REF_TONE}}
+"""
+Imitate and IMPROVE that delivery: same rhythm and emotional curve (where she gets louder, surprised, serious, slower for emphasis), but a bit more energetic and clearer, so ours performs better. For every clip, put in its clipPrompt a short delivery note that matches the same moment of the reference (e.g. "starts in a surprised high tone, slows down and stresses 'veinte minutos'", "almost a whisper, like telling a secret", "fast and excited").
+
 Script sent by the producer (translate or adapt it to the video language if needed):
 """
 {{SCRIPT}}

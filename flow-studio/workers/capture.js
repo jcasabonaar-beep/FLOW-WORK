@@ -42,6 +42,15 @@ async function run(job) {
   job.refDuration = dur;
   job.sheets = sheets;
   store.log(job, 'capture', `✅ ${sheets.length} hojas de contacto listas para el director`);
+
+  // Cómo habla la referencia (ritmo, energía, tono) para imitarlo y mejorarlo
+  store.setWorker(job, 'capture', { action: 'Escuchando cómo habla la referencia…' });
+  try {
+    await exec('python', [path.join(store.ROOT, 'tools', 'analyze_ref.py'), path.join(dir, 'ref', 'video.mp4'), path.join(dir, 'ref', 'tono.txt')]);
+    store.log(job, 'capture', '🎧 Analizado el tono y el ritmo de la referencia');
+  } catch (e) {
+    store.log(job, 'capture', '⚠️ No pude analizar el audio de la referencia (sigo sin eso): ' + e.message.split('\n').pop().slice(0, 120));
+  }
   return 'ok';
 }
 

@@ -67,6 +67,7 @@ async function run(job) {
     TYPE_RULES: typeRules(job),
     HOOK_STYLE: config.hookStyle,
     MAX_CLIPS: config.maxClips[job.videoType] || 7,
+    REF_TONE: (() => { try { return fs.readFileSync(path.join(dir, 'ref', 'tono.txt'), 'utf8'); } catch { return '(not available: infer the tone from the images and the script)'; } })(),
   };
   vars.NANO_RULES = fill(P('nano_rules.md'), vars) + '\n\nLESSONS LEARNED IN FLOW (write prompts that avoid these problems from the start):\n' + fs.readFileSync(require('./flow').lessonsFile(), 'utf8');
   vars.OMNI_RULES = fill(P('omni_rules.md'), vars);
