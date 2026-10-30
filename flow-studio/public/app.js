@@ -426,8 +426,10 @@ async function newFromIdea(s) {
   const f = $('#formNew');
   f.title.value = s.tema || '';
   f.url.value = s.url;
-  f.script.value = s.guion || '';
+  f.script.value = cleanScript(s.guion);
 }
+// Las notas entre corchetes ([Nota: …]) nunca son parte del guion: el director completa lo que falte
+const cleanScript = (t) => String(t || '').replace(/\[[^\]]*\]/g, '').replace(/\n{3,}/g, '\n\n').trim();
 
 $('#btnIdeas').onclick = () => { current = 'ideas'; location.hash = 'ideas'; ideasSig = ''; refreshIdeas(); loadList(); };
 $('#btnRunIdeas').onclick = async () => {
@@ -487,7 +489,7 @@ function bindVariations(a, url) {
     const v = a.variaciones[b.dataset.var];
     await $('#btnNew').onclick();
     const f = $('#formNew');
-    f.title.value = v.titulo; f.url.value = url || ''; f.script.value = v.guion;
+    f.title.value = v.titulo; f.url.value = url || ''; f.script.value = cleanScript(v.guion);
   });
 }
 // Las ideas salen en una ventana encima del panel
@@ -563,7 +565,7 @@ function reportHtml() {
 async function makeBatch(list, url, videoType) {
   if (!list.length) return alert('Marca primero las ideas que quieres');
   if (!confirm(`¿Crear ${list.length} videos en 🌙 Todo directo (${videoType === 'venta' ? 'Venta' : 'Crecimiento'})? Se harán solos y en cola.`)) return;
-  const r = await api('jobs/batch', { videoType, setting: 'kitchen', items: list.map((v) => ({ title: v.titulo, url, script: v.guion })) });
+  const r = await api('jobs/batch', { videoType, setting: 'kitchen', items: list.map((v) => ({ title: v.titulo, url, script: cleanScript(v.guion) })) });
   alert(`🌙 ${r.created} videos en cola. Los tendrás en "Videos completos".`);
   loadList();
 }

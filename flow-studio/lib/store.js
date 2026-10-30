@@ -28,7 +28,7 @@ function create({ title, url, script, setting, ctaWord, language, videoType, mod
   fs.mkdirSync(path.join(jobDir(id), 'ref'), { recursive: true });
   for (const d of ['frames', 'clips', 'edit', 'logs']) fs.mkdirSync(path.join(jobDir(id), d), { recursive: true });
   const job = {
-    id, title: title || 'Video ' + id, url: url || '', script: script || '', setting: setting || 'kitchen',
+    id, title: title || 'Video ' + id, url: url || '', script: String(script || '').replace(/\[[^\]]*\]/g, '').trim(), setting: setting || 'kitchen',
     ctaWord: ctaWord || 'AUTO', videoType: videoType === 'venta' ? 'venta' : 'crecimiento', auto: mode === 'auto', language: language || require('../config.json').language, createdAt: Date.now(),
     stage: 'capture', // capture → director → frames → review_frames → clips → editor → review_final → done
     status: 'running', // running | paused | waiting_you | done | error
