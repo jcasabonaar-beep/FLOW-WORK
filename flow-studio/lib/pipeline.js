@@ -11,6 +11,8 @@ const active = new Set();
 const lock = require('./lock');
 const fs = require('fs');
 const path = require('path');
+const notify = require('./notify');
+const { isLimit, EVERY } = require('./limit');
 
 // Guarda el video terminado en la carpeta de videos completos
 function finalize(job) {
@@ -33,6 +35,7 @@ function finalize(job) {
     store.log(job, 'editor', '⚠️ No pude subirlo a Drive: ' + e.message);
   }
   store.save(job);
+  notify.send(`✅ Video listo: ${job.title}`, job.driveName ? `Ya está en tu Google Drive como ${job.driveName}` : 'Está en "Videos completos"', { tags: 'white_check_mark' });
 }
 
 // Modo "todo directo": si algún frame o clip no salió, usa el más cercano para no parar
@@ -87,13 +90,16 @@ async function step(job) {
   }
   job.timings[stage] = (job.timings[stage] || 0) + (Date.now() - t0);
   if (r === 'wait' && job.auto && (stage === 'frames' || stage === 'clips') && fillGaps(job, stage === 'frames' ? 'frame' : 'clip')) r = 'ok';
-  if (r === 'wait') { job.status = 'waiting_you'; store.save(job); return 'stop'; }
+  if (r === 'wait') { job.status = 'waiting_you'; store.save(job); notify.send(`✋ Te necesito: ${job.title}`, 'Algo no salió solo y necesita que lo mires en Flow Studio', { tags: 'raised_hand' }); return 'stop'; }
   store.setWorker(job, worker, { state: 'done', action: '', endedAt: Date.now() });
   job.stage = STAGES[STAGES.indexOf(stage) + 1];
   // Modo "todo directo": se salta las paradas y guarda el video al terminar
   if ((job.auto || job.skipReviewOnce) && job.stage === 'review_frames') { job.stage = 'clips'; job.skipReviewOnce = false; store.log(job, 'frames', job.auto ? '🌙 Modo directo: sigo sin esperar tu revisión' : '💬 Cambios del chat: sigo sin pararme'); }
   if (job.auto && job.stage === 'review_final') { finalize(job); store.log(job, 'editor', `🌙 Video guardado en "${job.finalFile}"`); return 'stop'; }
-  if (job.stage === 'review_frames' || job.stage === 'review_final') job.status = 'waiting_you';
+  if (job.stage === 'review_frames' || job.stage === 'review_final') {
+    job.status = 'waiting_you';
+    notify.send(`✋ Te espera: ${job.title}`, job.stage === 'review_frames' ? 'Los frames están listos para que los revises' : 'El video está montado: dale el OK final', { tags: 'raised_hand' });
+  }
   store.save(job);
   return job.status === 'waiting_you' ? 'stop' : 'next';
 }
@@ -115,12 +121,13 @@ async function drive(id) {
         // Se resuelve solo: reintenta la etapa 2 veces antes de avisarte
         const w = STAGE_WORKER[job.stage];
         // Límite de uso de Claude: espera y sigue solo cuando se renueve
-        if (/usage limit|limit reached|rate limit|hit your limit|out of extra usage|resets? (at|in)/i.test(e.message)) {
+        if (isLimit(e.message)) {
           job.status = 'waiting_limit';
+          notify.send('💤 Sin límite de Claude', 'Se acabó el límite de uso. Sigo solo en cuanto se renueve.', { key: 'limit', every: 180, tags: 'zzz' });
           job.error = 'Se acabó el límite de uso de Claude. Sigo solo cuando se renueve (lo intento cada 10 min).';
           if (w) store.setWorker(job, w, { state: 'paused', action: '⏳ Esperando a que se renueve el límite de Claude' });
           store.save(job);
-          await wait(10 * 60 * 1000);
+          await wait(EVERY);
           job.status = 'running';
           job.error = null;
           store.save(job);
@@ -143,6 +150,7 @@ async function drive(id) {
     }
     job.status = 'error';
     job.error = e.message;
+    notify.send(`❌ Se atascó: ${job.title}`, e.message.slice(0, 200), { priority: 4, tags: 'x' });
     if (w) store.setWorker(job, w, { state: e.message === 'Detenido por ti' ? 'paused' : 'error', action: e.message.slice(0, 300) });
     if (w) store.log(job, w, '❌ ' + e.message);
     store.save(job);
@@ -152,7 +160,13 @@ async function drive(id) {
 }
 
 function resumeAll() {
-  for (const j of store.list()) if (j.status === 'running') { j.status = 'stopped'; j.error = 'Se cerró el programa a mitad de trabajo: pulsa Continuar'; store.save(j); }
+  for (const j of store.list()) {
+    if (!['running', 'waiting_limit'].includes(j.status)) continue;
+    // Los de "Todo directo" (y el piloto automático) siguen solos al volver a abrir Flow Studio
+    if (j.auto) { setTimeout(() => drive(j.id), 5000); continue; }
+    const full = store.load(j.id);
+    full.status = 'stopped'; full.error = 'Se cerró el programa a mitad de trabajo: pulsa Continuar'; store.save(full);
+  }
 }
 
 module.exports = { drive, STAGES, active, resumeAll, finalize };

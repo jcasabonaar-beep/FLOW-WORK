@@ -4,17 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const store = require('./store');
 
-const FILE = path.join(store.ROOT, 'memory', 'settings.json');
-
-function settings() {
-  try { return JSON.parse(fs.readFileSync(FILE, 'utf8')); } catch { return {}; }
-}
-function saveSettings(patch) {
-  const s = { ...settings(), ...patch };
-  fs.mkdirSync(path.dirname(FILE), { recursive: true });
-  fs.writeFileSync(FILE, JSON.stringify(s, null, 2));
-  return s;
-}
+const { get: settings, save: saveSettings } = require('./settings');
 
 // Busca dónde ha montado Windows tu Google Drive
 function detect() {

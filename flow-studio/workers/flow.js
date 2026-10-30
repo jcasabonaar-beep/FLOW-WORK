@@ -241,8 +241,16 @@ async function runClips(job) {
         learn(`Clip de ${c.line.split(/\s+/).length} palabras: ${bad}. ${q.text != null && q.text < 0.7 ? 'Acortar la frase o pedir ritmo más claro.' : 'Insistir en "same voice, tone and energy as the previous clips".'}`);
       }
     }
-    // Subtítulos puestos por Flow: se repite (una vez) para que no salgan nunca
-    for (const c of await checkText(job, todo.filter((x) => x.clipStatus === 'done'))) {
+    // 👀 Revisor: subtítulos de Flow (se repite una vez) y fallos visuales claros (cara distinta, manos raras, glitches)
+    const review = await checkText(job, todo.filter((x) => x.clipStatus === 'done'));
+    for (const { c, why } of review.broken) {
+      if (c.qaRetried) { store.log(job, 'clips', `⚠️ Clip ${c.n}: ${why} (ya repetido una vez, lo dejo)`); continue; }
+      Object.assign(c, { clipStatus: 'regen', qaRetried: true, clipNote: `El revisor vio: ${why}. Corrígelo` });
+      store.log(job, 'clips', `👀 Clip ${c.n}: ${why}. Lo repito una vez.`);
+      learn(`Revisor: ${why} (clip ${c.n === 1 ? 'hook' : c.n}).`);
+    }
+    for (const c of review.text) {
+      if (c.clipStatus === 'regen') continue;
       if ((c.textRetries || 0) >= 1) { store.log(job, 'clips', `⚠️ Clip ${c.n}: Flow insiste en poner texto; lo dejo así`); continue; }
       c.textRetries = (c.textRetries || 0) + 1;
       Object.assign(c, { clipStatus: 'regen', clipNote: 'Flow puso subtítulos o texto en pantalla: repite SIN ningún texto' });
@@ -264,18 +272,26 @@ async function checkText(job, list) {
       items.push({ c, strip });
     } catch {}
   }
-  if (!items.length) return [];
+  if (!items.length) return { text: [], broken: [] };
   const out = abs(job, 'clips/textcheck.json');
   if (fs.existsSync(out)) fs.unlinkSync(out);
-  const prompt = `Each image below shows 3 moments of one video clip. For each one decide if there are burned-in SUBTITLES, CAPTIONS or any words written on screen. Ignore text that belongs to real objects: product labels (e.g. a ketchup bottle), a store sign and a book cover. Only subtitles/captions/overlay text count. Read each image with the Read tool, then write ${out} as JSON {"<n>": true|false} (true = it has subtitles/text). Only Read and Write.\n` +
+  const avatar = ((config.avatar || {}).images || [])[0] ? path.join(store.ROOT, config.avatar.images[0]) : null;
+  const prompt = `You are the final reviewer of a video. Each image below shows 3 moments of one clip (left to right).${avatar && fs.existsSync(avatar) ? ` The woman must be the same as in ${avatar}.` : ''} For each clip decide:
+- "text": true if there are burned-in SUBTITLES, CAPTIONS or words written on screen. Ignore text on real objects: product labels, a store sign, a book cover.
+- "broken": a SHORT reason in Spanish ONLY for a clear defect a viewer would notice: the face clearly changes into another person, deformed or extra hands/fingers, melting or morphing objects, a frozen/black clip. Otherwise null. Be strict: small imperfections are fine. Clip 1 is the hook: also flag it if it is visually dull (no movement, she is far or not looking at camera).
+Read each image with the Read tool, then write ${out} as JSON {"<n>": {"text": true|false, "broken": null|"motivo"}}. Only Read and Write.\n` +
     items.map((x) => `Clip ${x.c.n}: ${x.strip}`).join('\n');
   try {
     await claude.run({ job, worker: 'clips', prompt, tools: ['Read', 'Write'] });
     const res = JSON.parse(fs.readFileSync(out, 'utf8'));
-    return items.filter((x) => res[x.c.n] === true).map((x) => x.c);
+    const get = (n) => { const v = res[n]; return typeof v === 'boolean' ? { text: v } : v || {}; };
+    return {
+      text: items.filter((x) => get(x.c.n).text === true).map((x) => x.c),
+      broken: items.filter((x) => get(x.c.n).broken).map((x) => ({ c: x.c, why: String(get(x.c.n).broken).slice(0, 120) })),
+    };
   } catch (e) {
-    store.log(job, 'clips', 'No pude revisar si hay subtítulos: ' + e.message.slice(0, 80));
-    return [];
+    store.log(job, 'clips', 'No pude revisar los clips: ' + e.message.slice(0, 80));
+    return { text: [], broken: [] };
   }
 }
 

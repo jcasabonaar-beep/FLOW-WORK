@@ -10,6 +10,7 @@ const { ffmpeg } = require('./lib/ff');
 const flow = require('./workers/flow');
 const research = require('./workers/research');
 const results = require('./workers/results');
+const autopilot = require('./lib/autopilot');
 const assistant = require('./workers/assistant');
 
 const PUB = path.join(__dirname, 'public');
@@ -118,6 +119,22 @@ async function api(req, res, url) {
     const lib = store.list().filter((j) => j.finalFile && fs.existsSync(path.join(store.ROOT, j.finalFile)))
       .map((j) => ({ id: j.id, title: j.title, file: j.finalFile, videoType: j.videoType, createdAt: j.createdAt, auto: !!j.auto, kit: j.kit || null, driveName: j.driveName || null }));
     return send(res, 200, lib);
+  }
+  if (parts[1] === 'autopilot') {
+    const settings = require('./lib/settings');
+    if (method === 'POST') {
+      const body = JSON.parse((await readBody(req)).toString() || '{}');
+      if (parts[2] === 'run') { autopilot.run('a mano'); return send(res, 200, { ok: true }); }
+      if (parts[2] === 'test') {
+        const ok = await require('./lib/notify').send('📱 Flow Studio', 'Los avisos funcionan. Aquí te llegará cuando un video esté listo o te necesite.', { tags: 'tada' });
+        return ok ? send(res, 200, { ok }) : send(res, 400, { error: 'No se pudo enviar. Revisa el nombre del canal.' });
+      }
+      if (body.ntfyTopic !== undefined) settings.save({ ntfyTopic: String(body.ntfyTopic).trim().replace(/[^\w-]/g, '') });
+      if (body.autopilot) autopilot.configure(body.autopilot);
+    }
+    const p = autopilot.pjob();
+    const runs = (p.runs || []).slice(0, 5).map((r) => ({ ...r, jobs: r.jobs.map((id) => { const x = store.load(id); return x ? { id, title: x.title, status: x.status, stage: x.stage, driveName: x.driveName || null } : null; }).filter(Boolean) }));
+    return send(res, 200, { opts: autopilot.opts(), ntfyTopic: settings.get().ntfyTopic || '', running: autopilot.isRunning(), worker: p.workers.autopilot, runs, settings: Object.keys(config.settings) });
   }
   if (parts[1] === 'results') {
     const r = results.rjob();
@@ -348,6 +365,7 @@ const server = http.createServer(async (req, res) => {
 fs.mkdirSync(store.JOBS, { recursive: true });
 pipeline.resumeAll();
 results.schedule();
+autopilot.start();
 server.listen(config.port, '127.0.0.1', () => {
   console.log(`\n  Flow Studio abierto en  http://localhost:${config.port}\n  (deja esta ventana abierta mientras trabajas)\n`);
 });

@@ -44,6 +44,7 @@ async function open(id) {
   $('#ideas').hidden = true;
   $('#library').hidden = true;
   $('#results').hidden = true;
+  $('#pilot').hidden = true;
   $('#analysis').innerHTML = '';
   current = id;
   panelSig = '';
@@ -57,6 +58,7 @@ async function refresh() {
   if (current === 'ideas') return refreshIdeas();
   if (current === 'library') return refreshLibrary();
   if (current === 'results') return refreshResults();
+  if (current === 'pilot') return refreshPilot();
   job = await api('jobs/' + current);
   $('#empty').hidden = true;
   $('#job').hidden = false;
@@ -111,7 +113,7 @@ async function refresh() {
 // ---------- Oficina visual ----------
 let viewMode = 'floor';
 try { viewMode = localStorage.getItem('viewMode') || 'floor'; } catch {}
-const COLORS = { capture: '#f59e0b', director: '#a855f7', frames: '#22c55e', clips: '#3b82f6', editor: '#ec4899', boss: '#94a3b8', research: '#14b8a6', results: '#eab308' };
+const COLORS = { capture: '#f59e0b', director: '#a855f7', frames: '#22c55e', clips: '#3b82f6', editor: '#ec4899', boss: '#94a3b8', research: '#14b8a6', results: '#eab308', autopilot: '#6366f1' };
 const PROPS = { idle: '☕', waiting_you: '✋', error: '💨', paused: '⏸️', done: '✅', limit: '💤' };
 
 function bossState() {
@@ -373,6 +375,7 @@ const es = new EventSource('/api/events');
 es.onmessage = (e) => {
   if (e.data === '_investigador') { if (current === 'ideas') refreshIdeas(); return; }
   if (e.data === '_resultados') { if (current === 'results') refreshResults(); return; }
+  if (e.data === '_piloto') { if (current === 'pilot') refreshPilot(); return; }
   if (e.data !== current) { loadList(); return; }
   clearTimeout(pending);
   pending = setTimeout(() => { refresh(); loadList(); }, 250);
@@ -386,7 +389,7 @@ const fmt = (n) => n >= 1e6 ? (n / 1e6).toFixed(1).replace('.0', '') + ' M' : n 
 let ideasSig = '';
 async function refreshIdeas() {
   const r = await api('research');
-  $('#empty').hidden = true; $('#job').hidden = true; $('#library').hidden = true; $('#results').hidden = true; $('#ideas').hidden = false;
+  $('#empty').hidden = true; $('#job').hidden = true; $('#library').hidden = true; $('#results').hidden = true; $('#pilot').hidden = true; $('#ideas').hidden = false;
   if (document.activeElement !== $('#inAccounts')) $('#inAccounts').value = (r.accounts || []).join('\n');
   const w = r.workers.research;
   const st = r.running ? 'working' : w.state;
@@ -514,7 +517,7 @@ async function refreshLibrary() {
     </div>
     <div class="muted" style="font-size:12px">Cada video terminado se sube como <b>1-DDMMAAAAIA.mp4</b>, <b>2-DDMMAAAAIA.mp4</b>… (número del día + fecha + IA), con su texto y su portada. Déjalo vacío para no subir.</div>`;
   $('#btnDrive').onclick = async () => { await api('drive', { driveFolder: $('#inDrive').value, driveSubfolder: $('#inDriveSub').value }); refreshLibrary(); };
-  $('#empty').hidden = true; $('#job').hidden = true; $('#ideas').hidden = true; $('#results').hidden = true; $('#library').hidden = false;
+  $('#empty').hidden = true; $('#job').hidden = true; $('#ideas').hidden = true; $('#results').hidden = true; $('#pilot').hidden = true; $('#library').hidden = false;
   $('#libCards').innerHTML = lib.map((v) => `<div class="card"><h3><span>${v.auto ? '🌙 ' : ''}${esc(v.title)}${v.driveName ? ` <span class="badge done">☁️ ${esc(v.driveName)}</span>` : ''}</span><span class="badge">${v.videoType === 'venta' ? '💰 Venta' : '🚀 Crecimiento'}</span></h3>
     <video controls preload="metadata" src="${rootFile(encodeURI(v.file))}" style="width:100%;aspect-ratio:9/16;border-radius:8px;background:#000"></video>
     <div class="btns"><a href="${rootFile(encodeURI(v.file))}" download><button class="small">⬇ Descargar</button></a>${v.kit ? `<button class="small" data-libkit="${v.id}">📋 Texto</button>` : ''}<button class="small" data-openjob="${v.id}">💬 Cambiar algo</button><button class="small" data-drive="${v.id}">☁️ ${v.driveName ? 'Renombrar en Drive' : 'Subir a Drive'}</button></div></div>`).join('') || '<p class="muted">Todavía no hay videos terminados.</p>';
@@ -568,7 +571,7 @@ async function makeBatch(list, url, videoType) {
 // ---------- Resultados de tus videos ----------
 async function refreshResults() {
   const r = await api('results');
-  $('#empty').hidden = true; $('#job').hidden = true; $('#ideas').hidden = true; $('#library').hidden = true; $('#results').hidden = false;
+  $('#empty').hidden = true; $('#job').hidden = true; $('#ideas').hidden = true; $('#library').hidden = true; $('#pilot').hidden = true; $('#results').hidden = false;
   const w = r.workers.results;
   const st = r.running ? 'working' : w.state;
   $('#btnRunResults').disabled = r.running;
@@ -594,3 +597,45 @@ async function refreshResults() {
 $('#btnResults').onclick = () => { current = 'results'; location.hash = 'results'; refreshResults(); loadList(); };
 $('#btnRunResults').onclick = async () => { await api('results/run', {}); refreshResults(); };
 $('#btnStopResults').onclick = () => api('results/stop', {}).then(refreshResults);
+
+// ---------- Piloto automático y avisos al móvil ----------
+const SETTING_ES = { kitchen: 'Cocina', walmart: 'Walmart', target: 'Target', supermarket: 'Supermercado', mix: 'Variado (cocina, Walmart, Target…)' };
+const STATUS_ES = { done: '✅ listo', running: '⏳ en marcha', waiting_limit: '💤 esperando límite', error: '❌ atascado', waiting_you: '✋ te espera', paused: '⏸ parado', stopped: '⏹ parado' };
+let pilotFormSig = '';
+async function refreshPilot() {
+  const p = await api('autopilot');
+  $('#empty').hidden = true; $('#job').hidden = true; $('#ideas').hidden = true; $('#library').hidden = true; $('#results').hidden = true; $('#pilot').hidden = false;
+  const o = p.opts;
+  const sig = JSON.stringify([o, p.ntfyTopic]);
+  if (sig !== pilotFormSig) {
+    pilotFormSig = sig;
+    $('#pilotForm').innerHTML = `<b>Ajustes</b> ${o.enabled ? `<span class="badge done">activado · cada noche a las ${o.hour}:00</span>` : '<span class="badge">desactivado</span>'}
+      <div class="row" style="margin-top:8px;align-items:end">
+        <label style="flex:none;display:flex;gap:6px;align-items:center"><input type="checkbox" id="apOn" style="width:auto" ${o.enabled ? 'checked' : ''}> Activado</label>
+        <label>Hora <select id="apHour">${Array.from({ length: 24 }, (_, h) => `<option value="${h}" ${h == o.hour ? 'selected' : ''}>${h}:00</option>`).join('')}</select></label>
+        <label>Videos por noche <input id="apVideos" type="number" min="1" max="10" value="${o.videos}"></label>
+        <label>De ellos 💰 Venta <input id="apVenta" type="number" min="0" max="10" value="${o.venta}"></label>
+        <label>Escenario <select id="apSetting">${[...p.settings, 'mix'].map((k) => `<option value="${k}" ${k === o.setting ? 'selected' : ''}>${SETTING_ES[k] || k}</option>`).join('')}</select></label>
+        <button class="primary" id="apSave" style="flex:none">Guardar</button>
+      </div>
+      <div class="muted" style="font-size:12px">Deja el PC encendido, enchufado y con Flow Studio abierto (no se dormirá mientras esté activado). Si es portátil, no cierres la tapa.</div>`;
+    $('#notifyBox').innerHTML = `<b>📱 Avisos al móvil</b> ${p.ntfyTopic ? '<span class="badge done">activados</span>' : '<span class="badge">desactivados</span>'}
+      <ol style="font-size:13px;margin:8px 0;padding-left:18px"><li>Instala en tu móvil la app gratuita <b>ntfy</b> (App Store / Google Play).</li><li>En la app pulsa <b>＋</b> y suscríbete al canal: <b>${esc(p.ntfyTopic || '(pulsa Crear canal)')}</b></li><li>Pulsa <b>Enviar prueba</b>.</li></ol>
+      <div class="row" style="align-items:end"><label>Canal<input id="ntfyTopic" value="${esc(p.ntfyTopic)}" placeholder="flowstudio-…"></label>
+      <button id="ntfyNew" style="flex:none">Crear canal</button><button class="primary" id="ntfySave" style="flex:none">Guardar</button><button id="ntfyTest" style="flex:none">Enviar prueba</button></div>
+      <div class="muted" style="font-size:12px">Te avisa cuando un video está listo, cuando te necesita, si se atasca, si se acaba el límite de Claude y el resumen de cada noche.</div>`;
+    $('#apSave').onclick = async () => { await api('autopilot', { autopilot: { enabled: $('#apOn').checked, hour: $('#apHour').value, videos: $('#apVideos').value, venta: $('#apVenta').value, setting: $('#apSetting').value } }); pilotFormSig = ''; refreshPilot(); };
+    $('#ntfyNew').onclick = () => { $('#ntfyTopic').value = 'flowstudio-' + Math.random().toString(36).slice(2, 10); };
+    $('#ntfySave').onclick = async () => { await api('autopilot', { ntfyTopic: $('#ntfyTopic').value }); pilotFormSig = ''; refreshPilot(); };
+    $('#ntfyTest').onclick = async () => { await api('autopilot', { ntfyTopic: $('#ntfyTopic').value }); pilotFormSig = ''; await api('autopilot/test', {}); alert('Enviado. Mira tu móvil.'); refreshPilot(); };
+  }
+  const w = p.worker;
+  const st = p.running ? 'working' : w.state;
+  $('#btnPilotRun').disabled = p.running;
+  $('#pRoom').innerHTML = room('autopilot', '🌙', 'Piloto automático', st, w.action || (o.enabled ? `Esperando a las ${o.hour}:00` : 'Desactivado')) + `<pre class="log">${esc(w.log.slice(-10).join('\n'))}</pre>`;
+  $('#pilotRuns').innerHTML = p.runs.length ? '<b>Últimas noches</b>' + p.runs.map((r) => `<div class="notes" style="margin-top:8px"><b>${new Date(r.at).toLocaleString()}</b>
+    <ul style="margin:6px 0;padding-left:18px">${r.jobs.map((x) => `<li><a href="#${x.id}" data-openjob="${x.id}" style="color:#93c5fd">${esc(x.title)}</a> · ${STATUS_ES[x.status] || x.status}${x.driveName ? ' · ☁️ ' + esc(x.driveName) : ''}</li>`).join('')}</ul></div>`).join('') : '';
+  document.querySelectorAll('#pilotRuns [data-openjob]').forEach((b) => b.onclick = (e) => { e.preventDefault(); open(b.dataset.openjob); });
+}
+$('#btnPilot').onclick = () => { current = 'pilot'; location.hash = 'pilot'; pilotFormSig = ''; refreshPilot(); loadList(); };
+$('#btnPilotRun').onclick = async () => { if (!confirm('¿Lanzar el piloto automático ahora? Buscará ideas y empezará los videos.')) return; await api('autopilot/run', {}); refreshPilot(); };

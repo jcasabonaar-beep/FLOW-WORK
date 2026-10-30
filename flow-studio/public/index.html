@@ -13,6 +13,7 @@
   <button class="wide" id="btnIdeas" style="margin-top:8px">🔎 Ideas virales</button>
   <button class="wide" id="btnLibrary" style="margin-top:8px">🎬 Videos completos</button>
   <button class="wide" id="btnResults" style="margin-top:8px">📈 Resultados</button>
+  <button class="wide" id="btnPilot" style="margin-top:8px">🌙 Piloto automático</button>
   <div class="side-title">Videos</div>
   <div id="jobList"></div>
 </aside>
@@ -48,6 +49,20 @@
       <div class="room-mini" id="rRoom"></div>
     </div>
     <div id="rTable"></div>
+  </section>
+  <section id="pilot" hidden>
+    <header class="job-head">
+      <div><h1>🌙 Piloto automático</h1><div class="muted">Cada noche busca ideas virales, hace los videos solo y los sube a tu Drive. Si se acaba el límite de Claude, espera y sigue cuando se renueva.</div></div>
+      <div class="head-actions"><button class="primary" id="btnPilotRun">▶ Lanzar ahora</button></div>
+    </header>
+    <div class="ideas-top">
+      <div>
+        <div class="notes" id="pilotForm"></div>
+        <div class="notes" id="notifyBox"></div>
+        <div id="pilotRuns"></div>
+      </div>
+      <div class="room-mini" id="pRoom"></div>
+    </div>
   </section>
   <section id="job" hidden>
     <header class="job-head">

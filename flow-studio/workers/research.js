@@ -66,8 +66,9 @@ async function prepare(j, item) {
   return item;
 }
 
+// Devuelve { ok } o { error } (el piloto automático lo usa para saber si esperar al límite de Claude)
 async function run() {
-  if (running) return;
+  if (running) return { error: 'El investigador ya está trabajando' };
   running = true;
   const j = rjob();
   const setW = (patch) => store.setWorker(j, 'research', patch);
@@ -92,7 +93,7 @@ async function run() {
     const viral = findViral(data).filter((v) => !seen.has(v.url));
     j.seen = [...seen, ...viral.map((v) => v.url)].slice(-500);
     store.log(j, 'research', `📈 ${viral.length} reels nuevos con un salto claro de visitas (los que ya te sugerí no se repiten)`);
-    if (!viral.length) { j.lastRun = Date.now(); store.save(j); setW({ state: 'done', action: 'No hay ningún reel viral nuevo en esas cuentas desde la última búsqueda' }); return; }
+    if (!viral.length) { j.lastRun = Date.now(); store.save(j); setW({ state: 'done', action: 'No hay ningún reel viral nuevo en esas cuentas desde la última búsqueda' }); return { ok: true, count: 0 }; }
 
     for (const [i, item] of viral.entries()) {
       setW({ action: `Descargando y transcribiendo ${i + 1}/${viral.length}…` });
@@ -108,9 +109,11 @@ async function run() {
     store.save(j);
     setW({ state: 'done', action: `✅ ${j.suggestions.length} ideas listas` });
     store.log(j, 'research', `✅ ${j.suggestions.length} ideas listas`);
+    return { ok: true, count: j.suggestions.length };
   } catch (e) {
     store.log(j, 'research', '❌ ' + e.message);
     setW({ state: 'error', action: e.message.slice(0, 300) });
+    return { error: e.message };
   } finally {
     running = false;
   }
