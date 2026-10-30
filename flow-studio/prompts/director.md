@@ -21,6 +21,14 @@ Script sent by the producer (translate or adapt it to the video language if need
 {{SCRIPT}}
 """
 
+## Who we make it for
+{{TARGET}}
+Everything must make THIS viewer stop scrolling and feel "this is for me":
+- Pick the benefit angle that matters to her (e.g. a ginger tea video → "para las rodillas" or "para dormir" rather than "pre-workout").
+- She talks like a warm abuela/vecina to another woman her age: "mija", "amiga", "a nuestra edad", "después de los 50"; real US Hispanic life (Walmart, la farmacia, el doctor, los nietos, la cocina de casa). No young slang.
+- Use an age/identity CALL-OUT in the hook when it fits ("Si tienes más de 50…", "Las mujeres de nuestra edad…", "Mi abuela en México…") — it tells Instagram exactly who to show it to.
+- Clear, energetic but easy to follow: short sentences, one idea per line.
+
 ## What to do
 1. Read every contact sheet with the Read tool so you understand the reference: the shots, the framing, the props and the order of actions.
 2. Fix the script yourself if it is incomplete: if it contains notes, brackets or placeholders (e.g. "[Nota: …]", "completar con…"), remove them; if it promises a secret or recipe but never says which one, or lacks ingredients/measures/steps, complete it with a real, safe, well-known home recipe that fits the topic and the reference (exact US measures, clear steps). Never ask the producer and never let notes be spoken. Mention what you completed in `notes`.

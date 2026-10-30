@@ -439,7 +439,7 @@ async function refreshIdeas() {
   $('#ideaCards').innerHTML = (r.suggestions || []).map((s, i) => `<div class="card">
     <h3><span>@${esc(s.account)}</span><span class="badge ${s.older ? '' : 'done'}">${s.older ? 'esta semana' : s.ageHours != null ? 'hace ' + s.ageHours + ' h' : ''}</span></h3>
     <div class="pair"><figure>${s.thumb ? `<img src="/files/_investigador/${s.thumb}">` : '<div class="ph">sin miniatura</div>'}</figure>
-      <div><div style="font-size:22px;font-weight:800">${fmt(s.views)}</div><div class="muted">vistas · <b style="color:#86efac">${s.ratio}×</b> su media (${fmt(s.median)})</div>
+      <div><div style="font-size:22px;font-weight:800">${fmt(s.views)}</div><div class="muted">vistas · <b style="color:#86efac">${s.ratio}×</b> su media (${fmt(s.median)})</div>${s.encaje ? `<div class="muted" style="font-size:12px">👵 Encaje con tu público: <b style="color:${s.encaje >= 7 ? '#86efac' : s.encaje >= 5 ? '#fcd34d' : '#fca5a5'}">${s.encaje}/10</b></div>` : ''}
       <p style="margin:10px 0 4px"><b>${esc(s.tema || '')}</b></p><div class="muted">Hook: “${esc(s.hook || '')}”</div>
       <p style="font-size:12px">${esc(s.porque || '')}</p><a href="${esc(s.url)}" target="_blank" style="color:#93c5fd">Ver en Instagram</a></div></div>
     <details><summary class="muted">Guion en español</summary><pre>${esc(s.guion || '')}</pre></details>
@@ -569,12 +569,13 @@ async function refreshLibrary() {
 
 // ---------- Kit para publicar ----------
 const kitText = (k) => [k.caption || '', '', k.hashtags || '', k.disclosure ? '\n' + k.disclosure : ''].join('\n').trim();
+const kitPlace = (k) => k && k.ubicacion ? `<div class="muted" style="font-size:12px;margin-top:6px">📍 Pon de ubicación: <b>${esc(k.ubicacion)}</b> (ayuda a que salga en EE. UU.)</div>` : '';
 function kitHtml() {
   const k = job.kit;
   if (!k) return '';
   return `<h2 class="sec">📦 Para publicar</h2><div class="kit">
     ${k.cover ? `<a href="${file(k.cover, job.outputV)}" download="portada.jpg"><img src="${file(k.cover, job.outputV)}" title="Descargar portada"></a>` : ''}
-    <div style="flex:1;min-width:240px"><pre class="kit-text">${esc(kitText(k))}</pre>
+    <div style="flex:1;min-width:240px"><pre class="kit-text">${esc(kitText(k))}</pre>${kitPlace(k)}
     <div class="btns"><button class="primary small" data-copykit>📋 Copiar descripción y hashtags</button>${k.cover ? `<a href="${file(k.cover, job.outputV)}" download="portada.jpg"><button class="small">⬇ Portada</button></a>` : ''}</div></div></div>`;
 }
 

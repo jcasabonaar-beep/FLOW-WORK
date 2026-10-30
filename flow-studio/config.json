@@ -40,7 +40,7 @@
   "languages": {
     "es": {
       "name": "natural, neutral Latin American Spanish (no regional slang, no vosotros). Very occasionally (at most once per video) drop a common English word that Hispanics in the US use naturally, like okay, Walmart, el mall",
-      "audience": "Hispanics living in the United States",
+      "audience": "Spanish-speaking Hispanic women in the United States, mostly 60+ (also 45+ and 50+)",
       "speech": "Spoken in Spanish with a neutral Latin American accent",
       "cta": "Escribe \"{{WORD}}\" en los comentarios",
       "ctaExamples": "LIBRO, RECETA, SÍ",
@@ -149,5 +149,6 @@
     "every": 2.4,
     "sfx": true,
     "sfxVolume": 0.35
-  }
+  },
+  "target": "TARGET VIEWER: Spanish-speaking Hispanic WOMEN living in the UNITED STATES, mostly 60+ (also 45+ and 50+): moms and grandmothers from Mexico, Central America, the Caribbean and South America, family-oriented, practical, shop at Walmart/Target/Costco/Sam's, cook at home, trust grandma's remedies and want to save money. What they care about: joint and knee pain, energy and tiredness, sleep, digestion and bloating, belly fat after 50, blood sugar and blood pressure (only softened, never cure claims), menopause and hot flashes, strong bones, skin, hair and nails after 50, memory, swollen feet and legs, staying independent and healthy for the grandchildren. They do NOT care about gym, dating, babies, young-people trends or slang."
 }

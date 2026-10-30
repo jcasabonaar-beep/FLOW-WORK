@@ -7,8 +7,10 @@ const config = require('../config.json');
 
 const P = (f) => fs.readFileSync(path.join(store.ROOT, 'prompts', f), 'utf8');
 
+// {{TARGET}} (el público al que queremos llegar) está disponible en todos los prompts
 function fill(text, vars) {
-  return text.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in vars ? vars[k] : m));
+  const all = { TARGET: config.target || '', ...vars };
+  return text.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in all ? all[k] : m));
 }
 
 function brolls() {

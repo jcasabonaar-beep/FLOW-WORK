@@ -65,7 +65,9 @@ async function run(reason = 'programado') {
 
     const used = new Set(j.used || []);
     const rj = research.rjob();
-    const sugs = [...(rj.suggestions || [])].filter((s) => s.guion).sort((a, b) => (b.ratio || 0) - (a.ratio || 0));
+    // Viralidad × encaje con nuestro público (señoras hispanas 60+ en EE. UU.); las que no encajan, fuera
+    const score = (s) => (s.ratio || 0) * (s.encaje || 6) / 10;
+    const sugs = [...(rj.suggestions || [])].filter((s) => s.guion && (s.encaje == null || s.encaje >= 5)).sort((a, b) => score(b) - score(a));
     const pool = sugs.filter((s) => !used.has(s.url)).map((s) => ({ key: s.url, title: s.tema || 'Idea viral', url: s.url, script: s.guion }));
     // Si no hay bastantes ideas nuevas: variaciones de la más viral (mismo formato, otro ingrediente o remedio)
     for (const base of sugs) {
