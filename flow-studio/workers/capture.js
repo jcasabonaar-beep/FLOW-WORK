@@ -15,7 +15,10 @@ async function download(job, dir) {
   if (!job.url) return null;
   store.log(job, 'capture', 'Descargando el reel de Instagram…');
   try {
-    await exec('yt-dlp', ['-f', 'mp4/bv*+ba/b', '--merge-output-format', 'mp4', '-o', out, job.url]);
+    try { await exec('yt-dlp', ['-f', 'mp4/bv*+ba/b', '--merge-output-format', 'mp4', '-o', out, job.url]); } catch {
+      store.log(job, 'capture', 'Instagram pide sesión: lo intento con la del Chrome de Flow Studio…');
+      await exec('yt-dlp', ['--cookies-from-browser', `chrome:${path.join(store.ROOT, 'chrome-profile')}`, '-f', 'mp4/bv*+ba/b', '--merge-output-format', 'mp4', '-o', out, job.url]);
+    }
   } catch (e) {
     store.log(job, 'capture', '⚠️ No se pudo descargar: ' + e.message.split('\n').slice(-2).join(' '));
     return null;

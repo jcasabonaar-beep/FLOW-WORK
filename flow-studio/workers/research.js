@@ -55,7 +55,12 @@ async function prepare(j, item) {
   const thumb = path.join(dir(), 'vids', code + '.jpg');
   const tono = path.join(dir(), 'vids', code + '.txt');
   try {
-    if (!fs.existsSync(vid)) await exec('yt-dlp', ['-f', 'mp4/bv*+ba/b', '--merge-output-format', 'mp4', '-o', vid, item.url]);
+    if (!fs.existsSync(vid)) {
+      try { await exec('yt-dlp', ['-f', 'mp4/bv*+ba/b', '--merge-output-format', 'mp4', '-o', vid, item.url]); } catch (e) {
+        // Instagram a veces pide sesión: se reintenta con la del Chrome de Flow Studio
+        await exec('yt-dlp', ['--cookies-from-browser', `chrome:${path.join(store.ROOT, 'chrome-profile')}`, '-f', 'mp4/bv*+ba/b', '--merge-output-format', 'mp4', '-o', vid, item.url]);
+      }
+    }
     await ffmpeg(['-ss', '1', '-i', vid, '-frames:v', '1', '-vf', 'scale=360:-2', thumb]);
     await exec('python', [path.join(store.ROOT, 'tools', 'analyze_ref.py'), vid, tono]);
     item.transcript = fs.readFileSync(tono, 'utf8');
@@ -104,7 +109,8 @@ async function run() {
     const items = viral.map((v) => `### ${v.url}\n@${v.account} · ${v.views} vistas · ${v.ratio}× su media (${v.median}) · ${v.ageHours != null ? `hace ${v.ageHours} h` : 'fecha desconocida'}\nCaption: ${v.caption || '-'}\nTranscript:\n${v.transcript || '(no transcript: work from the caption)'}`).join('\n\n');
     const text = await claude.run({ job: j, worker: 'research', prompt: fill(P('research_ideas.md'), { ITEMS: items, OUT: ideasFile }), tools: ['Write'], cwd: dir() });
     const ideas = fs.existsSync(ideasFile) ? JSON.parse(fs.readFileSync(ideasFile, 'utf8')) : claude.extractJson(text);
-    j.suggestions = viral.map((v) => ({ ...v, ...(ideas[v.url] || {}) }));
+    const clean = (t) => String(t || '').replace(/\[[^\]]*\]/g, '').replace(/\n{3,}/g, '\n\n').trim();
+    j.suggestions = viral.map((v) => { const it = { ...v, ...(ideas[v.url] || {}) }; it.guion = clean(it.guion); return it; });
     j.lastRun = Date.now();
     store.save(j);
     setW({ state: 'done', action: `✅ ${j.suggestions.length} ideas listas` });
