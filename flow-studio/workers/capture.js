@@ -23,8 +23,23 @@ async function download(job, dir) {
   return fs.existsSync(out) ? out : null;
 }
 
+// Referencias ya trabajadas: si el link es el mismo, se reutiliza todo (video, hojas, fotogramas y tono)
+function cacheDir(job) {
+  const m = (job.url || '').match(/instagram\.com\/(?:reel|reels|p)\/([\w-]+)/i);
+  return m ? path.join(store.ROOT, 'cache', 'refs', m[1]) : null;
+}
+const copyDir = (from, to) => { fs.mkdirSync(to, { recursive: true }); for (const f of fs.readdirSync(from)) fs.copyFileSync(path.join(from, f), path.join(to, f)); };
+
 async function run(job) {
   const dir = store.jobDir(job.id);
+  const cache = cacheDir(job);
+  if (cache && fs.existsSync(path.join(cache, 'video.mp4')) && fs.existsSync(path.join(cache, 'info.json'))) {
+    copyDir(cache, path.join(dir, 'ref'));
+    const info = JSON.parse(fs.readFileSync(path.join(cache, 'info.json'), 'utf8'));
+    Object.assign(job, { refDuration: info.refDuration, sheets: info.sheets });
+    store.log(job, 'capture', '♻️ Esta referencia ya la tenía: reutilizo el video, las capturas y el análisis del tono');
+    return 'ok';
+  }
   const video = await download(job, dir);
   if (!video) {
     store.setWorker(job, 'capture', { state: 'waiting_you', action: 'No pude descargar el reel. Arrastra el video al panel (botón "Subir referencia").' });
@@ -56,6 +71,10 @@ async function run(job) {
     store.log(job, 'capture', '🎧 Analizado el tono y el ritmo de la referencia');
   } catch (e) {
     store.log(job, 'capture', '⚠️ No pude analizar el audio de la referencia (sigo sin eso): ' + e.message.split('\n').pop().slice(0, 120));
+  }
+  if (cache) {
+    copyDir(path.join(dir, 'ref'), cache);
+    fs.writeFileSync(path.join(cache, 'info.json'), JSON.stringify({ refDuration: job.refDuration, sheets: job.sheets }));
   }
   return 'ok';
 }
