@@ -262,7 +262,7 @@ async function checkText(job, list) {
   if (!items.length) return [];
   const out = abs(job, 'clips/textcheck.json');
   if (fs.existsSync(out)) fs.unlinkSync(out);
-  const prompt = `Each image below shows 3 moments of one video clip. For each one decide if there are burned-in SUBTITLES, CAPTIONS or any words written on screen. Ignore a store sign in the background and a book cover. Read each image with the Read tool, then write ${out} as JSON {"<n>": true|false} (true = it has subtitles/text). Only Read and Write.\n` +
+  const prompt = `Each image below shows 3 moments of one video clip. For each one decide if there are burned-in SUBTITLES, CAPTIONS or any words written on screen. Ignore text that belongs to real objects: product labels (e.g. a ketchup bottle), a store sign and a book cover. Only subtitles/captions/overlay text count. Read each image with the Read tool, then write ${out} as JSON {"<n>": true|false} (true = it has subtitles/text). Only Read and Write.\n` +
     items.map((x) => `Clip ${x.c.n}: ${x.strip}`).join('\n');
   try {
     await claude.run({ job, worker: 'clips', prompt, tools: ['Read', 'Write'] });

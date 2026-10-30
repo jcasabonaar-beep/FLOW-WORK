@@ -11,7 +11,7 @@ FIXED RULES, always included:
 - Speech delivery: talks continuously and naturally, like a real person telling a friend: fluid and energetic, no long pauses, no hesitations, only the tiny natural breath between sentences. She starts speaking on the first frame and finishes before the last second.
 - Dialogue block: "{{SPEECH}}. Voice: {{VOICE}}. Very energetic, warm and enthusiastic, clear lip sync, looking straight into the lens." then the line in quotes as {{LINE}}.
 - Audio: "No background music, no sound effects; only natural room ambience, the real sounds of the action and her voice."
-- "IMPORTANT: do NOT add subtitles, captions or any on-screen text. The video must be clean, with no words written on screen."
+- "IMPORTANT: do NOT add subtitles, captions or any on-screen text. The only text allowed is what already exists on real objects in the frame (product labels, the book cover, the store sign), unchanged."
 - Never eat or drink while speaking.
 - "She says the line exactly once, word for word: no repeated words, no extra words before or after it."
 

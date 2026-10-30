@@ -32,7 +32,7 @@ REALISM: "Ultra-realistic smartphone photo, natural skin texture with pores and 
 
 BOOK (only for clips with "book"): one more image is uploaded last. For "hand" it is a photo of her holding the real book: write "She holds the book exactly as in the last image, cover facing the camera: same cover design, colors and title". For "table" it is the cover: write "the book from the last image lies on the counter next to her, cover visible". The book cover is the ONLY text allowed in the image.
 
-NEVER: mention skin tone, skin color, race or ethnicity (Flow refuses those edits); describe her face, hair, body or clothing beyond the consistency sentence; any text, captions, subtitles, logos, brand names or labels on products (every product is plain and unbranded, say so). Only exceptions: the store sign of the setting and the book cover.
+NEVER: mention skin tone, skin color, race or ethnicity (Flow refuses those edits); describe her face, hair, body or clothing beyond the consistency sentence; any captions, subtitles or text overlays. PRODUCTS: if the reference shows a real product whose brand matters for the video (e.g. a ketchup bottle, a supermarket item she is talking about), keep it with its real brand and label exactly as in the reference; any other prop is plain and unbranded. Text that IS allowed: real product labels, the store sign of the setting and the book cover.
 
 LAST LINE, exactly:
 - frameMode 1: "Use Images A and B for the person's face, body, outfit and the kitchen exactly as shown."
