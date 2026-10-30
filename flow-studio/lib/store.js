@@ -77,4 +77,9 @@ function setWorker(job, worker, patch) {
   save(job);
 }
 
-module.exports = { ROOT, JOBS, WORKERS, bus, jobDir, create, load, save, list, log, setWorker };
+function remove(id) {
+  cache.delete(id);
+  fs.rmSync(jobDir(id), { recursive: true, force: true });
+}
+
+module.exports = { ROOT, JOBS, WORKERS, bus, jobDir, create, load, save, list, log, setWorker, remove };

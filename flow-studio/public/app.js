@@ -34,12 +34,29 @@ function show(view) {
 const file = (p, v) => `/files/${job.id}/${p}${v ? '?v=' + v : ''}`;
 const rootFile = (p) => '/root/' + p;
 
+// Menú ⋯ de cada video: archivar o borrar
+const dotsMenu = (id) => `<details class="dots"><summary title="Más opciones">⋯</summary><div class="menu">
+  <button data-dots-open="${id}">📂 Abrir</button><button data-dots-archive="${id}">🗑 Archivar (se oculta)</button><button class="danger" data-dots-delete="${id}">✖ Borrar del todo</button></div></details>`;
+function bindDots(root) {
+  root.querySelectorAll('.dots').forEach((d) => d.onclick = (e) => e.stopPropagation());
+  root.querySelectorAll('[data-dots-open]').forEach((b) => b.onclick = () => open(b.dataset.dotsOpen));
+  root.querySelectorAll('[data-dots-archive]').forEach((b) => b.onclick = async () => {
+    if (!confirm('¿Archivar este video? Desaparece de la lista, pero sus archivos se quedan en el PC.')) return;
+    await api('jobs/' + b.dataset.dotsArchive + '/archive', {}); afterRemove(b.dataset.dotsArchive);
+  });
+  root.querySelectorAll('[data-dots-delete]').forEach((b) => b.onclick = async () => {
+    if (!confirm('¿Borrar este video del todo? Se borran su proyecto y el video terminado del PC. No se puede deshacer (lo que ya esté en tu Google Drive se queda).')) return;
+    await api('jobs/' + b.dataset.dotsDelete + '/delete', {}); afterRemove(b.dataset.dotsDelete);
+  });
+}
+function afterRemove(id) { if (current === id) go('home'); else { refresh(); loadList(); } }
 const needsYou = (j) => ['waiting_you', 'error', 'paused', 'stopped'].includes(j.status);
 async function loadList() {
   const list = await api('jobs');
   const item = (j) => `
     <div class="job-item ${j.id === current ? 'sel' : ''}" data-id="${j.id}">
       <span class="dot ${j.status}"></span>
+      ${dotsMenu(j.id)}
       <div><div>${esc(j.title)}</div><small>${j.status === 'error' ? 'Se atascó' : ['paused', 'stopped'].includes(j.status) ? '⏸ Parado' : j.status === 'waiting_limit' ? '💤 Esperando límite de Claude' : esc(stageName(j.stage))} · ${j.clips} clips</small></div>
     </div>`;
   const wait = list.filter(needsYou);
@@ -48,7 +65,8 @@ async function loadList() {
   const group = (title, arr, cls) => arr.length ? `<div class="side-title ${cls || ''}">${title} <span>${arr.length}</span></div>${arr.map(item).join('')}` : '';
   $('#jobList').innerHTML = group('✋ Te esperan', wait, 'warn') + group('⏳ En marcha', run) +
     (done.length ? `<details class="done-group"><summary class="side-title">✅ Terminados <span>${done.length}</span></summary>${done.map(item).join('')}</details>` : '');
-  document.querySelectorAll('.job-item').forEach((el) => el.onclick = () => open(el.dataset.id));
+  document.querySelectorAll('.job-item').forEach((el) => el.onclick = (e) => { if (!e.target.closest('.dots')) open(el.dataset.id); });
+  bindDots($('#jobList'));
   $('#navWait').hidden = !wait.length;
   $('#navWait').textContent = wait.length;
   return list;
@@ -526,9 +544,13 @@ $('#btnAnalyze').onclick = async () => {
 async function refreshLibrary() {
   const lib = await api('library');
   show('library');
-  $('#libCards').innerHTML = lib.map((v) => `<div class="card"><h3><span>${v.auto ? '🌙 ' : ''}${esc(v.title)}${v.driveName ? ` <span class="badge done">☁️ ${esc(v.driveName)}</span>` : ''}</span><span class="badge">${v.videoType === 'venta' ? '💰 Venta' : '🚀 Crecimiento'}</span></h3>
+  const dayOf = (v) => { const t = new Date(v.createdAt).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }); return t[0].toUpperCase() + t.slice(1); };
+  const days = [...new Set(lib.map(dayOf))];
+  const card = (v) => `<div class="card"><h3><span>${v.auto ? '🌙 ' : ''}${esc(v.title)}${v.driveName ? ` <span class="badge done">☁️ ${esc(v.driveName)}</span>` : ''}</span><span class="badge">${v.videoType === 'venta' ? '💰 Venta' : '🚀 Crecimiento'}</span></h3>
     <video controls preload="metadata" src="${rootFile(encodeURI(v.file))}" style="width:100%;aspect-ratio:9/16;border-radius:8px;background:#000"></video>
-    <div class="btns"><a href="${rootFile(encodeURI(v.file))}" download><button class="small">⬇ Descargar</button></a>${v.kit ? `<button class="small" data-libkit="${v.id}">📋 Texto</button>` : ''}<button class="small" data-openjob="${v.id}">💬 Cambiar algo</button><button class="small" data-drive="${v.id}">☁️ ${v.driveName ? 'Renombrar en Drive' : 'Subir a Drive'}</button></div></div>`).join('') || '<p class="muted">Todavía no hay videos terminados.</p>';
+    <div class="btns"><a href="${rootFile(encodeURI(v.file))}" download><button class="small">⬇ Descargar</button></a>${v.kit ? `<button class="small" data-libkit="${v.id}">📋 Texto</button>` : ''}<button class="small" data-openjob="${v.id}">💬 Cambiar algo</button><button class="small" data-drive="${v.id}">☁️ ${v.driveName ? 'Renombrar en Drive' : 'Subir a Drive'}</button>${dotsMenu(v.id)}</div></div>`;
+  $('#libCards').innerHTML = days.map((d) => `<h2 class="sec day">📅 ${esc(d)} <span class="muted">· ${lib.filter((v) => dayOf(v) === d).length} videos</span></h2><div class="cards">${lib.filter((v) => dayOf(v) === d).map(card).join('')}</div>`).join('') || '<p class="muted">Todavía no hay videos terminados.</p>';
+  bindDots($('#libCards'));
   document.querySelectorAll('[data-openjob]').forEach((b) => b.onclick = () => open(b.dataset.openjob));
   document.querySelectorAll('[data-drive]').forEach((b) => b.onclick = async () => {
     const cur = await api('drive/' + b.dataset.drive);

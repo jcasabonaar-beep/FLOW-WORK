@@ -221,3 +221,15 @@ button.big { padding: 11px 12px; font-size: 15px; }
 .more .menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 4px; min-width: 200px; box-shadow: 0 10px 30px #0008; }
 .more .menu button { text-align: left; background: none; border: none; }
 .more .menu button:hover { background: var(--panel2); }
+/* ⋯ en cada video */
+.job-item { position: relative; }
+.dots { margin-left: auto; order: 9; position: relative; }
+.dots summary { list-style: none; cursor: pointer; padding: 0 6px; border-radius: 6px; color: var(--muted); font-size: 16px; line-height: 20px; }
+.dots summary::-webkit-details-marker { display: none; }
+.dots summary:hover { background: var(--line); color: var(--text); }
+.dots .menu { position: absolute; right: 0; top: 24px; z-index: 30; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 2px; min-width: 190px; box-shadow: 0 10px 30px #0008; }
+.dots .menu button { text-align: left; background: none; border: none; font-size: 13px; }
+.dots .menu button:hover { background: var(--panel2); }
+.dots .menu button.danger { color: #fca5a5; }
+.btns .dots .menu { top: auto; bottom: 28px; }
+

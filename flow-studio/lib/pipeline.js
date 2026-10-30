@@ -16,7 +16,10 @@ const { isLimit, EVERY } = require('./limit');
 
 // Guarda el video terminado en la carpeta de videos completos
 function finalize(job) {
-  const outName = require('../config.json').outputDir || 'output';
+  // Una carpeta por día: Videos completos/30-10-2026/
+  const d = new Date();
+  const day = `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+  const outName = `${require('../config.json').outputDir || 'output'}/${day}`;
   const outDir = path.join(store.ROOT, outName);
   fs.mkdirSync(outDir, { recursive: true });
   const name = `${job.id}-${job.title.replace(/[^\w\- áéíóúñÁÉÍÓÚÑ]+/g, '').trim().replace(/\s+/g, '-').slice(0, 50)}.mp4`;
@@ -159,7 +162,28 @@ async function drive(id) {
   }
 }
 
+// Los videos terminados de antes (sueltos en Videos completos) pasan a su carpeta del día
+function tidyOutput() {
+  const out = require('../config.json').outputDir || 'output';
+  for (const j of store.list()) {
+    if (!j.finalFile || j.finalFile.split('/').length !== 2) continue;
+    const d = new Date(j.createdAt);
+    const day = `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+    const dest = path.join(store.ROOT, out, day);
+    try {
+      fs.mkdirSync(dest, { recursive: true });
+      for (const ext of ['.mp4', '-portada.jpg', '-texto.txt']) {
+        const f = path.join(store.ROOT, j.finalFile.replace(/\.mp4$/, ext));
+        if (fs.existsSync(f)) fs.renameSync(f, path.join(dest, path.basename(f)));
+      }
+      j.finalFile = `${out}/${day}/${path.basename(j.finalFile)}`;
+      store.save(j);
+    } catch {}
+  }
+}
+
 function resumeAll() {
+  tidyOutput();
   for (const j of store.list()) {
     if (!['running', 'waiting_limit'].includes(j.status)) continue;
     // Los de "Todo directo" (y el piloto automático) siguen solos al volver a abrir Flow Studio
@@ -169,4 +193,4 @@ function resumeAll() {
   }
 }
 
-module.exports = { drive, STAGES, active, resumeAll, finalize };
+module.exports = { drive, STAGES, active, resumeAll, finalize, tidyOutput };

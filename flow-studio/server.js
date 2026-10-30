@@ -199,6 +199,14 @@ async function api(req, res, url) {
   const job = store.load(parts[2]);
   if (!job) return send(res, 404, { error: 'No existe ese video' });
   const action = parts[3];
+  if (action === 'delete' && method === 'POST') {
+    // Borra el proyecto y su video terminado del PC (lo que ya esté en Drive se queda)
+    if (pipeline.active.has(job.id)) return send(res, 400, { error: 'Está trabajando: páralo antes de borrarlo' });
+    if (job.finalFile) for (const ext of ['.mp4', '-portada.jpg', '-texto.txt']) fs.rmSync(path.join(store.ROOT, job.finalFile.replace(/\.mp4$/, ext)), { force: true });
+    store.remove(job.id);
+    store.bus.emit('job', job.id);
+    return send(res, 200, { ok: true });
+  }
   if (action === 'archive' && method === 'POST') {
     // Lo quita de las listas; los archivos se quedan en jobs/
     if (pipeline.active.has(job.id)) return send(res, 400, { error: 'Está trabajando: páralo antes de archivarlo' });

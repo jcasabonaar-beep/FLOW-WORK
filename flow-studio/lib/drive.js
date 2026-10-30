@@ -23,6 +23,7 @@ function folder() {
   return s.driveFolder ? path.join(s.driveFolder, s.driveSubfolder || 'Videos IA') : null;
 }
 
+const dayFolder = () => { const d = new Date(); return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`; };
 const today = () => { const d = new Date(); return `${String(d.getDate()).padStart(2, '0')}${String(d.getMonth() + 1).padStart(2, '0')}${d.getFullYear()}`; };
 const clean = (n) => String(n || '').replace(/\.mp4$/i, '').replace(/[\\/:*?"<>|]/g, '').trim();
 
@@ -31,13 +32,14 @@ function target() {
   if (!dest) return null;
   const root = settings().driveFolder;
   if (!fs.existsSync(root)) throw new Error(`No encuentro tu Google Drive en ${root} (¿está abierto Google Drive para ordenador?)`);
-  fs.mkdirSync(dest, { recursive: true });
-  return dest;
+  const day = path.join(dest, dayFolder()); // Videos IA/30-10-2026/
+  fs.mkdirSync(day, { recursive: true });
+  return day;
 }
 
 // Siguiente nombre libre del día: automáticos con "IA" (1-30102026IA), manuales sin ella (3-30102026). Comparten el contador.
 function nextName(auto = true) {
-  const dest = folder();
+  const dest = folder() && path.join(folder(), dayFolder());
   const day = today();
   const taken = dest && fs.existsSync(dest) ? fs.readdirSync(dest).map((f) => f.match(new RegExp(`^(\\d+)-${day}(IA)?\\.mp4$`))).filter(Boolean).map((m) => +m[1]) : [];
   return `${(taken.length ? Math.max(...taken) : 0) + 1}-${day}${auto ? 'IA' : ''}`;
@@ -51,6 +53,7 @@ function upload(job, name) {
   const base = clean(name) || nextName(!name);
   if (fs.existsSync(path.join(dest, base + '.mp4'))) throw new Error(`Ya hay un video llamado ${base} en tu Drive`);
   fs.copyFileSync(path.join(store.jobDir(job.id), job.output), path.join(dest, base + '.mp4'));
+  job.driveDir = dest;
   const k = job.kit || {};
   if (k.caption) fs.writeFileSync(path.join(dest, base + '-texto.txt'), [k.caption, '', k.hashtags || '', k.disclosure ? '\n' + k.disclosure : ''].join('\n'));
   if (k.cover && fs.existsSync(path.join(store.jobDir(job.id), k.cover))) fs.copyFileSync(path.join(store.jobDir(job.id), k.cover), path.join(dest, base + '-portada.jpg'));
@@ -59,7 +62,8 @@ function upload(job, name) {
 
 // Cambia el nombre de un video ya subido (y de su texto y portada)
 function rename(job, name) {
-  const dest = target();
+  // En la carpeta donde se subió (puede ser de otro día)
+  const dest = job.driveDir && fs.existsSync(job.driveDir) ? job.driveDir : target();
   const base = clean(name);
   if (!dest || !base || !job.driveName) return null;
   if (base === job.driveName) return base;
