@@ -355,6 +355,31 @@ async function run(job) {
   job.outputV = Date.now();
   store.log(job, 'editor', `✅ Video final listo: ${total.toFixed(1)} s`);
   store.save(job);
+  await publishKit(job);
+}
+
+// Kit para publicar: portada, descripción, hashtags y aviso de afiliado
+async function publishKit(job) {
+  const edit = path.join(store.jobDir(job.id), 'edit');
+  store.setWorker(job, 'editor', { action: 'Preparando portada y texto para publicar…' });
+  try { await ffmpeg(['-ss', '0.6', '-i', 'final.mp4', '-frames:v', '1', '-q:v', '2', 'cover.jpg'], { cwd: edit }); } catch {}
+  const out = path.join(edit, 'kit.json');
+  try {
+    const { fill } = require('./director');
+    const claude = require('../lib/claude');
+    const prompt = fill(fs.readFileSync(path.join(store.ROOT, 'prompts', 'kit.md'), 'utf8'), {
+      TYPE: job.videoType === 'venta' ? 'sales video for the book' : 'growth video (max virality)', HOOK: (job.plan && job.plan.hook || '').replace(/\*/g, ''),
+      CTA: (job.plan && job.plan.ctaWord) || job.ctaWord, LINES: job.clips.filter((c) => !c.skip).map((c) => c.line).join('\n'), OUT: out,
+    });
+    if (!job.workers.kit) job.workers.kit = { state: 'idle', action: '', log: [], paused: false };
+    const text = await claude.run({ job, worker: 'kit', prompt, tools: ['Write'] });
+    const k = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, 'utf8')) : claude.extractJson(text);
+    job.kit = { ...k, disclosure: job.videoType === 'venta' ? config.amazonDisclosure : '', cover: fs.existsSync(path.join(edit, 'cover.jpg')) ? 'edit/cover.jpg' : null };
+  } catch (e) {
+    store.log(job, 'editor', '⚠️ No pude preparar el texto para publicar: ' + e.message.slice(0, 100));
+    job.kit = { cover: fs.existsSync(path.join(edit, 'cover.jpg')) ? 'edit/cover.jpg' : null };
+  }
+  store.save(job);
 }
 
 module.exports = { run, buildAss, estimateWords, cleanRanges };

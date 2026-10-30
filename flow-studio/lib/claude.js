@@ -75,6 +75,12 @@ function run({ job, worker, prompt, tools = ['Read', 'Write'], browser = false, 
           }
         }
         if (ev.type === 'result') {
+          // Cuánto ha gastado este trabajador (para el informe de cada video)
+          const u = ev.usage || {};
+          const tok = (u.input_tokens || 0) + (u.output_tokens || 0) + (u.cache_creation_input_tokens || 0) + Math.round((u.cache_read_input_tokens || 0) / 10);
+          j.usage = j.usage || {};
+          j.usage[worker] = (j.usage[worker] || 0) + tok;
+          store.save(j);
           result = ev.result || '';
           if (ev.is_error) { errText = result || 'error'; result = ''; }
         }

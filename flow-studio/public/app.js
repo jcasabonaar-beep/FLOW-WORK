@@ -218,7 +218,7 @@ function renderPanel() {
           <div class="btns">${job.clips.map((c) => `<button class="small ${c.clipStatus === 'regen' ? 'primary' : ''}" data-rc="${c.n}">Clip ${c.n}</button>`).join('')}</div>
           <div class="btns"><button id="bRegenClips">↻ Rehacer clips marcados</button></div>`}
         </div>
-      </div>${chatHtml()}${cardsHtml('clips')}`;
+      </div>${kitHtml()}${reportHtml()}${chatHtml()}${cardsHtml('clips')}`;
     if (job.stage === 'review_final') {
       $('#bApprove').onclick = () => api('jobs/' + job.id + '/final', { action: 'approve' }).then(refresh);
       $('#bReEdit').onclick = () => api('jobs/' + job.id + '/final', { action: 'redo-edit', hook: $('#inHook').value }).then(refresh);
@@ -230,6 +230,7 @@ function renderPanel() {
     }
     bindCards();
     bindChat();
+    document.querySelectorAll('[data-copykit]').forEach((b) => b.onclick = () => { navigator.clipboard.writeText(kitText(job.kit)); b.textContent = '✓ Copiado'; });
     return;
   }
 
@@ -467,9 +468,15 @@ function analysisHtml(a, src) {
     <div class="cards">${(a.variaciones || []).map((v, i) => `<div class="card"><h3><span>${esc(v.titulo)}</span></h3>
       <div class="muted">Hook: “${esc(v.hook)}”</div><p style="font-size:12px">${esc(v.porque || '')}</p>
       <details><summary class="muted">Guion</summary><pre>${esc(v.guion)}</pre></details>
-      <div class="btns"><button class="good" data-var="${i}" data-src="${esc(src)}">🎬 Crear video con esta</button></div></div>`).join('')}</div>`;
+      <div class="btns"><button class="good" data-var="${i}" data-src="${esc(src)}">🎬 Crear video con esta</button><label class="small" style="margin:0;display:flex;gap:6px;align-items:center"><input type="checkbox" data-pick="${i}" style="width:auto"> Lote</label></div></div>`).join('')}</div>
+    <div class="btns"><button data-batch="crecimiento">🌙 Hacer las marcadas esta noche · 🚀 Crecimiento</button><button data-batch="venta">🌙 Hacer las marcadas · 💰 Venta</button></div>`;
 }
 function bindVariations(a, url) {
+  document.querySelectorAll('[data-batch]').forEach((b) => b.onclick = () => {
+    const box = b.closest('.btns').previousElementSibling;
+    const picked = [...box.querySelectorAll('[data-pick]:checked')].map((x) => a.variaciones[x.dataset.pick]);
+    makeBatch(picked, url, b.dataset.batch);
+  });
   document.querySelectorAll('[data-var]').forEach((b) => b.onclick = async () => {
     const v = a.variaciones[b.dataset.var];
     await $('#btnNew').onclick();
@@ -490,7 +497,41 @@ async function refreshLibrary() {
   $('#empty').hidden = true; $('#job').hidden = true; $('#ideas').hidden = true; $('#library').hidden = false;
   $('#libCards').innerHTML = lib.map((v) => `<div class="card"><h3><span>${v.auto ? '🌙 ' : ''}${esc(v.title)}</span><span class="badge">${v.videoType === 'venta' ? '💰 Venta' : '🚀 Crecimiento'}</span></h3>
     <video controls preload="metadata" src="${rootFile(encodeURI(v.file))}" style="width:100%;aspect-ratio:9/16;border-radius:8px;background:#000"></video>
-    <div class="btns"><a href="${rootFile(encodeURI(v.file))}" download><button class="small">⬇ Descargar</button></a><button class="small" data-openjob="${v.id}">💬 Cambiar algo</button></div></div>`).join('') || '<p class="muted">Todavía no hay videos terminados.</p>';
+    <div class="btns"><a href="${rootFile(encodeURI(v.file))}" download><button class="small">⬇ Descargar</button></a>${v.kit ? `<button class="small" data-libkit="${v.id}">📋 Texto</button>` : ''}<button class="small" data-openjob="${v.id}">💬 Cambiar algo</button></div></div>`).join('') || '<p class="muted">Todavía no hay videos terminados.</p>';
   document.querySelectorAll('[data-openjob]').forEach((b) => b.onclick = () => open(b.dataset.openjob));
+  document.querySelectorAll('[data-libkit]').forEach((b) => b.onclick = () => { const v = lib.find((x) => x.id === b.dataset.libkit); navigator.clipboard.writeText(kitText(v.kit)); b.textContent = '✓ Copiado'; });
 }
 $('#btnLibrary').onclick = () => { current = 'library'; location.hash = 'library'; refreshLibrary(); loadList(); };
+
+// ---------- Kit para publicar ----------
+const kitText = (k) => [k.caption || '', '', k.hashtags || '', k.disclosure ? '\n' + k.disclosure : ''].join('\n').trim();
+function kitHtml() {
+  const k = job.kit;
+  if (!k) return '';
+  return `<h2 class="sec">📦 Para publicar</h2><div class="kit">
+    ${k.cover ? `<a href="${file(k.cover, job.outputV)}" download="portada.jpg"><img src="${file(k.cover, job.outputV)}" title="Descargar portada"></a>` : ''}
+    <div style="flex:1;min-width:240px"><pre class="kit-text">${esc(kitText(k))}</pre>
+    <div class="btns"><button class="primary small" data-copykit>📋 Copiar descripción y hashtags</button>${k.cover ? `<a href="${file(k.cover, job.outputV)}" download="portada.jpg"><button class="small">⬇ Portada</button></a>` : ''}</div></div></div>`;
+}
+
+// ---------- Informe de tiempos y gasto ----------
+function reportHtml() {
+  const t = job.timings || {};
+  const names = { capture: 'Captura', director: 'Director', frames: 'Frames', clips: 'Clips', editor: 'Editor' };
+  const mins = Object.entries(names).filter(([k]) => t[k]).map(([k, n]) => `${n} ${(t[k] / 60000).toFixed(1)} min`);
+  const u = job.usage || {};
+  const tot = Object.values(u).reduce((a, b) => a + b, 0);
+  const use = Object.entries(u).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${names[k] || k} ${Math.round((v / tot) * 100)} %`);
+  if (!mins.length) return '';
+  const total = Object.values(t).reduce((a, b) => a + b, 0) / 60000;
+  return `<div class="notes"><b>⏱️ Tiempo de máquina: ${total.toFixed(0)} min</b> · ${mins.join(' · ')}${tot ? `<br><b>🔋 Gasto de Claude:</b> ≈ ${Math.round(tot / 1000)} mil tokens · ${use.join(' · ')}` : ''}</div>`;
+}
+
+// ---------- Lote nocturno ----------
+async function makeBatch(list, url, videoType) {
+  if (!list.length) return alert('Marca primero las ideas que quieres');
+  if (!confirm(`¿Crear ${list.length} videos en 🌙 Todo directo (${videoType === 'venta' ? 'Venta' : 'Crecimiento'})? Se harán solos y en cola.`)) return;
+  const r = await api('jobs/batch', { videoType, setting: 'kitchen', items: list.map((v) => ({ title: v.titulo, url, script: v.guion })) });
+  alert(`🌙 ${r.created} videos en cola. Los tendrás en "Videos completos".`);
+  loadList();
+}

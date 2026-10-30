@@ -93,7 +93,7 @@ async function api(req, res, url) {
   if (parts[1] === 'library') {
     // Videos terminados (los de la carpeta de videos completos)
     const lib = store.list().filter((j) => j.finalFile && fs.existsSync(path.join(store.ROOT, j.finalFile)))
-      .map((j) => ({ id: j.id, title: j.title, file: j.finalFile, videoType: j.videoType, createdAt: j.createdAt, auto: !!j.auto }));
+      .map((j) => ({ id: j.id, title: j.title, file: j.finalFile, videoType: j.videoType, createdAt: j.createdAt, auto: !!j.auto, kit: j.kit || null }));
     return send(res, 200, lib);
   }
   if (parts[1] === 'research') {
@@ -120,6 +120,19 @@ async function api(req, res, url) {
 
   if (parts.length === 2 && method === 'GET') {
     return send(res, 200, store.list().map((j) => ({ id: j.id, title: j.title, stage: j.stage, status: j.status, createdAt: j.createdAt, clips: j.clips.length, auto: !!j.auto })));
+  }
+  if (parts[2] === 'batch' && method === 'POST') {
+    // Lote nocturno: varias ideas de golpe, en modo directo y en cola
+    const body = JSON.parse((await readBody(req)).toString() || '{}');
+    const made = [];
+    for (const it of (body.items || []).slice(0, 10)) {
+      if (!it.script) continue;
+      const job = store.create({ title: it.title, url: it.url, script: it.script, setting: body.setting || 'kitchen', videoType: body.videoType, mode: 'auto', language: 'es' });
+      made.push(job.id);
+      pipeline.drive(job.id);
+      await new Promise((r) => setTimeout(r, 1100)); // ids distintos
+    }
+    return send(res, 200, { created: made.length });
   }
   if (parts.length === 2 && method === 'POST') {
     const body = JSON.parse((await readBody(req)).toString() || '{}');

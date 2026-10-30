@@ -120,8 +120,13 @@
     "analyst": {
       "model": "sonnet",
       "effort": "low"
+    },
+    "kit": {
+      "model": "sonnet",
+      "effort": "low"
     }
   },
   "layoutPass": false,
-  "outputDir": "Videos completos"
+  "outputDir": "Videos completos",
+  "amazonDisclosure": "Como afiliada de Amazon, gano por las compras que cumplen los requisitos. #publicidad"
 }
