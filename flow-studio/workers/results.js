@@ -58,14 +58,17 @@ async function run() {
       // Los reels de hace más de 10 días ya no cambian mucho: no hace falta abrirlos otra vez
       const known = (j.reels || []).filter((r) => r.postedAt && Date.now() - Date.parse(r.postedAt) > 10 * 86400000).map((r) => r.url);
       await claude.run({ job: j, worker: 'results', browser: true, cwd: store.ROOT, tools: ['Read', 'Write'],
-        prompt: fill(P('results.md'), { ACCOUNT, OUT: out, MAX: C.maxReels || 30, KNOWN: known.length ? known.join(' ') : '(none)' }) });
+        prompt: fill(P('results.md'), { ACCOUNT, OUT: out, MAX: C.maxReels || 6, KNOWN: known.length ? known.join(' ') : '(none)' }) });
     } finally {
       lock.release();
     }
     const data = JSON.parse(fs.readFileSync(out, 'utf8'));
     if (data.blocked) throw new Error('Instagram pide algo: ' + data.blocked + ' — resuélvelo en el Chrome de Flow Studio y vuelve a pulsar Analizar');
     const old = Object.fromEntries((j.reels || []).map((r) => [r.url, r]));
-    j.reels = (data.reels || []).map((r) => ({ ...(old[r.url] || {}), ...Object.fromEntries(Object.entries(r).filter(([, v]) => v != null)) }));
+    // Solo mira los últimos; los anteriores se quedan guardados con sus últimos datos para seguir comparando
+    const fresh = (data.reels || []).map((r) => ({ ...(old[r.url] || {}), ...Object.fromEntries(Object.entries(r).filter(([, v]) => v != null)) }));
+    const seen = new Set(fresh.map((r) => r.url));
+    j.reels = [...fresh, ...(j.reels || []).filter((r) => !seen.has(r.url))].slice(0, 80);
     j.followers = data.followers || j.followers;
     const med = median(j.reels.map((r) => r.views).filter(Boolean));
     store.log(j, 'results', `📊 ${j.reels.length} reels leídos · media de la cuenta ${med} vistas`);

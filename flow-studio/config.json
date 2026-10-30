@@ -135,7 +135,7 @@
   "amazonDisclosure": "Como afiliada de Amazon, gano por las compras que cumplen los requisitos. #publicidad",
   "results": {
     "_nota": "Analista de resultados: lee las visitas de tus reels. autoEveryHours 0 = solo a mano",
-    "maxReels": 30,
+    "maxReels": 6,
     "autoEveryHours": 24
   }
 }
