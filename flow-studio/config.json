@@ -124,9 +124,18 @@
     "kit": {
       "model": "sonnet",
       "effort": "low"
+    },
+    "results": {
+      "model": "sonnet",
+      "effort": "low"
     }
   },
   "layoutPass": false,
   "outputDir": "Videos completos",
-  "amazonDisclosure": "Como afiliada de Amazon, gano por las compras que cumplen los requisitos. #publicidad"
+  "amazonDisclosure": "Como afiliada de Amazon, gano por las compras que cumplen los requisitos. #publicidad",
+  "results": {
+    "_nota": "Analista de resultados: lee las visitas de tus reels. autoEveryHours 0 = solo a mano",
+    "maxReels": 30,
+    "autoEveryHours": 24
+  }
 }

@@ -71,7 +71,8 @@ async function run(job) {
   };
   vars.NANO_RULES = fill(P('nano_rules.md'), vars) + '\n\nLESSONS LEARNED IN FLOW (write prompts that avoid these problems from the start):\n' + fs.readFileSync(require('./flow').lessonsFile(), 'utf8');
   vars.OMNI_RULES = fill(P('omni_rules.md'), vars);
-  const prompt = fill(P('director.md'), vars);
+  const results = require('./results').memory();
+  const prompt = fill(P('director.md'), vars) + (results ? '\n\n## WHAT WORKS ON OUR OWN ACCOUNT (real views of our published videos)\n' + results : '');
 
   store.log(job, 'director', 'Leyendo la referencia y escribiendo el plan…');
   const text = await claude.run({ job, worker: 'director', prompt, tools: ['Read', 'Write'] });

@@ -9,6 +9,7 @@ const config = require('./config.json');
 const { ffmpeg } = require('./lib/ff');
 const flow = require('./workers/flow');
 const research = require('./workers/research');
+const results = require('./workers/results');
 const assistant = require('./workers/assistant');
 
 const PUB = path.join(__dirname, 'public');
@@ -117,6 +118,16 @@ async function api(req, res, url) {
     const lib = store.list().filter((j) => j.finalFile && fs.existsSync(path.join(store.ROOT, j.finalFile)))
       .map((j) => ({ id: j.id, title: j.title, file: j.finalFile, videoType: j.videoType, createdAt: j.createdAt, auto: !!j.auto, kit: j.kit || null, driveName: j.driveName || null }));
     return send(res, 200, lib);
+  }
+  if (parts[1] === 'results') {
+    const r = results.rjob();
+    if (method === 'GET') {
+      const titles = Object.fromEntries(store.list().map((x) => [x.id, x.title]));
+      return send(res, 200, { ...r, running: results.isRunning(), titles, auto: (config.results || {}).autoEveryHours ?? 24 });
+    }
+    if (parts[2] === 'run') { results.run(); return send(res, 200, { ok: true }); }
+    if (parts[2] === 'stop') return send(res, 200, { ok: claude.stop(results.RID, 'results') });
+    return send(res, 404, { error: 'ruta' });
   }
   if (parts[1] === 'research') {
     const r = research.rjob();
@@ -332,6 +343,7 @@ const server = http.createServer(async (req, res) => {
 
 fs.mkdirSync(store.JOBS, { recursive: true });
 pipeline.resumeAll();
+results.schedule();
 server.listen(config.port, '127.0.0.1', () => {
   console.log(`\n  Flow Studio abierto en  http://localhost:${config.port}\n  (deja esta ventana abierta mientras trabajas)\n`);
 });

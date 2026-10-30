@@ -12,6 +12,7 @@
   <button class="primary wide" id="btnNew">＋ Nuevo video</button>
   <button class="wide" id="btnIdeas" style="margin-top:8px">🔎 Ideas virales</button>
   <button class="wide" id="btnLibrary" style="margin-top:8px">🎬 Videos completos</button>
+  <button class="wide" id="btnResults" style="margin-top:8px">📈 Resultados</button>
   <div class="side-title">Videos</div>
   <div id="jobList"></div>
 </aside>
@@ -36,6 +37,17 @@
     <header class="job-head"><div><h1>🎬 Videos completos</h1><div class="muted">Se guardan solos en la carpeta <b>flow-studio\Videos completos</b>.</div></div></header>
     <div class="notes" id="driveBox"></div>
     <div class="cards" id="libCards"></div>
+  </section>
+  <section id="results" hidden>
+    <header class="job-head">
+      <div><h1>📈 Resultados</h1><div class="muted" id="rMeta"></div></div>
+      <div class="head-actions"><button id="btnStopResults" hidden>⏹ Detener</button><button class="primary" id="btnRunResults">📈 Analizar ahora</button></div>
+    </header>
+    <div class="ideas-top">
+      <div id="rReport"></div>
+      <div class="room-mini" id="rRoom"></div>
+    </div>
+    <div id="rTable"></div>
   </section>
   <section id="job" hidden>
     <header class="job-head">

@@ -189,3 +189,6 @@ label.type:has(input:checked) { border-color: var(--accent); background: #1d2a44
 .kit { display: flex; gap: 14px; flex-wrap: wrap; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
 .kit img { width: 140px; aspect-ratio: 9/16; object-fit: cover; border-radius: 8px; }
 .kit-text { white-space: pre-wrap; background: var(--bg); padding: 10px; border-radius: 8px; font: 13px/1.5 system-ui, sans-serif; margin: 0; }
+.rtable { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+.rtable th, .rtable td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #ffffff14; }
+.rtable th { color: #94a3b8; font-weight: 600; }

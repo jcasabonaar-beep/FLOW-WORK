@@ -43,6 +43,7 @@ const stageName = (s) => (STAGES.find((x) => x[0] === s) || [, s])[1];
 async function open(id) {
   $('#ideas').hidden = true;
   $('#library').hidden = true;
+  $('#results').hidden = true;
   $('#analysis').innerHTML = '';
   current = id;
   panelSig = '';
@@ -55,6 +56,7 @@ async function refresh() {
   if (!current) return;
   if (current === 'ideas') return refreshIdeas();
   if (current === 'library') return refreshLibrary();
+  if (current === 'results') return refreshResults();
   job = await api('jobs/' + current);
   $('#empty').hidden = true;
   $('#job').hidden = false;
@@ -109,7 +111,7 @@ async function refresh() {
 // ---------- Oficina visual ----------
 let viewMode = 'floor';
 try { viewMode = localStorage.getItem('viewMode') || 'floor'; } catch {}
-const COLORS = { capture: '#f59e0b', director: '#a855f7', frames: '#22c55e', clips: '#3b82f6', editor: '#ec4899', boss: '#94a3b8', research: '#14b8a6' };
+const COLORS = { capture: '#f59e0b', director: '#a855f7', frames: '#22c55e', clips: '#3b82f6', editor: '#ec4899', boss: '#94a3b8', research: '#14b8a6', results: '#eab308' };
 const PROPS = { idle: '☕', waiting_you: '✋', error: '💨', paused: '⏸️', done: '✅', limit: '💤' };
 
 function bossState() {
@@ -370,6 +372,7 @@ let pending = null;
 const es = new EventSource('/api/events');
 es.onmessage = (e) => {
   if (e.data === '_investigador') { if (current === 'ideas') refreshIdeas(); return; }
+  if (e.data === '_resultados') { if (current === 'results') refreshResults(); return; }
   if (e.data !== current) { loadList(); return; }
   clearTimeout(pending);
   pending = setTimeout(() => { refresh(); loadList(); }, 250);
@@ -383,7 +386,7 @@ const fmt = (n) => n >= 1e6 ? (n / 1e6).toFixed(1).replace('.0', '') + ' M' : n 
 let ideasSig = '';
 async function refreshIdeas() {
   const r = await api('research');
-  $('#empty').hidden = true; $('#job').hidden = true; $('#library').hidden = true; $('#ideas').hidden = false;
+  $('#empty').hidden = true; $('#job').hidden = true; $('#library').hidden = true; $('#results').hidden = true; $('#ideas').hidden = false;
   if (document.activeElement !== $('#inAccounts')) $('#inAccounts').value = (r.accounts || []).join('\n');
   const w = r.workers.research;
   const st = r.running ? 'working' : w.state;
@@ -511,7 +514,7 @@ async function refreshLibrary() {
     </div>
     <div class="muted" style="font-size:12px">Cada video terminado se sube como <b>1-DDMMAAAAIA.mp4</b>, <b>2-DDMMAAAAIA.mp4</b>… (número del día + fecha + IA), con su texto y su portada. Déjalo vacío para no subir.</div>`;
   $('#btnDrive').onclick = async () => { await api('drive', { driveFolder: $('#inDrive').value, driveSubfolder: $('#inDriveSub').value }); refreshLibrary(); };
-  $('#empty').hidden = true; $('#job').hidden = true; $('#ideas').hidden = true; $('#library').hidden = false;
+  $('#empty').hidden = true; $('#job').hidden = true; $('#ideas').hidden = true; $('#results').hidden = true; $('#library').hidden = false;
   $('#libCards').innerHTML = lib.map((v) => `<div class="card"><h3><span>${v.auto ? '🌙 ' : ''}${esc(v.title)}${v.driveName ? ` <span class="badge done">☁️ ${esc(v.driveName)}</span>` : ''}</span><span class="badge">${v.videoType === 'venta' ? '💰 Venta' : '🚀 Crecimiento'}</span></h3>
     <video controls preload="metadata" src="${rootFile(encodeURI(v.file))}" style="width:100%;aspect-ratio:9/16;border-radius:8px;background:#000"></video>
     <div class="btns"><a href="${rootFile(encodeURI(v.file))}" download><button class="small">⬇ Descargar</button></a>${v.kit ? `<button class="small" data-libkit="${v.id}">📋 Texto</button>` : ''}<button class="small" data-openjob="${v.id}">💬 Cambiar algo</button><button class="small" data-drive="${v.id}">☁️ ${v.driveName ? 'Renombrar en Drive' : 'Subir a Drive'}</button></div></div>`).join('') || '<p class="muted">Todavía no hay videos terminados.</p>';
@@ -561,3 +564,30 @@ async function makeBatch(list, url, videoType) {
   alert(`🌙 ${r.created} videos en cola. Los tendrás en "Videos completos".`);
   loadList();
 }
+
+// ---------- Resultados de tus videos ----------
+async function refreshResults() {
+  const r = await api('results');
+  $('#empty').hidden = true; $('#job').hidden = true; $('#ideas').hidden = true; $('#library').hidden = true; $('#results').hidden = false;
+  const w = r.workers.results;
+  const st = r.running ? 'working' : w.state;
+  $('#btnRunResults').disabled = r.running;
+  $('#btnStopResults').hidden = !r.running;
+  $('#rMeta').textContent = (r.lastRun ? `Último análisis: ${new Date(r.lastRun).toLocaleString()}` : 'Todavía no se ha analizado. Inicia sesión en Instagram en el Chrome de Flow Studio y pulsa Analizar ahora.') +
+    (r.auto && r.lastRun ? ` · se repite solo cada ${r.auto} h` : '');
+  $('#rRoom').innerHTML = room('results', '📈', 'Analista de resultados', st, st === 'working' || st === 'error' ? w.action : (w.action || 'Listo')) + `<pre class="log">${esc(w.log.slice(-8).join('\n'))}</pre>`;
+  const p = r.report;
+  $('#rReport').innerHTML = p ? `<div class="notes"><b>Resumen</b><p>${esc(p.resumen || '')}</p>
+    ${(p.patrones || []).length ? `<b>Lo que marca la diferencia</b><ul>${p.patrones.map((x) => `<li>${esc(x.texto)} <span class="badge ${x.fuerza === 'fuerte' ? 'done' : ''}">${esc(x.fuerza || '')}</span></li>`).join('')}</ul>` : ''}
+    ${(p.lecciones || []).length ? `<b>Lo que ya aplica el director en los próximos videos</b><ul>${p.lecciones.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+    ${(p.probar || []).length ? `<b>Para probar</b><ul>${p.probar.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>` : '';
+  const med = p && p.median;
+  const reels = [...(r.reels || [])].sort((a, b) => (b.views || 0) - (a.views || 0));
+  $('#rTable').innerHTML = reels.length ? `<table class="rtable"><tr><th>Vistas</th><th>vs media</th><th>Likes</th><th>Coment.</th><th>Publicado</th><th>Video</th></tr>${reels.map((x) => `<tr>
+    <td><b>${fmt(x.views || 0)}</b></td><td style="color:${med && x.views / med >= 1.5 ? '#86efac' : med && x.views / med < 0.6 ? '#fca5a5' : 'inherit'}">${med ? (x.views / med).toFixed(1) + '×' : ''}</td>
+    <td>${x.likes ?? ''}</td><td>${x.comments ?? ''}</td><td>${x.postedAt ? new Date(x.postedAt).toLocaleDateString() : ''}</td>
+    <td><a href="${esc(x.url)}" target="_blank" style="color:#93c5fd">${esc(x.jobId && r.titles[x.jobId] ? r.titles[x.jobId] : (x.caption || 'Ver').slice(0, 60))}</a></td></tr>`).join('')}</table>` : '';
+}
+$('#btnResults').onclick = () => { current = 'results'; location.hash = 'results'; refreshResults(); loadList(); };
+$('#btnRunResults').onclick = async () => { await api('results/run', {}); refreshResults(); };
+$('#btnStopResults').onclick = () => api('results/stop', {}).then(refreshResults);
