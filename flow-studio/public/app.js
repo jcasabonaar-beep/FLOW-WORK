@@ -133,13 +133,13 @@ async function refresh() {
       <div class="office-btns">
         <button class="small" data-pause="${k}">${w.paused ? '▶ Reanudar' : '⏸ Pausar'}</button>
         ${w.state === 'working' && ['director', 'frames', 'clips'].includes(k) ? `<button class="small" data-stop="${k}">⏹ Detener ya</button>` : ''}
-        <button class="small" data-view="${k}">🔍 Ver oficina</button>
+        <button class="small" data-office="${k}">🔍 Ver oficina</button>
       </div></div>`;
   }).join('');
   renderFloor();
   document.querySelectorAll('[data-pause]').forEach((b) => b.onclick = () => api('jobs/' + job.id + '/' + (job.workers[b.dataset.pause].paused ? 'resume' : 'pause'), { worker: b.dataset.pause }).then(refresh));
   document.querySelectorAll('[data-stop]').forEach((b) => b.onclick = () => confirm('¿Detener a este trabajador ahora? Lo que esté a medias se pierde.') && api('jobs/' + job.id + '/stop-worker', { worker: b.dataset.stop }));
-  document.querySelectorAll('[data-view]').forEach((b) => b.onclick = () => viewOffice(b.dataset.view));
+  document.querySelectorAll("[data-office]").forEach((b) => b.onclick = () => viewOffice(b.dataset.office));
   if ($('#dlgOffice').open && $('#dlgOffice').dataset.w) viewOffice($('#dlgOffice').dataset.w, true);
 
   const sig = JSON.stringify([job.stage, job.status, job.outputV, job.clips.map((c) => [c.frameStatus, c.clipStatus, c.v, c.frame, c.clip])]);
