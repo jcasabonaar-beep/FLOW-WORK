@@ -25,26 +25,37 @@ async function api(path, body, opts = {}) {
   if (!r.ok) { alert(j.error || 'Error'); throw new Error(j.error); }
   return j;
 }
+// Una sola pantalla visible a la vez
+const VIEWS = ['empty', 'home', 'ideas', 'library', 'results', 'settings', 'job'];
+function show(view) {
+  for (const v of VIEWS) $('#' + v).hidden = v !== view;
+  document.querySelectorAll('.nav [data-view]').forEach((b) => b.classList.toggle('sel', b.dataset.view === view));
+}
 const file = (p, v) => `/files/${job.id}/${p}${v ? '?v=' + v : ''}`;
 const rootFile = (p) => '/root/' + p;
 
+const needsYou = (j) => ['waiting_you', 'error', 'paused', 'stopped'].includes(j.status);
 async function loadList() {
   const list = await api('jobs');
-  $('#jobList').innerHTML = list.map((j) => `
+  const item = (j) => `
     <div class="job-item ${j.id === current ? 'sel' : ''}" data-id="${j.id}">
       <span class="dot ${j.status}"></span>
-      <div><div>${j.auto ? '🌙 ' : ''}${esc(j.title)}</div><small>${esc(stageName(j.stage))} · ${j.clips} clips</small></div>
-    </div>`).join('');
+      <div><div>${esc(j.title)}</div><small>${j.status === 'error' ? 'Se atascó' : ['paused', 'stopped'].includes(j.status) ? '⏸ Parado' : j.status === 'waiting_limit' ? '💤 Esperando límite de Claude' : esc(stageName(j.stage))} · ${j.clips} clips</small></div>
+    </div>`;
+  const wait = list.filter(needsYou);
+  const done = list.filter((j) => j.status === 'done');
+  const run = list.filter((j) => !wait.includes(j) && !done.includes(j));
+  const group = (title, arr, cls) => arr.length ? `<div class="side-title ${cls || ''}">${title} <span>${arr.length}</span></div>${arr.map(item).join('')}` : '';
+  $('#jobList').innerHTML = group('✋ Te esperan', wait, 'warn') + group('⏳ En marcha', run) +
+    (done.length ? `<details class="done-group"><summary class="side-title">✅ Terminados <span>${done.length}</span></summary>${done.map(item).join('')}</details>` : '');
   document.querySelectorAll('.job-item').forEach((el) => el.onclick = () => open(el.dataset.id));
-  if (!current && list[0]) open(list[0].id);
+  $('#navWait').hidden = !wait.length;
+  $('#navWait').textContent = wait.length;
+  return list;
 }
 const stageName = (s) => (STAGES.find((x) => x[0] === s) || [, s])[1];
 
 async function open(id) {
-  $('#ideas').hidden = true;
-  $('#library').hidden = true;
-  $('#results').hidden = true;
-  $('#pilot').hidden = true;
   $('#analysis').innerHTML = '';
   current = id;
   panelSig = '';
@@ -55,13 +66,14 @@ async function open(id) {
 
 async function refresh() {
   if (!current) return;
+  if (current === 'home') return refreshHome();
   if (current === 'ideas') return refreshIdeas();
   if (current === 'library') return refreshLibrary();
   if (current === 'results') return refreshResults();
-  if (current === 'pilot') return refreshPilot();
+  if (current === 'settings' || current === 'pilot') return refreshSettings();
   job = await api('jobs/' + current);
-  $('#empty').hidden = true;
-  $('#job').hidden = false;
+  show('job');
+  $('.more').open = false;
   $('#jTitle').textContent = job.title;
   const mins = Math.round((Object.values(job.timings || {}).reduce((a, b) => a + b, 0)) / 60000);
   $('#jMeta').textContent = `${job.videoType === 'venta' ? '💰 Venta' : '🚀 Crecimiento'} · ${new Date(job.createdAt).toLocaleString()} · ${job.clips.length || '?'} clips · ${mins} min de trabajo${job.url ? ' · ' : ''}`;
@@ -375,21 +387,25 @@ const es = new EventSource('/api/events');
 es.onmessage = (e) => {
   if (e.data === '_investigador') { if (current === 'ideas') refreshIdeas(); return; }
   if (e.data === '_resultados') { if (current === 'results') refreshResults(); return; }
-  if (e.data === '_piloto') { if (current === 'pilot') refreshPilot(); return; }
+  if (e.data === '_piloto') { if (current === 'settings') refreshSettings(); if (current === 'home') homeSoon(); return; }
+  if (current === 'home') { homeSoon(); return; }
   if (e.data !== current) { loadList(); return; }
   clearTimeout(pending);
   pending = setTimeout(() => { refresh(); loadList(); }, 250);
 };
 
-current = location.hash.slice(1) || null;
-loadList().then(() => current && refresh());
+let homeTimer = null;
+const homeSoon = () => { clearTimeout(homeTimer); homeTimer = setTimeout(refreshHome, 800); };
+current = location.hash.slice(1) || 'home';
+if (current === 'pilot') current = 'settings';
+loadList().then(() => refresh());
 
 // ---------- Ideas virales ----------
 const fmt = (n) => n >= 1e6 ? (n / 1e6).toFixed(1).replace('.0', '') + ' M' : n >= 1e3 ? Math.round(n / 1e3) + ' mil' : String(n);
 let ideasSig = '';
 async function refreshIdeas() {
   const r = await api('research');
-  $('#empty').hidden = true; $('#job').hidden = true; $('#library').hidden = true; $('#results').hidden = true; $('#pilot').hidden = true; $('#ideas').hidden = false;
+  show('ideas');
   if (document.activeElement !== $('#inAccounts')) $('#inAccounts').value = (r.accounts || []).join('\n');
   const w = r.workers.research;
   const st = r.running ? 'working' : w.state;
@@ -431,7 +447,6 @@ async function newFromIdea(s) {
 // Las notas entre corchetes ([Nota: …]) nunca son parte del guion: el director completa lo que falte
 const cleanScript = (t) => String(t || '').replace(/\[[^\]]*\]/g, '').replace(/\n{3,}/g, '\n\n').trim();
 
-$('#btnIdeas').onclick = () => { current = 'ideas'; location.hash = 'ideas'; ideasSig = ''; refreshIdeas(); loadList(); };
 $('#btnRunIdeas').onclick = async () => {
   await api('research/accounts', { accounts: $('#inAccounts').value.split(/[\n,]+/) });
   await api('research/run', {});
@@ -510,16 +525,7 @@ $('#btnAnalyze').onclick = async () => {
 // ---------- Videos completos ----------
 async function refreshLibrary() {
   const lib = await api('library');
-  const dv = await api('drive');
-  $('#driveBox').innerHTML = `<b>☁️ Subida automática a Google Drive</b> ${dv.target ? `<span class="badge done">activa → ${esc(dv.target)}</span>` : '<span class="badge">desactivada</span>'}
-    <div class="row" style="margin-top:8px;align-items:end">
-      <label>Carpeta de tu Google Drive en este PC ${dv.detected.length ? `(encontrada: ${dv.detected.map(esc).join(', ')})` : '(instala Google Drive para ordenador)'}<input id="inDrive" value="${esc(dv.driveFolder || dv.detected[0] || '')}" placeholder="G:\\Mi unidad"></label>
-      <label>Subcarpeta<input id="inDriveSub" value="${esc(dv.driveSubfolder)}"></label>
-      <button class="primary" id="btnDrive" style="flex:none">Guardar</button>
-    </div>
-    <div class="muted" style="font-size:12px">Cada video terminado se sube como <b>1-DDMMAAAAIA.mp4</b>, <b>2-DDMMAAAAIA.mp4</b>… (número del día + fecha + IA), con su texto y su portada. Déjalo vacío para no subir.</div>`;
-  $('#btnDrive').onclick = async () => { await api('drive', { driveFolder: $('#inDrive').value, driveSubfolder: $('#inDriveSub').value }); refreshLibrary(); };
-  $('#empty').hidden = true; $('#job').hidden = true; $('#ideas').hidden = true; $('#results').hidden = true; $('#pilot').hidden = true; $('#library').hidden = false;
+  show('library');
   $('#libCards').innerHTML = lib.map((v) => `<div class="card"><h3><span>${v.auto ? '🌙 ' : ''}${esc(v.title)}${v.driveName ? ` <span class="badge done">☁️ ${esc(v.driveName)}</span>` : ''}</span><span class="badge">${v.videoType === 'venta' ? '💰 Venta' : '🚀 Crecimiento'}</span></h3>
     <video controls preload="metadata" src="${rootFile(encodeURI(v.file))}" style="width:100%;aspect-ratio:9/16;border-radius:8px;background:#000"></video>
     <div class="btns"><a href="${rootFile(encodeURI(v.file))}" download><button class="small">⬇ Descargar</button></a>${v.kit ? `<button class="small" data-libkit="${v.id}">📋 Texto</button>` : ''}<button class="small" data-openjob="${v.id}">💬 Cambiar algo</button><button class="small" data-drive="${v.id}">☁️ ${v.driveName ? 'Renombrar en Drive' : 'Subir a Drive'}</button></div></div>`).join('') || '<p class="muted">Todavía no hay videos terminados.</p>';
@@ -535,7 +541,6 @@ async function refreshLibrary() {
   });
   document.querySelectorAll('[data-libkit]').forEach((b) => b.onclick = () => { const v = lib.find((x) => x.id === b.dataset.libkit); navigator.clipboard.writeText(kitText(v.kit)); b.textContent = '✓ Copiado'; });
 }
-$('#btnLibrary').onclick = () => { current = 'library'; location.hash = 'library'; refreshLibrary(); loadList(); };
 
 // ---------- Kit para publicar ----------
 const kitText = (k) => [k.caption || '', '', k.hashtags || '', k.disclosure ? '\n' + k.disclosure : ''].join('\n').trim();
@@ -573,7 +578,7 @@ async function makeBatch(list, url, videoType) {
 // ---------- Resultados de tus videos ----------
 async function refreshResults() {
   const r = await api('results');
-  $('#empty').hidden = true; $('#job').hidden = true; $('#ideas').hidden = true; $('#library').hidden = true; $('#pilot').hidden = true; $('#results').hidden = false;
+  show('results');
   const w = r.workers.results;
   const st = r.running ? 'working' : w.state;
   $('#btnRunResults').disabled = r.running;
@@ -596,7 +601,6 @@ async function refreshResults() {
     <p class="muted" style="font-size:12px">Elige qué video es cada reel: así el analista sabe qué hook, escenario y tipo de video tuvo cada resultado. Se tiene en cuenta en el próximo análisis.</p>` : '';
   document.querySelectorAll('[data-link]').forEach((sel) => sel.onchange = () => api('results/link', { url: sel.dataset.link, jobId: sel.value }).then(refreshResults));
 }
-$('#btnResults').onclick = () => { current = 'results'; location.hash = 'results'; refreshResults(); loadList(); };
 $('#btnRunResults').onclick = async () => { await api('results/run', {}); refreshResults(); };
 $('#btnStopResults').onclick = () => api('results/stop', {}).then(refreshResults);
 
@@ -604,14 +608,17 @@ $('#btnStopResults').onclick = () => api('results/stop', {}).then(refreshResults
 const SETTING_ES = { kitchen: 'Cocina', walmart: 'Walmart', target: 'Target', supermarket: 'Supermercado', bathroom: 'Baño', reference: 'Como la referencia', mix: 'Variado (cocina, Walmart, Target…)' };
 const STATUS_ES = { done: '✅ listo', running: '⏳ en marcha', waiting_limit: '💤 esperando límite', error: '❌ atascado', waiting_you: '✋ te espera', paused: '⏸ parado', stopped: '⏹ parado' };
 let pilotFormSig = '';
-async function refreshPilot() {
+async function refreshSettings() {
   const p = await api('autopilot');
-  $('#empty').hidden = true; $('#job').hidden = true; $('#ideas').hidden = true; $('#library').hidden = true; $('#results').hidden = true; $('#pilot').hidden = false;
+  show('settings');
+  renderDrive();
+  const r = await api('research');
+  if (document.activeElement !== $('#inAccounts')) $('#inAccounts').value = (r.accounts || []).join('\n');
   const o = p.opts;
   const sig = JSON.stringify([o, p.ntfyTopic]);
   if (sig !== pilotFormSig) {
     pilotFormSig = sig;
-    $('#pilotForm').innerHTML = `<b>Ajustes</b> ${o.enabled ? `<span class="badge done">activado · cada noche a las ${o.hour}:00</span>` : '<span class="badge">desactivado</span>'}
+    $('#pilotForm').innerHTML = `Cada noche busca ideas virales, hace los videos solo y los sube a tu Drive. Si se acaba el límite de Claude, espera y sigue cuando se renueva. ${o.enabled ? `<span class="badge done">activado · cada noche a las ${o.hour}:00</span>` : '<span class="badge">desactivado</span>'}
       <div class="row" style="margin-top:8px;align-items:end">
         <label style="flex:none;display:flex;gap:6px;align-items:center"><input type="checkbox" id="apOn" style="width:auto" ${o.enabled ? 'checked' : ''}> Activado</label>
         <label>Hora <select id="apHour">${Array.from({ length: 24 }, (_, h) => `<option value="${h}" ${h == o.hour ? 'selected' : ''}>${h}:00</option>`).join('')}</select></label>
@@ -621,23 +628,79 @@ async function refreshPilot() {
         <button class="primary" id="apSave" style="flex:none">Guardar</button>
       </div>
       <div class="muted" style="font-size:12px">Deja el PC encendido, enchufado y con Flow Studio abierto (no se dormirá mientras esté activado). Si es portátil, no cierres la tapa.</div>`;
-    $('#notifyBox').innerHTML = `<b>📱 Avisos al móvil</b> ${p.ntfyTopic ? '<span class="badge done">activados</span>' : '<span class="badge">desactivados</span>'}
+    $('#notifyBox').innerHTML = `${p.ntfyTopic ? '<span class="badge done">activados</span>' : '<span class="badge">desactivados</span>'}
       <ol style="font-size:13px;margin:8px 0;padding-left:18px"><li>Instala en tu móvil la app gratuita <b>ntfy</b> (App Store / Google Play).</li><li>En la app pulsa <b>＋</b> y suscríbete al canal: <b>${esc(p.ntfyTopic || '(pulsa Crear canal)')}</b></li><li>Pulsa <b>Enviar prueba</b>.</li></ol>
       <div class="row" style="align-items:end"><label>Canal<input id="ntfyTopic" value="${esc(p.ntfyTopic)}" placeholder="flowstudio-…"></label>
       <button id="ntfyNew" style="flex:none">Crear canal</button><button class="primary" id="ntfySave" style="flex:none">Guardar</button><button id="ntfyTest" style="flex:none">Enviar prueba</button></div>
       <div class="muted" style="font-size:12px">Te avisa cuando un video está listo, cuando te necesita, si se atasca, si se acaba el límite de Claude y el resumen de cada noche.</div>`;
-    $('#apSave').onclick = async () => { await api('autopilot', { autopilot: { enabled: $('#apOn').checked, hour: $('#apHour').value, videos: $('#apVideos').value, venta: $('#apVenta').value, setting: $('#apSetting').value } }); pilotFormSig = ''; refreshPilot(); };
+    $('#apSave').onclick = async () => { await api('autopilot', { autopilot: { enabled: $('#apOn').checked, hour: $('#apHour').value, videos: $('#apVideos').value, venta: $('#apVenta').value, setting: $('#apSetting').value } }); pilotFormSig = ''; refreshSettings(); };
     $('#ntfyNew').onclick = () => { $('#ntfyTopic').value = 'flowstudio-' + Math.random().toString(36).slice(2, 10); };
-    $('#ntfySave').onclick = async () => { await api('autopilot', { ntfyTopic: $('#ntfyTopic').value }); pilotFormSig = ''; refreshPilot(); };
-    $('#ntfyTest').onclick = async () => { await api('autopilot', { ntfyTopic: $('#ntfyTopic').value }); pilotFormSig = ''; await api('autopilot/test', {}); alert('Enviado. Mira tu móvil.'); refreshPilot(); };
+    $('#ntfySave').onclick = async () => { await api('autopilot', { ntfyTopic: $('#ntfyTopic').value }); pilotFormSig = ''; refreshSettings(); };
+    $('#ntfyTest').onclick = async () => { await api('autopilot', { ntfyTopic: $('#ntfyTopic').value }); pilotFormSig = ''; await api('autopilot/test', {}); alert('Enviado. Mira tu móvil.'); refreshSettings(); };
   }
-  const w = p.worker;
-  const st = p.running ? 'working' : w.state;
-  $('#btnPilotRun').disabled = p.running;
-  $('#pRoom').innerHTML = room('autopilot', '🌙', 'Piloto automático', st, w.action || (o.enabled ? `Esperando a las ${o.hour}:00` : 'Desactivado')) + `<pre class="log">${esc(w.log.slice(-10).join('\n'))}</pre>`;
-  $('#pilotRuns').innerHTML = p.runs.length ? '<b>Últimas noches</b>' + p.runs.map((r) => `<div class="notes" style="margin-top:8px"><b>${new Date(r.at).toLocaleString()}</b>
-    <ul style="margin:6px 0;padding-left:18px">${r.jobs.map((x) => `<li><a href="#${x.id}" data-openjob="${x.id}" style="color:#93c5fd">${esc(x.title)}</a> · ${STATUS_ES[x.status] || x.status}${x.driveName ? ' · ☁️ ' + esc(x.driveName) : ''}</li>`).join('')}</ul></div>`).join('') : '';
-  document.querySelectorAll('#pilotRuns [data-openjob]').forEach((b) => b.onclick = (e) => { e.preventDefault(); open(b.dataset.openjob); });
 }
-$('#btnPilot').onclick = () => { current = 'pilot'; location.hash = 'pilot'; pilotFormSig = ''; refreshPilot(); loadList(); };
-$('#btnPilotRun').onclick = async () => { if (!confirm('¿Lanzar el piloto automático ahora? Buscará ideas y empezará los videos.')) return; await api('autopilot/run', {}); refreshPilot(); };
+
+async function renderDrive() {
+  const dv = await api('drive');
+  if ($('#driveBox').contains(document.activeElement)) return;
+  $('#driveBox').innerHTML = `${dv.target ? `<span class="badge done">activa → ${esc(dv.target)}</span>` : '<span class="badge">desactivada</span>'}
+    <div class="row" style="margin-top:8px;align-items:end">
+      <label>Carpeta de tu Google Drive en este PC ${dv.detected.length ? `(encontrada: ${dv.detected.map(esc).join(', ')})` : '(instala Google Drive para ordenador)'}<input id="inDrive" value="${esc(dv.driveFolder || dv.detected[0] || '')}" placeholder="G:\\Mi unidad"></label>
+      <label>Subcarpeta<input id="inDriveSub" value="${esc(dv.driveSubfolder)}"></label>
+      <button class="primary" id="btnDrive" style="flex:none">Guardar</button>
+    </div>
+    <div class="muted" style="font-size:12px">Cada video terminado se sube como <b>1-DDMMAAAAIA.mp4</b>, <b>2-DDMMAAAAIA.mp4</b>… (número del día + fecha + IA), con su texto y su portada. Déjalo vacío para no subir.</div>`;
+  $('#btnDrive').onclick = async () => { await api('drive', { driveFolder: $('#inDrive').value, driveSubfolder: $('#inDriveSub').value }); renderDrive(); };
+}
+
+// ---------- 🏠 Hoy ----------
+async function refreshHome() {
+  show('home');
+  const [list, p, r] = await Promise.all([loadList(), api('autopilot'), api('results')]);
+  const wait = list.filter(needsYou);
+  const run = list.filter((j) => !needsYou(j) && j.status !== 'done');
+  const today = list.filter((j) => j.status === 'done' && new Date(j.createdAt).toDateString() === new Date().toDateString());
+  $('#hMeta').textContent = `${new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} · ${today.length} videos terminados hoy`;
+  const why = (j) => j.status === 'error' ? '❌ Se atascó: ábrelo y pulsa Continuar' : ['paused', 'stopped'].includes(j.status) ? '⏸ Parado: ábrelo y pulsa Continuar (o archívalo en ⋯ Más)' : j.stage === 'review_frames' ? 'Revisa los frames' : j.stage === 'review_final' ? 'Dale el OK final' : 'Necesita que lo mires';
+  const row = (j, txt) => `<div class="hrow" data-openjob="${j.id}"><span class="dot ${j.status}"></span><div><b>${esc(j.title)}</b><small>${esc(txt)}</small></div></div>`;
+  $('#hWait').innerHTML = `<h3>✋ Te esperan <span class="badge ${wait.length ? 'waiting_you' : ''}">${wait.length}</span></h3>` +
+    (wait.map((j) => row(j, why(j))).join('') || '<p class="muted">Nada pendiente. 👌</p>');
+  $('#hRun').innerHTML = `<h3>⏳ En marcha <span class="badge ${run.length ? 'working' : ''}">${run.length}</span></h3>` +
+    (run.map((j) => row(j, j.status === 'waiting_limit' ? '💤 Esperando a que se renueve el límite de Claude' : stageName(j.stage))).join('') || '<p class="muted">Ningún video trabajando ahora.</p>');
+  const o = p.opts;
+  const last = p.runs[0];
+  const w = p.worker;
+  $('#hPilot').innerHTML = `<h3>🌙 Piloto automático ${o.enabled ? `<span class="badge done">cada noche a las ${o.hour}:00</span>` : '<span class="badge">desactivado</span>'}</h3>
+    <p>${o.enabled ? `Esta noche hará <b>${o.videos} videos</b> (${o.venta} de 💰 Venta) y los subirá a tu Drive.` : 'Actívalo en ⚙️ Ajustes para que haga videos mientras duermes.'}</p>
+    ${p.running || w.state === 'working' || w.state === 'paused' ? `<p class="muted">Ahora: ${esc(w.action)}</p>` : ''}
+    ${last ? `<div class="muted" style="font-size:12px">Última tanda (${new Date(last.at).toLocaleString()}):</div>${last.jobs.map((x) => row(x, (STATUS_ES[x.status] || x.status) + (x.driveName ? ' · ☁️ ' + x.driveName : ''))).join('')}` : ''}
+    <div class="btns"><button id="hPilotRun" ${p.running ? 'disabled' : ''}>▶ Lanzar ahora</button><button data-go="settings">⚙️ Cambiar</button></div>`;
+  const rep = r.report;
+  const top = [...(r.reels || [])].sort((a, b) => (b.views || 0) - (a.views || 0))[0];
+  $('#hResults').innerHTML = `<h3>📈 Tus reels</h3>` + (rep ? `<p>${esc((rep.resumen || '').split(/(?<=\.)\s/)[0])}</p>
+    ${top ? `<p class="muted">Mejor: <b>${fmt(top.views)}</b> vistas${rep.median ? ` · ${(top.views / rep.median).toFixed(1)}× tu media` : ''}</p>` : ''}
+    ${(rep.lecciones || []).length ? `<div class="muted" style="font-size:12px">El director ya aplica:</div><ul>${rep.lecciones.slice(0, 3).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}` : '<p class="muted">Todavía no hay análisis.</p>') +
+    `<div class="btns"><button data-go="results">Ver todo</button></div>`;
+  document.querySelectorAll('#home [data-openjob]').forEach((b) => b.onclick = () => open(b.dataset.openjob));
+  document.querySelectorAll('#home [data-go]').forEach((b) => b.onclick = () => go(b.dataset.go));
+  $('#hPilotRun').onclick = async () => { if (!confirm('¿Lanzar el piloto automático ahora? Buscará ideas y empezará los videos.')) return; await api('autopilot/run', {}); refreshHome(); };
+}
+
+// Navegación
+function go(view) {
+  current = view;
+  location.hash = view;
+  if (view === 'ideas') ideasSig = '';
+  if (view === 'settings') pilotFormSig = '';
+  refresh();
+  loadList();
+}
+document.querySelectorAll('.nav [data-view]').forEach((b) => b.onclick = () => go(b.dataset.view));
+$('#btnHomeNew').onclick = () => $('#btnNew').onclick();
+$('#btnHomeIdeas').onclick = () => go('ideas');
+$('#btnArchive').onclick = async () => {
+  if (!confirm('¿Archivar este video? Desaparece de la lista, pero sus archivos se quedan en el PC.')) return;
+  await api('jobs/' + job.id + '/archive', {});
+  go('home');
+};
+document.querySelectorAll('.more .menu button').forEach((b) => b.addEventListener('click', () => { $('.more').open = false; }));

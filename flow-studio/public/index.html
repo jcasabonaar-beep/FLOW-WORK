@@ -9,34 +9,45 @@
 <body>
 <aside id="side">
   <div class="brand">Flow <b>Studio</b></div>
-  <button class="primary wide" id="btnNew">＋ Nuevo video</button>
-  <button class="wide" id="btnIdeas" style="margin-top:8px">🔎 Ideas virales</button>
-  <button class="wide" id="btnLibrary" style="margin-top:8px">🎬 Videos completos</button>
-  <button class="wide" id="btnResults" style="margin-top:8px">📈 Resultados</button>
-  <button class="wide" id="btnPilot" style="margin-top:8px">🌙 Piloto automático</button>
-  <div class="side-title">Videos</div>
+  <button class="primary wide big" id="btnNew">＋ Nuevo video</button>
+  <nav class="nav">
+    <button data-view="home">🏠 Hoy <span class="count" id="navWait" hidden></span></button>
+    <button data-view="ideas">💡 Ideas</button>
+    <button data-view="library">🎬 Terminados</button>
+    <button data-view="results">📈 Resultados</button>
+    <button data-view="settings">⚙️ Ajustes</button>
+  </nav>
   <div id="jobList"></div>
 </aside>
 
 <main id="main">
+  <section id="home" hidden>
+    <header class="job-head"><div><h1>🏠 Hoy</h1><div class="muted" id="hMeta"></div></div>
+      <div class="head-actions"><button id="btnHomeIdeas">💡 Buscar ideas</button><button class="primary" id="btnHomeNew">＋ Nuevo video</button></div></header>
+    <div class="home-grid">
+      <div class="hcard" id="hWait"></div>
+      <div class="hcard" id="hRun"></div>
+      <div class="hcard" id="hPilot"></div>
+      <div class="hcard" id="hResults"></div>
+    </div>
+  </section>
   <div id="empty" class="empty">
     <h1>Tus oficinas</h1>
     <p>Pulsa <b>＋ Nuevo video</b>, pega el link de Instagram y el guion. Los trabajadores hacen el resto y te avisan en las dos paradas: <b>frames</b> y <b>video final</b>.</p>
   </div>
   <section id="ideas" hidden>
     <header class="job-head">
-      <div><h1>🔎 Ideas virales</h1><div class="muted" id="iMeta">El investigador revisa tus cuentas y te trae los reels que han dado un salto de visitas.</div></div>
+      <div><h1>💡 Ideas</h1><div class="muted" id="iMeta">El investigador revisa tus cuentas y te trae los reels que han dado un salto de visitas.</div></div>
       <div class="head-actions"><button id="btnStopIdeas" hidden>⏹ Detener</button><button class="primary" id="btnRunIdeas">🔎 Sugerir</button></div>
     </header>
     <div class="ideas-top">
-      <label>Cuentas que vigila (una por línea, sin @)<textarea id="inAccounts" rows="5" placeholder="wellnesseverydayh&#10;otra_cuenta"></textarea></label>
+      <div class="muted" style="font-size:13px">Pulsa <b>🔎 Sugerir</b> para ver los reels que han dado un salto de visitas en tus cuentas, con el guion ya en español. En cada idea: <b>🎬 Crear video con esta</b> o <b>🧠 Variaciones</b> (marca varias y hazlas esta noche). Las cuentas que vigila se cambian en ⚙️ Ajustes.</div>
       <div class="room-mini" id="iRoom"></div>
     </div>
     <div class="cards" id="ideaCards"></div>
   </section>
   <section id="library" hidden>
-    <header class="job-head"><div><h1>🎬 Videos completos</h1><div class="muted">Se guardan solos en la carpeta <b>flow-studio\Videos completos</b>.</div></div></header>
-    <div class="notes" id="driveBox"></div>
+    <header class="job-head"><div><h1>🎬 Terminados</h1><div class="muted" id="libMeta">Se guardan solos en la carpeta <b>flow-studio\Videos completos</b>.</div></div></header>
     <div class="cards" id="libCards"></div>
   </section>
   <section id="results" hidden>
@@ -50,19 +61,16 @@
     </div>
     <div id="rTable"></div>
   </section>
-  <section id="pilot" hidden>
-    <header class="job-head">
-      <div><h1>🌙 Piloto automático</h1><div class="muted">Cada noche busca ideas virales, hace los videos solo y los sube a tu Drive. Si se acaba el límite de Claude, espera y sigue cuando se renueva.</div></div>
-      <div class="head-actions"><button class="primary" id="btnPilotRun">▶ Lanzar ahora</button></div>
-    </header>
-    <div class="ideas-top">
-      <div>
-        <div class="notes" id="pilotForm"></div>
-        <div class="notes" id="notifyBox"></div>
-        <div id="pilotRuns"></div>
-      </div>
-      <div class="room-mini" id="pRoom"></div>
-    </div>
+  <section id="settings" hidden>
+    <header class="job-head"><div><h1>⚙️ Ajustes</h1><div class="muted">Lo que configuras una vez. Se guarda solo y no se pierde al actualizar.</div></div></header>
+    <h2 class="sec">🌙 Piloto automático</h2>
+    <div class="notes" id="pilotForm"></div>
+    <h2 class="sec">📱 Avisos al móvil</h2>
+    <div class="notes" id="notifyBox"></div>
+    <h2 class="sec">☁️ Google Drive</h2>
+    <div class="notes" id="driveBox"></div>
+    <h2 class="sec">🔎 Cuentas que vigila el Investigador</h2>
+    <div class="notes"><label style="margin-top:0">Una por línea, sin @ (se guarda al salir de la casilla)<textarea id="inAccounts" rows="5" placeholder="wellnesseverydayh&#10;otra_cuenta"></textarea></label></div>
   </section>
   <section id="job" hidden>
     <header class="job-head">
@@ -71,11 +79,14 @@
         <div class="muted" id="jMeta"></div>
       </div>
       <div class="head-actions">
-        <button id="btnAnalyze" title="Por qué es viral la referencia y 6 ideas con la misma fórmula">🧠 Ideas como esta</button>
-        <button id="btnResetFrames" title="Borra los frames y los clips y los vuelve a generar con el mismo plan">↻ Rehacer frames</button>
-        <button id="btnResetPlan" title="Borra todo y el Director vuelve a hacer el plan con las reglas nuevas">↻ Rehacer plan</button>
         <button id="btnPauseAll">⏸ Pausar todo</button>
         <button id="btnContinue" class="primary">▶ Continuar</button>
+        <details class="more"><summary>⋯ Más</summary><div class="menu">
+          <button id="btnAnalyze" title="Por qué es viral la referencia y 6 ideas con la misma fórmula">🧠 Ideas como esta</button>
+          <button id="btnResetFrames" title="Borra los frames y los clips y los vuelve a generar con el mismo plan">↻ Rehacer frames</button>
+          <button id="btnResetPlan" title="Borra todo y el Director vuelve a hacer el plan con las reglas nuevas">↻ Rehacer plan</button>
+          <button id="btnArchive" title="Lo quita de la lista (los archivos se quedan en el PC)">🗑 Archivar</button>
+        </div></details>
       </div>
     </header>
     <div class="viewtabs"><button data-mode="floor">🏢 Oficina</button><button data-mode="panel">📋 Panel</button></div>

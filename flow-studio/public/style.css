@@ -192,3 +192,32 @@ label.type:has(input:checked) { border-color: var(--accent); background: #1d2a44
 .rtable { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
 .rtable th, .rtable td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #ffffff14; }
 .rtable th { color: #94a3b8; font-weight: 600; }
+/* Barra lateral por secciones */
+button.big { padding: 11px 12px; font-size: 15px; }
+.nav { display: flex; flex-direction: column; gap: 2px; margin: 14px 0 6px; }
+.nav button { background: none; border: none; text-align: left; padding: 9px 10px; border-radius: 8px; display: flex; align-items: center; gap: 6px; }
+.nav button:hover { background: var(--panel2); }
+.nav button.sel { background: var(--panel2); color: #fff; font-weight: 600; }
+.nav .count { margin-left: auto; background: var(--wait); color: #fff; font-size: 11px; font-weight: 700; border-radius: 99px; padding: 1px 7px; }
+.side-title span { color: var(--text); opacity: .6; margin-left: 4px; }
+.side-title.warn { color: #d8b4fe; }
+.done-group summary { cursor: pointer; list-style: none; }
+.done-group summary::-webkit-details-marker { display: none; }
+.done-group summary::after { content: ' ▸'; }
+.done-group[open] summary::after { content: ' ▾'; }
+/* Hoy */
+.home-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+@media (max-width: 1000px) { .home-grid { grid-template-columns: 1fr; } }
+.hcard { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.hcard h3 { margin: 0 0 10px; font-size: 16px; display: flex; gap: 8px; align-items: center; }
+.hcard ul { margin: 6px 0; padding-left: 18px; font-size: 13px; }
+.hrow { display: flex; gap: 10px; align-items: center; padding: 8px; border-radius: 8px; cursor: pointer; }
+.hrow:hover { background: var(--panel2); }
+.hrow small { display: block; color: var(--muted); }
+/* Menú Más */
+.more { position: relative; }
+.more summary { list-style: none; cursor: pointer; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; }
+.more summary::-webkit-details-marker { display: none; }
+.more .menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 4px; min-width: 200px; box-shadow: 0 10px 30px #0008; }
+.more .menu button { text-align: left; background: none; border: none; }
+.more .menu button:hover { background: var(--panel2); }

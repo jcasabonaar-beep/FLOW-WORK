@@ -199,6 +199,12 @@ async function api(req, res, url) {
   const job = store.load(parts[2]);
   if (!job) return send(res, 404, { error: 'No existe ese video' });
   const action = parts[3];
+  if (action === 'archive' && method === 'POST') {
+    // Lo quita de las listas; los archivos se quedan en jobs/
+    if (pipeline.active.has(job.id)) return send(res, 400, { error: 'Está trabajando: páralo antes de archivarlo' });
+    job.hidden = true; job.archived = true; store.save(job);
+    return send(res, 200, { ok: true });
+  }
   if (!action && method === 'GET') return send(res, 200, { ...job, prompts: promptsFor(job), running: pipeline.active.has(job.id) });
 
   const body = method === 'POST' && action !== 'upload' ? JSON.parse((await readBody(req)).toString() || '{}') : {};
