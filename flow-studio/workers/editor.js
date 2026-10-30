@@ -202,7 +202,7 @@ const norm = (w) => w.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,
 const same = (a, b) => a.length === b.length && a.every((w, i) => norm(w.w) === norm(b[i].w));
 
 // Qué trozos del clip se quedan: quita lo que repite el final del clip anterior y las palabras dichas dos veces seguidas
-function cleanRanges(start, end, words, prevWords) {
+function cleanRanges(start, end, words, prevWords, pc = PACE.corto) {
   const notes = [];
   if (!words || !words.length) return { ranges: [[start, end]], notes };
   const ws = words.filter((w) => w.e > start && w.s < end);
@@ -230,25 +230,31 @@ function cleanRanges(start, end, words, prevWords) {
       }
     }
   }
-  // Pausas largas entre palabras: se dejan en 0,22 s para que hable seguido pero natural
+  // Pausas entre palabras: se dejan muy cortas para que hable seguido pero natural
   for (let i = 0; i < ws.length - 1; i++) {
     const gap = ws[i + 1].s - ws[i].e;
-    if (gap > 0.45 && !cuts.some(([a, b]) => a <= ws[i].e && b >= ws[i + 1].s)) {
-      cuts.push([ws[i].e + 0.11, ws[i + 1].s - 0.11]);
+    if (gap > pc.gap && !cuts.some(([a, b]) => a <= ws[i].e && b >= ws[i + 1].s)) {
+      cuts.push([ws[i].e + pc.keep / 2, ws[i + 1].s - pc.keep / 2]);
       notes.push(`pausa de ${gap.toFixed(1)} s después de "${ws[i].w}": la acorto`);
     }
   }
   cuts.sort((a, b) => a[0] - b[0]);
   const ranges = [];
   let cur = start;
-  for (const [a, b] of cuts) { if (a - cur > 0.15) ranges.push([cur, a]); cur = Math.max(cur, b); }
-  if (end - cur > 0.15) ranges.push([cur, end]);
+  for (const [a, b] of cuts) { if (a - cur > 0.08) ranges.push([cur, a]); cur = Math.max(cur, b); }
+  if (end - cur > 0.08) ranges.push([cur, end]);
   return { ranges: ranges.length ? ranges : [[start, end]], notes };
 }
 
 // 🎬 Edición dinámica: dentro de cada trozo, cortes cada ~2,4 s alternando plano normal y más cerrado,
 // y un golpe de zoom en la palabra clave del clip. Devuelve los trozos y dónde pegó el zoom.
 const E = config.edit || {};
+// Ritmo: cuánto silencio se deja entre frases y a qué velocidad va el video (⚙️ Ajustes → Edición)
+const PACE = { normal: { gap: 0.45, keep: 0.22, pad: 0.12, tail: 0.22 }, corto: { gap: 0.28, keep: 0.12, pad: 0.06, tail: 0.12 }, muycorto: { gap: 0.2, keep: 0.07, pad: 0.04, tail: 0.08 } };
+function pace() {
+  const s = require('../lib/settings').get();
+  return { ...(PACE[s.silences] || PACE.corto), speed: Number(s.speed || E.speed || 1) || 1 };
+}
 function zoomPieces(ranges, words, still, counter) {
   const every = E.every || 2.4;
   const keyWord = still || !words ? null : words.filter((w) => !STOP.has(norm(w.w)) && norm(w.w).length > 5 && ranges.some((r) => w.s >= r[0] && w.e <= r[1]))
@@ -324,6 +330,7 @@ async function render(job, v) {
 
   // 1) Medir la voz de cada clip y buscar palabras repetidas
   const heard = await clipWords(J);
+  const pc = pace();
   const segments = [];
   let t = 0;
   let prevWords = null;
@@ -332,10 +339,10 @@ async function render(job, v) {
     const file = path.join(dir, c.clip);
     const [s, e, dur] = await speechBounds(file);
     // El hook arranca hablando desde el primer fotograma
-    let start = Math.max(0, s - (c.n === J.clips[0].n ? 0.04 : 0.12));
-    const end = Math.min(dur, e + 0.22);
+    let start = Math.max(0, s - (c.n === J.clips[0].n ? 0.03 : pc.pad));
+    const end = Math.min(dur, e + pc.tail);
     const words = heard[file] || null;
-    const { ranges, notes } = cleanRanges(start, end, words, prevWords);
+    const { ranges, notes } = cleanRanges(start, end, words, prevWords, pc);
     for (const n of notes) store.log(job, 'editor', `✂️ Clip ${c.n}: ${n}`);
     prevWords = words;
     start = ranges[0][0];
@@ -349,7 +356,7 @@ async function render(job, v) {
     }
     // Sin zoom en los clips del libro (la portada no se corta) ni en los clips ya hechos
     const still = !!(c.book === 'hand' || c.readyClip || c.frameFrom);
-    segments.push({ n: c.n, file, line: c.line, start: t, len, cut: [start, end], ranges, words, still, speechStart: t + Math.max(0, s - start), speechEnd: t + len - 0.22, audio: await hasAudio(file), broll });
+    segments.push({ n: c.n, file, line: c.line, start: t, len, cut: [start, end], ranges, words, still, tail: pc.tail, speechStart: t + Math.max(0, s - start), speechEnd: t + len - pc.tail, audio: await hasAudio(file), broll });
     store.log(job, 'editor', `Clip ${c.n}: voz ${s.toFixed(2)}–${e.toFixed(2)} s de ${dur.toFixed(1)} s`);
     t += len;
   }
@@ -440,7 +447,13 @@ async function render(job, v) {
   fc.push(`[${last}]ass=captions${T}.ass:fontsdir=fonts[vout]`);
   await ffmpeg([...inputs, '-filter_complex', fc.join(';'), '-map', '[vout]', '-map', '0:a', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18',
     '-pix_fmt', 'yuv420p', '-c:a', 'copy', '-movflags', '+faststart', `final${T}.mp4`], { cwd: edit });
-  store.log(job, 'editor', `✅ Video final${T ? ' (versión ' + T + ')' : ''} listo: ${total.toFixed(1)} s · ${counter.n} cambios de plano · ${events.length} sonidos`);
+  if (pc.speed > 1.001 || pc.speed < 0.999) {
+    store.setWorker(job, 'editor', { action: `⚡ Acelerando a x${pc.speed}…` });
+    await ffmpeg(['-i', `final${T}.mp4`, '-filter_complex', `[0:v]setpts=PTS/${pc.speed}[v];[0:a]atempo=${pc.speed}[a]`, '-map', '[v]', '-map', '[a]',
+      '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', `final${T}_x.mp4`], { cwd: edit });
+    fs.renameSync(path.join(edit, `final${T}_x.mp4`), path.join(edit, `final${T}.mp4`));
+  }
+  store.log(job, 'editor', `✅ Video final${T ? ' (versión ' + T + ')' : ''} listo: ${(total / pc.speed).toFixed(1)} s${pc.speed !== 1 ? ` (x${pc.speed})` : ''} · ${counter.n} cambios de plano · ${events.length} sonidos`);
   return T;
 }
 
