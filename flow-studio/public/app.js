@@ -42,6 +42,8 @@ const stageName = (s) => (STAGES.find((x) => x[0] === s) || [, s])[1];
 
 async function open(id) {
   $('#ideas').hidden = true;
+  $('#library').hidden = true;
+  $('#analysis').innerHTML = '';
   current = id;
   panelSig = '';
   location.hash = id;
@@ -52,6 +54,7 @@ async function open(id) {
 async function refresh() {
   if (!current) return;
   if (current === 'ideas') return refreshIdeas();
+  if (current === 'library') return refreshLibrary();
   job = await api('jobs/' + current);
   $('#empty').hidden = true;
   $('#job').hidden = false;
@@ -61,6 +64,8 @@ async function refresh() {
   if (job.url) $('#jMeta').insertAdjacentHTML('beforeend', `<a href="${esc(job.url)}" target="_blank" style="color:#93c5fd">referencia</a>`);
   $('#btnPauseAll').textContent = job.paused || job.status === 'paused' ? '▶ Reanudar' : '⏹ Parar ahora';
   $('#btnResetFrames').hidden = job.running || !job.clips.length;
+  $('#btnAnalyze').hidden = !job.script;
+  if (job.analysis && !$('#analysis').innerHTML) { $('#analysis').innerHTML = '<h2 class="sec">🧠 Ideas como esta</h2>' + analysisHtml(job.analysis, 'job'); bindVariations(job.analysis, job.url); }
   $('#btnResetPlan').hidden = job.running || !job.clips.length;
   $('#btnPauseAll').hidden = !job.paused && job.status !== 'paused' && !job.running;
   const canContinue = !job.running && ['error', 'stopped', 'waiting_you'].includes(job.status) && !['review_frames', 'review_final', 'done'].includes(job.stage);
@@ -213,7 +218,7 @@ function renderPanel() {
           <div class="btns">${job.clips.map((c) => `<button class="small ${c.clipStatus === 'regen' ? 'primary' : ''}" data-rc="${c.n}">Clip ${c.n}</button>`).join('')}</div>
           <div class="btns"><button id="bRegenClips">↻ Rehacer clips marcados</button></div>`}
         </div>
-      </div>${cardsHtml('clips')}`;
+      </div>${chatHtml()}${cardsHtml('clips')}`;
     if (job.stage === 'review_final') {
       $('#bApprove').onclick = () => api('jobs/' + job.id + '/final', { action: 'approve' }).then(refresh);
       $('#bReEdit').onclick = () => api('jobs/' + job.id + '/final', { action: 'redo-edit', hook: $('#inHook').value }).then(refresh);
@@ -224,6 +229,7 @@ function renderPanel() {
       });
     }
     bindCards();
+    bindChat();
     return;
   }
 
@@ -376,7 +382,7 @@ const fmt = (n) => n >= 1e6 ? (n / 1e6).toFixed(1).replace('.0', '') + ' M' : n 
 let ideasSig = '';
 async function refreshIdeas() {
   const r = await api('research');
-  $('#empty').hidden = true; $('#job').hidden = true; $('#ideas').hidden = false;
+  $('#empty').hidden = true; $('#job').hidden = true; $('#library').hidden = true; $('#ideas').hidden = false;
   if (document.activeElement !== $('#inAccounts')) $('#inAccounts').value = (r.accounts || []).join('\n');
   const w = r.workers.research;
   const st = r.running ? 'working' : w.state;
@@ -394,9 +400,18 @@ async function refreshIdeas() {
       <p style="margin:10px 0 4px"><b>${esc(s.tema || '')}</b></p><div class="muted">Hook: “${esc(s.hook || '')}”</div>
       <p style="font-size:12px">${esc(s.porque || '')}</p><a href="${esc(s.url)}" target="_blank" style="color:#93c5fd">Ver en Instagram</a></div></div>
     <details><summary class="muted">Guion en español</summary><pre>${esc(s.guion || '')}</pre></details>
-    <div class="btns"><button class="good" data-idea="${i}">🎬 Crear video con esta</button></div>
+    <div class="btns"><button class="good" data-idea="${i}">🎬 Crear video con esta</button><button class="small" data-ana="${i}">🧠 Variaciones</button></div>
+    <div id="ana${i}">${s.analysis ? analysisHtml(s.analysis, 'idea') : ''}</div>
   </div>`).join('') || (r.lastRun ? '<p class="muted">No hay reels con un salto claro de visitas en esas cuentas. Prueba con más cuentas.</p>' : '');
   document.querySelectorAll('[data-idea]').forEach((b) => b.onclick = () => newFromIdea(r.suggestions[b.dataset.idea]));
+  (r.suggestions || []).forEach((sg) => sg.analysis && bindVariations(sg.analysis, sg.url));
+  document.querySelectorAll('[data-ana]').forEach((b) => b.onclick = async () => {
+    const sg = r.suggestions[b.dataset.ana];
+    $('#ana' + b.dataset.ana).innerHTML = '<p class="muted">🧠 Analizando (menos de 1 minuto)…</p>';
+    try { sg.analysis = await api('research/analyze', { url: sg.url }); } catch { return; }
+    $('#ana' + b.dataset.ana).innerHTML = analysisHtml(sg.analysis, 'idea');
+    bindVariations(sg.analysis, sg.url);
+  });
 }
 
 async function newFromIdea(s) {
@@ -418,3 +433,64 @@ $('#inAccounts').onchange = () => api('research/accounts', { accounts: $('#inAcc
 
 $('#btnResetFrames').onclick = () => confirm('¿Borrar TODOS los frames y clips de este video y hacerlos de nuevo con el mismo plan?') && api('jobs/' + job.id + '/reset', { from: 'frames' }).then(() => { panelSig = ''; refresh(); });
 $('#btnResetPlan').onclick = () => confirm('¿Borrar el plan, los frames y los clips y que el Director lo rehaga con las reglas nuevas? (el guion y la referencia se mantienen)') && api('jobs/' + job.id + '/reset', { from: 'director' }).then(() => { panelSig = ''; refresh(); });
+
+// ---------- Chat de cambios ----------
+function chatHtml() {
+  const msgs = [{ role: 'assistant', text: '¿Qué quieres cambiar del video? Dímelo con tus palabras (por ejemplo: "en el clip 3 la cara sale rara", "el hook más corto", "quita las pausas del final") y me pongo a trabajar.' }, ...(job.chat || [])];
+  return `<div class="chat"><h2 class="sec">💬 ¿Qué cambiamos?</h2>
+    <div class="chat-log" id="chatLog">${msgs.map((m) => `<div class="msg ${m.role}">${esc(m.text)}</div>`).join('')}</div>
+    <form class="chat-in" id="chatForm"><input id="chatIn" placeholder="Escribe aquí lo que quieres cambiar…" autocomplete="off"><button class="primary">Enviar</button></form></div>`;
+}
+function bindChat() {
+  const f = $('#chatForm');
+  if (!f) return;
+  const log = $('#chatLog');
+  log.scrollTop = log.scrollHeight;
+  f.onsubmit = async (e) => {
+    e.preventDefault();
+    const text = $('#chatIn').value.trim();
+    if (!text) return;
+    log.insertAdjacentHTML('beforeend', `<div class="msg user">${esc(text)}</div><div class="msg assistant" id="thinking">Pensando…</div>`);
+    log.scrollTop = log.scrollHeight;
+    $('#chatIn').value = '';
+    try { await api(`jobs/${job.id}/chat`, { message: text }); } catch {}
+    panelSig = '';
+    refresh();
+  };
+}
+
+// ---------- Analista: por qué es viral + variaciones ----------
+function analysisHtml(a, src) {
+  if (!a) return '';
+  return `<div class="notes"><b>🧠 Por qué funciona</b><ul>${(a.porque || []).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
+    <p><b>Fórmula:</b> ${esc(a.formula || '')}</p></div>
+    <div class="cards">${(a.variaciones || []).map((v, i) => `<div class="card"><h3><span>${esc(v.titulo)}</span></h3>
+      <div class="muted">Hook: “${esc(v.hook)}”</div><p style="font-size:12px">${esc(v.porque || '')}</p>
+      <details><summary class="muted">Guion</summary><pre>${esc(v.guion)}</pre></details>
+      <div class="btns"><button class="good" data-var="${i}" data-src="${esc(src)}">🎬 Crear video con esta</button></div></div>`).join('')}</div>`;
+}
+function bindVariations(a, url) {
+  document.querySelectorAll('[data-var]').forEach((b) => b.onclick = async () => {
+    const v = a.variaciones[b.dataset.var];
+    await $('#btnNew').onclick();
+    const f = $('#formNew');
+    f.title.value = v.titulo; f.url.value = url || ''; f.script.value = v.guion;
+  });
+}
+$('#btnAnalyze').onclick = async () => {
+  $('#analysis').innerHTML = '<p class="muted">🧠 Analizando la referencia (menos de 1 minuto)…</p>';
+  try { const a = await api(`jobs/${job.id}/analyze`, {}); job.analysis = a; } catch { $('#analysis').innerHTML = ''; return; }
+  $('#analysis').innerHTML = '<h2 class="sec">🧠 Ideas como esta</h2>' + analysisHtml(job.analysis, 'job');
+  bindVariations(job.analysis, job.url);
+};
+
+// ---------- Videos completos ----------
+async function refreshLibrary() {
+  const lib = await api('library');
+  $('#empty').hidden = true; $('#job').hidden = true; $('#ideas').hidden = true; $('#library').hidden = false;
+  $('#libCards').innerHTML = lib.map((v) => `<div class="card"><h3><span>${v.auto ? '🌙 ' : ''}${esc(v.title)}</span><span class="badge">${v.videoType === 'venta' ? '💰 Venta' : '🚀 Crecimiento'}</span></h3>
+    <video controls preload="metadata" src="${rootFile(encodeURI(v.file))}" style="width:100%;aspect-ratio:9/16;border-radius:8px;background:#000"></video>
+    <div class="btns"><a href="${rootFile(encodeURI(v.file))}" download><button class="small">⬇ Descargar</button></a><button class="small" data-openjob="${v.id}">💬 Cambiar algo</button></div></div>`).join('') || '<p class="muted">Todavía no hay videos terminados.</p>';
+  document.querySelectorAll('[data-openjob]').forEach((b) => b.onclick = () => open(b.dataset.openjob));
+}
+$('#btnLibrary').onclick = () => { current = 'library'; location.hash = 'library'; refreshLibrary(); loadList(); };

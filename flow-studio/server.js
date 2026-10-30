@@ -9,6 +9,7 @@ const config = require('./config.json');
 const { ffmpeg } = require('./lib/ff');
 const flow = require('./workers/flow');
 const research = require('./workers/research');
+const assistant = require('./workers/assistant');
 
 const PUB = path.join(__dirname, 'public');
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.mp4': 'video/mp4', '.json': 'application/json', '.log': 'text/plain; charset=utf-8', '.md': 'text/plain; charset=utf-8' };
@@ -89,10 +90,23 @@ async function api(req, res, url) {
   const parts = url.pathname.split('/').filter(Boolean); // api, jobs, id, action, n
   const method = req.method;
   if (parts[1] === 'config') return send(res, 200, { settings: Object.keys(config.settings), avatar: config.avatar, flowMode: config.flowMode });
+  if (parts[1] === 'library') {
+    // Videos terminados (los de la carpeta de videos completos)
+    const lib = store.list().filter((j) => j.finalFile && fs.existsSync(path.join(store.ROOT, j.finalFile)))
+      .map((j) => ({ id: j.id, title: j.title, file: j.finalFile, videoType: j.videoType, createdAt: j.createdAt, auto: !!j.auto }));
+    return send(res, 200, lib);
+  }
   if (parts[1] === 'research') {
     const r = research.rjob();
     if (method === 'GET') return send(res, 200, { ...r, running: research.isRunning() });
     const body = JSON.parse((await readBody(req)).toString() || '{}');
+    if (parts[2] === 'analyze') {
+      const sug = (r.suggestions || []).find((x) => x.url === body.url);
+      if (!sug) return send(res, 404, { error: 'No encuentro esa idea' });
+      sug.analysis = await assistant.analyze(r, 'research', { title: sug.tema, url: sug.url, stats: `${sug.views} vistas, ${sug.ratio}× la media de @${sug.account}`, text: `${sug.caption || ''}\n${sug.transcript || sug.guion || ''}` });
+      store.save(r);
+      return send(res, 200, sug.analysis);
+    }
     if (parts[2] === 'accounts') {
       r.accounts = (body.accounts || []).map((a) => a.trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/.*$/, '')).filter(Boolean);
       store.save(r);
@@ -137,28 +151,30 @@ async function api(req, res, url) {
       if (!pipeline.active.has(job.id) && !['review_frames', 'review_final', 'done'].includes(job.stage)) pipeline.drive(job.id);
       return send(res, 200, { ok: true });
     case 'reset': {
-      // Rehacer desde cero los frames (con el mismo plan) o el plan entero con las reglas nuevas
       if (pipeline.active.has(job.id)) return send(res, 400, { error: 'Primero pulsa Parar ahora' });
-      const dir = store.jobDir(job.id);
-      for (const sub of ['frames', 'clips', 'edit']) {
-        const d = path.join(dir, sub);
-        if (fs.existsSync(d)) for (const f of fs.readdirSync(d)) { const p2 = path.join(d, f); if (fs.statSync(p2).isFile()) fs.unlinkSync(p2); }
-      }
-      if (body.from === 'director') {
-        for (const f of ['plan.json', 'layout.json']) if (fs.existsSync(path.join(dir, f))) fs.unlinkSync(path.join(dir, f));
-        if (fs.existsSync(path.join(dir, 'stickers'))) for (const f of fs.readdirSync(path.join(dir, 'stickers'))) fs.unlinkSync(path.join(dir, 'stickers', f));
-        Object.assign(job, { clips: [], plan: null, notes: [], stage: 'director' });
-        store.log(job, 'director', '↻ Plan borrado: lo rehago con las reglas nuevas');
-      } else {
-        for (const c of job.clips) Object.assign(c, { frame: null, frameStatus: 'pending', frameNote: '', feedback: '', clip: null, clipStatus: 'pending', clipNote: '', clipRetried: false, skip: false });
-        job.stage = 'frames';
-        store.log(job, 'frames', '↻ Frames borrados: los hago de nuevo');
-      }
-      for (const w of ['frames', 'clips', 'editor']) Object.assign(job.workers[w], { state: 'idle', action: '' });
-      Object.assign(job, { output: null, finalFile: null, error: null, paused: false, status: 'running' });
-      store.save(job);
-      pipeline.drive(job.id);
+      resetJob(job, body.from === 'director' ? 'director' : 'frames');
       return send(res, 200, { ok: true });
+    }
+    case 'chat': {
+      if (pipeline.active.has(job.id)) return send(res, 400, { error: 'Está trabajando: espera a que termine o pulsa Parar ahora' });
+      const r = await assistant.chat(job, String(body.message || '').slice(0, 2000));
+      if (r.stage) {
+        if (r.stage === 'director') resetJob(job, 'director');
+        else {
+          Object.assign(job, { stage: r.stage, status: 'running', error: null, paused: false, skipReviewOnce: true });
+          store.save(job);
+          pipeline.drive(job.id);
+        }
+      }
+      return send(res, 200, { reply: r.reply, stage: r.stage });
+    }
+    case 'analyze': {
+      const dir = store.jobDir(job.id);
+      let tono = '';
+      try { tono = fs.readFileSync(path.join(dir, 'ref', 'tono.txt'), 'utf8'); } catch {}
+      job.analysis = await assistant.analyze(job, 'analyst', { title: job.title, url: job.url, text: `${job.script}\n\nHow the reference speaks:\n${tono}` });
+      store.save(job);
+      return send(res, 200, job.analysis);
     }
     case 'stop-all':
       // Parar ya: pausa el video y corta al trabajador que esté en marcha
@@ -222,6 +238,29 @@ async function api(req, res, url) {
     }
   }
   return send(res, 404, { error: 'acción' });
+}
+
+// Rehacer desde cero los frames (con el mismo plan) o el plan entero con las reglas nuevas
+function resetJob(job, from) {
+  const dir = store.jobDir(job.id);
+  for (const sub of ['frames', 'clips', 'edit']) {
+    const d = path.join(dir, sub);
+    if (fs.existsSync(d)) for (const f of fs.readdirSync(d)) { const p2 = path.join(d, f); if (fs.statSync(p2).isFile()) fs.unlinkSync(p2); }
+  }
+  if (from === 'director') {
+    for (const f of ['plan.json', 'layout.json']) if (fs.existsSync(path.join(dir, f))) fs.unlinkSync(path.join(dir, f));
+    if (fs.existsSync(path.join(dir, 'stickers'))) for (const f of fs.readdirSync(path.join(dir, 'stickers'))) fs.unlinkSync(path.join(dir, 'stickers', f));
+    Object.assign(job, { clips: [], plan: null, notes: [], stage: 'director' });
+    store.log(job, 'director', '↻ Plan borrado: lo rehago con las reglas nuevas');
+  } else {
+    for (const c of job.clips) Object.assign(c, { frame: null, frameStatus: 'pending', frameNote: '', feedback: '', clip: null, clipStatus: 'pending', clipNote: '', clipRetried: false, textRetries: 0, skip: false });
+    job.stage = 'frames';
+    store.log(job, 'frames', '↻ Frames borrados: los hago de nuevo');
+  }
+  for (const w of ['frames', 'clips', 'editor']) Object.assign(job.workers[w], { state: 'idle', action: '' });
+  Object.assign(job, { output: null, finalFile: null, error: null, paused: false, status: 'running' });
+  store.save(job);
+  pipeline.drive(job.id);
 }
 
 const server = http.createServer(async (req, res) => {

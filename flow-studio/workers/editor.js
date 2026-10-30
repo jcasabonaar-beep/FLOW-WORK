@@ -230,6 +230,15 @@ function cleanRanges(start, end, words, prevWords) {
       }
     }
   }
+  // Pausas largas entre palabras: se dejan en 0,22 s para que hable seguido pero natural
+  for (let i = 0; i < ws.length - 1; i++) {
+    const gap = ws[i + 1].s - ws[i].e;
+    if (gap > 0.45 && !cuts.some(([a, b]) => a <= ws[i].e && b >= ws[i + 1].s)) {
+      cuts.push([ws[i].e + 0.11, ws[i + 1].s - 0.11]);
+      notes.push(`pausa de ${gap.toFixed(1)} s después de "${ws[i].w}": la acorto`);
+    }
+  }
+  cuts.sort((a, b) => a[0] - b[0]);
   const ranges = [];
   let cur = start;
   for (const [a, b] of cuts) { if (a - cur > 0.15) ranges.push([cur, a]); cur = Math.max(cur, b); }

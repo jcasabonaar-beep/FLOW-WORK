@@ -81,7 +81,7 @@ async function step(job) {
   store.setWorker(job, worker, { state: 'done', action: '', endedAt: Date.now() });
   job.stage = STAGES[STAGES.indexOf(stage) + 1];
   // Modo "todo directo": se salta las paradas y guarda el video al terminar
-  if (job.auto && job.stage === 'review_frames') { job.stage = 'clips'; store.log(job, 'frames', '🌙 Modo directo: sigo sin esperar tu revisión'); }
+  if ((job.auto || job.skipReviewOnce) && job.stage === 'review_frames') { job.stage = 'clips'; job.skipReviewOnce = false; store.log(job, 'frames', job.auto ? '🌙 Modo directo: sigo sin esperar tu revisión' : '💬 Cambios del chat: sigo sin pararme'); }
   if (job.auto && job.stage === 'review_final') { finalize(job); store.log(job, 'editor', `🌙 Video guardado en "${job.finalFile}"`); return 'stop'; }
   if (job.stage === 'review_frames' || job.stage === 'review_final') job.status = 'waiting_you';
   store.save(job);

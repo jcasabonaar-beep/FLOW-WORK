@@ -39,7 +39,7 @@ function frameTask(job, c) {
   const dest = abs(job, `frames/frame_${pad(c.n)}.png`);
   const imgs = frameInputs(job, c);
   const look = c.ref ? `Reference shot to copy (do NOT upload it, Flow refuses real people; only look at it with the Read tool): ${abs(job, c.ref)}\n` +
-    'Before pasting, compare the prompt with this reference: sizes, positions and distances of her, the props and the camera must match it. If the prompt does not describe the layout precisely, improve its numbers first. After generating, reject results whose composition is clearly different from the reference.\n' : '';
+    'Before pasting, compare the prompt with this reference: sizes, positions and distances of her, the props and the camera must match it. If the prompt does not describe the layout precisely, improve its numbers first. After generating, compare result and reference side by side: the main object must have the SAME size and position in the frame (within about 15%), and her distance to the camera must be the same. If not, regenerate once with corrected numbers (e.g. "the tube occupies only the left 35% of the width").\n' : '';
   if (c.feedback && c.frame) {
     return { dest, text: `### Frame ${c.n} — CORRECTION\n${look}Upload in this order: ${imgs.map((p, i) => `Image ${L[i]} = ${p}`).join(' ; ')}\n` +
       `The producer wants this change (translate it to a clear English instruction for the image model): "${c.feedback}".\n` +
@@ -211,7 +211,7 @@ async function runClips(job) {
     }
   }
   store.save(job);
-  for (let round = 0; round < 2; round++) {
+  for (let round = 0; round < 3; round++) {
     const todo = job.clips.filter((c) => ['pending', 'regen'].includes(c.clipStatus));
     if (!todo.length) break;
     if (config.flowMode !== 'auto') return manual(job, 'clips', todo);
@@ -236,9 +236,42 @@ async function runClips(job) {
         learn(`Clip de ${c.line.split(/\s+/).length} palabras: ${bad}. ${q.text != null && q.text < 0.7 ? 'Acortar la frase o pedir ritmo más claro.' : 'Insistir en "same voice, tone and energy as the previous clips".'}`);
       }
     }
+    // Subtítulos puestos por Flow: se repite (hasta 2 veces) para que no salgan nunca
+    for (const c of await checkText(job, todo.filter((x) => x.clipStatus === 'done'))) {
+      if ((c.textRetries || 0) >= 2) { store.log(job, 'clips', `⚠️ Clip ${c.n}: Flow insiste en poner texto; lo dejo así`); continue; }
+      c.textRetries = (c.textRetries || 0) + 1;
+      Object.assign(c, { clipStatus: 'regen', clipNote: 'Flow puso subtítulos o texto en pantalla: repite SIN ningún texto' });
+      store.log(job, 'clips', `🔁 Clip ${c.n}: tenía subtítulos de Flow. Lo repito sin texto.`);
+    }
     store.save(job);
   }
   return job.clips.some((c) => c.clipStatus === 'manual') ? 'wait' : 'ok';
+}
+
+// ¿Flow ha metido subtítulos o texto en el clip? Se mira con 3 fotogramas de cada uno y se repite si los hay
+async function checkText(job, list) {
+  const items = [];
+  for (const c of list) {
+    if (!c.clip || c.readyClip) continue;
+    const strip = abs(job, `clips/check_${pad(c.n)}.jpg`);
+    try {
+      await ffmpeg(['-i', abs(job, c.clip), '-vf', 'fps=1/2.4,scale=240:-2,tile=3x1', '-frames:v', '1', strip]);
+      items.push({ c, strip });
+    } catch {}
+  }
+  if (!items.length) return [];
+  const out = abs(job, 'clips/textcheck.json');
+  if (fs.existsSync(out)) fs.unlinkSync(out);
+  const prompt = `Each image below shows 3 moments of one video clip. For each one decide if there are burned-in SUBTITLES, CAPTIONS or any words written on screen. Ignore a store sign in the background and a book cover. Read each image with the Read tool, then write ${out} as JSON {"<n>": true|false} (true = it has subtitles/text). Only Read and Write.\n` +
+    items.map((x) => `Clip ${x.c.n}: ${x.strip}`).join('\n');
+  try {
+    await claude.run({ job, worker: 'clips', prompt, tools: ['Read', 'Write'] });
+    const res = JSON.parse(fs.readFileSync(out, 'utf8'));
+    return items.filter((x) => res[x.c.n] === true).map((x) => x.c);
+  } catch (e) {
+    store.log(job, 'clips', 'No pude revisar si hay subtítulos: ' + e.message.slice(0, 80));
+    return [];
+  }
 }
 
 // Apunta una lección para los próximos videos

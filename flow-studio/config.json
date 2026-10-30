@@ -112,6 +112,14 @@
     "research": {
       "model": "sonnet",
       "effort": "low"
+    },
+    "chat": {
+      "model": "sonnet",
+      "effort": "low"
+    },
+    "analyst": {
+      "model": "sonnet",
+      "effort": "low"
     }
   },
   "layoutPass": false,

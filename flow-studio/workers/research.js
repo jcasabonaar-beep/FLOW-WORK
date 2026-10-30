@@ -103,7 +103,7 @@ async function run() {
     const items = viral.map((v) => `### ${v.url}\n@${v.account} · ${v.views} vistas · ${v.ratio}× su media (${v.median}) · ${v.ageHours != null ? `hace ${v.ageHours} h` : 'fecha desconocida'}\nCaption: ${v.caption || '-'}\nTranscript:\n${v.transcript || '(no transcript: work from the caption)'}`).join('\n\n');
     const text = await claude.run({ job: j, worker: 'research', prompt: fill(P('research_ideas.md'), { ITEMS: items, OUT: ideasFile }), tools: ['Write'], cwd: dir() });
     const ideas = fs.existsSync(ideasFile) ? JSON.parse(fs.readFileSync(ideasFile, 'utf8')) : claude.extractJson(text);
-    j.suggestions = viral.map((v) => ({ ...v, transcript: undefined, ...(ideas[v.url] || {}) }));
+    j.suggestions = viral.map((v) => ({ ...v, ...(ideas[v.url] || {}) }));
     j.lastRun = Date.now();
     store.save(j);
     setW({ state: 'done', action: `✅ ${j.suggestions.length} ideas listas` });

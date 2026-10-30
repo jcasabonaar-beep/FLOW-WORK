@@ -178,3 +178,10 @@ label.type:has(input:checked) { border-color: var(--accent); background: #1d2a44
 @media (max-width: 900px) { .ideas-top { grid-template-columns: 1fr; } }
 .room-mini .room { height: 230px; border-radius: 12px; }
 .room-mini .log { margin-top: 8px; max-height: 110px; }
+
+.chat { margin-top: 18px; }
+.chat-log { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; max-height: 320px; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+.msg { max-width: 80%; padding: 8px 12px; border-radius: 12px; white-space: pre-wrap; }
+.msg.assistant { background: var(--panel2); align-self: flex-start; }
+.msg.user { background: var(--accent); color: #fff; align-self: flex-end; }
+.chat-in { display: flex; gap: 8px; margin-top: 8px; }
