@@ -65,7 +65,7 @@ async function refresh() {
   $('#btnPauseAll').textContent = job.paused || job.status === 'paused' ? '▶ Reanudar' : '⏹ Parar ahora';
   $('#btnResetFrames').hidden = job.running || !job.clips.length;
   $('#btnAnalyze').hidden = !job.script;
-  if (job.analysis && !$('#analysis').innerHTML) { $('#analysis').innerHTML = '<h2 class="sec">🧠 Ideas como esta</h2>' + analysisHtml(job.analysis, 'job'); bindVariations(job.analysis, job.url); }
+  $('#btnAnalyze').textContent = job.analysis ? '🧠 Ver ideas' : '🧠 Ideas como esta';
   $('#btnResetPlan').hidden = job.running || !job.clips.length;
   $('#btnPauseAll').hidden = !job.paused && job.status !== 'paused' && !job.running;
   const canContinue = !job.running && ['error', 'stopped', 'waiting_you'].includes(job.status) && !['review_frames', 'review_final', 'done'].includes(job.stage);
@@ -473,7 +473,7 @@ function analysisHtml(a, src) {
 }
 function bindVariations(a, url) {
   document.querySelectorAll('[data-batch]').forEach((b) => b.onclick = () => {
-    const box = b.closest('.btns').previousElementSibling;
+    const box = b.closest('.btns').previousElementSibling;  // la lista de variaciones justo encima
     const picked = [...box.querySelectorAll('[data-pick]:checked')].map((x) => a.variaciones[x.dataset.pick]);
     makeBatch(picked, url, b.dataset.batch);
   });
@@ -484,11 +484,19 @@ function bindVariations(a, url) {
     f.title.value = v.titulo; f.url.value = url || ''; f.script.value = v.guion;
   });
 }
+// Las ideas salen en una ventana encima del panel
+function showIdeas(a, url) {
+  $('#ideasBody').innerHTML = analysisHtml(a, 'job');
+  bindVariations(a, url);
+  if (!$('#dlgIdeas').open) $('#dlgIdeas').showModal();
+}
 $('#btnAnalyze').onclick = async () => {
-  $('#analysis').innerHTML = '<p class="muted">🧠 Analizando la referencia (menos de 1 minuto)…</p>';
-  try { const a = await api(`jobs/${job.id}/analyze`, {}); job.analysis = a; } catch { $('#analysis').innerHTML = ''; return; }
-  $('#analysis').innerHTML = '<h2 class="sec">🧠 Ideas como esta</h2>' + analysisHtml(job.analysis, 'job');
-  bindVariations(job.analysis, job.url);
+  if (job.analysis) return showIdeas(job.analysis, job.url);
+  $('#ideasBody').innerHTML = '<p class="muted" style="padding:30px;text-align:center">🧠 El analista está viendo por qué funciona este video y buscando variaciones…<br>Tarda menos de 1 minuto.</p>';
+  $('#dlgIdeas').showModal();
+  try { job.analysis = await api(`jobs/${job.id}/analyze`, {}); } catch (e) { $('#ideasBody').innerHTML = `<p class="alert">No pude analizarlo: ${esc(e.message)}</p>`; return; }
+  showIdeas(job.analysis, job.url);
+  $('#btnAnalyze').textContent = '🧠 Ver ideas';
 };
 
 // ---------- Videos completos ----------
