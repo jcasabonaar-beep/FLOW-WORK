@@ -243,9 +243,11 @@ function renderPanel() {
   if (job.stage === 'review_final' || job.stage === 'done') {
     p.innerHTML = `<h2 class="sec">${job.stage === 'done' ? '✅ Video terminado' : '✋ Parada 2: video final'}</h2>
       <div class="final">
-        <video controls src="${file(job.output, job.outputV)}"></video>
+        <div><div class="muted" style="font-size:12px;margin-bottom:4px">🅰️ Hook A</div><video controls src="${file(job.output, job.outputV)}"></video></div>
+        ${job.outputB ? `<div><div class="muted" style="font-size:12px;margin-bottom:4px">🅱️ Hook B: “${esc((job.hookB && job.hookB.line) || '')}”</div><video controls src="${file(job.outputB, job.outputV)}"></video></div>` : ''}
         <div style="flex:1;min-width:260px">
-          ${job.stage === 'done' ? `<p>Guardado en <b>flow-studio\\${esc(job.finalFile)}</b>.</p><a href="${rootFile(job.finalFile)}" download><button class="primary">⬇ Descargar</button></a>` : `
+          ${job.outputB ? '<p class="muted" style="font-size:13px">🅰️🅱️ Sube las dos (una como <b>reel de prueba</b>) y en 📈 Resultados marca cuál es cuál: el analista aprende qué tipo de hook gana.</p>' : ''}
+          ${job.stage === 'done' ? `<p>Guardado en <b>flow-studio\\${esc(job.finalFile)}</b>.</p><a href="${rootFile(job.finalFile)}" download><button class="primary">⬇ Descargar A</button></a>${job.outputB ? ` <a href="${file(job.outputB, job.outputV)}" download="video-B.mp4"><button>⬇ Descargar B</button></a>` : ''}` : `
           <label>Texto del hook (pon *asteriscos* en las palabras en cursiva)<input id="inHook" value="${esc(job.plan.hook)}"></label>
           <div class="btns"><button class="good" id="bApprove">✓ Aprobar y guardar</button><button id="bReEdit">↻ Rehacer edición</button></div>
           <p class="muted" style="margin-top:18px">¿Algún clip mal? Márcalo y pulsa "Rehacer clips marcados":</p>
@@ -548,7 +550,8 @@ async function refreshLibrary() {
   const days = [...new Set(lib.map(dayOf))];
   const card = (v) => `<div class="card"><h3><span>${v.auto ? '🌙 ' : ''}${esc(v.title)}${v.driveName ? ` <span class="badge done">☁️ ${esc(v.driveName)}</span>` : ''}</span><span class="badge">${v.videoType === 'venta' ? '💰 Venta' : '🚀 Crecimiento'}</span></h3>
     <video controls preload="metadata" src="${rootFile(encodeURI(v.file))}" style="width:100%;aspect-ratio:9/16;border-radius:8px;background:#000"></video>
-    <div class="btns"><a href="${rootFile(encodeURI(v.file))}" download><button class="small">⬇ Descargar</button></a>${v.kit ? `<button class="small" data-libkit="${v.id}">📋 Texto</button>` : ''}<button class="small" data-openjob="${v.id}">💬 Cambiar algo</button><button class="small" data-drive="${v.id}">☁️ ${v.driveName ? 'Renombrar en Drive' : 'Subir a Drive'}</button>${dotsMenu(v.id)}</div></div>`;
+    ${v.fileB ? `<details style="margin-top:6px"><summary class="muted" style="font-size:12px;cursor:pointer">🅱️ Versión B: ${esc((v.hookB || '').replace(/\*/g, ''))}</summary><video controls preload="none" src="${rootFile(encodeURI(v.fileB))}" style="width:100%;aspect-ratio:9/16;border-radius:8px;background:#000;margin-top:6px"></video></details>` : ''}
+    <div class="btns"><a href="${rootFile(encodeURI(v.file))}" download><button class="small">⬇ Descargar${v.fileB ? ' A' : ''}</button></a>${v.fileB ? `<a href="${rootFile(encodeURI(v.fileB))}" download><button class="small">⬇ B</button></a>` : ''}${v.kit ? `<button class="small" data-libkit="${v.id}">📋 Texto</button>` : ''}<button class="small" data-openjob="${v.id}">💬 Cambiar algo</button><button class="small" data-drive="${v.id}">☁️ ${v.driveName ? 'Renombrar en Drive' : 'Subir a Drive'}</button>${dotsMenu(v.id)}</div></div>`;
   $('#libCards').innerHTML = days.map((d) => `<h2 class="sec day">📅 ${esc(d)} <span class="muted">· ${lib.filter((v) => dayOf(v) === d).length} videos</span></h2><div class="cards">${lib.filter((v) => dayOf(v) === d).map(card).join('')}</div>`).join('') || '<p class="muted">Todavía no hay videos terminados.</p>';
   bindDots($('#libCards'));
   document.querySelectorAll('[data-openjob]').forEach((b) => b.onclick = () => open(b.dataset.openjob));
@@ -612,6 +615,7 @@ async function refreshResults() {
   $('#rReport').innerHTML = p ? `<div class="notes"><b>Resumen</b><p>${esc(p.resumen || '')}</p>
     ${(p.patrones || []).length ? `<b>Lo que marca la diferencia</b><ul>${p.patrones.map((x) => `<li>${esc(x.texto)} <span class="badge ${x.fuerza === 'fuerte' ? 'done' : ''}">${esc(x.fuerza || '')}</span></li>`).join('')}</ul>` : ''}
     ${(p.lecciones || []).length ? `<b>Lo que ya aplica el director en los próximos videos</b><ul>${p.lecciones.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+    ${p.horario ? `<b>🕐 Cuándo publicar</b><p>${esc(p.horario)}</p>` : ''}
     ${(p.probar || []).length ? `<b>Para probar</b><ul>${p.probar.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>` : '';
   const med = p && p.median;
   const reels = [...(r.reels || [])].sort((a, b) => (b.views || 0) - (a.views || 0));
@@ -619,7 +623,7 @@ async function refreshResults() {
     <td><b>${fmt(x.views || 0)}</b></td><td style="color:${med && x.views / med >= 1.5 ? '#86efac' : med && x.views / med < 0.6 ? '#fca5a5' : 'inherit'}">${med ? (x.views / med).toFixed(1) + '×' : ''}</td>
     <td>${x.likes ?? ''}</td><td>${x.comments ?? ''}</td><td>${x.postedAt ? new Date(x.postedAt).toLocaleDateString() : ''}</td>
     <td><a href="${esc(x.url)}" target="_blank" style="color:#93c5fd">Ver reel</a></td>
-    <td><select data-link="${esc(x.url)}" style="max-width:260px"><option value="">— ¿Qué video es? —</option>${Object.entries(r.titles).map(([id, t]) => `<option value="${id}" ${x.jobId === id ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>${x.linked ? ' ✓' : x.jobId ? ' <span class="muted">(adivinado)</span>' : ''}</td></tr>`).join('')}</table>
+    <td><select data-link="${esc(x.url)}" style="max-width:260px"><option value="">— ¿Qué video es? —</option>${Object.entries(r.titles).map(([id, t]) => `<option value="${id}" ${x.jobId === id && x.version !== 'B' ? 'selected' : ''}>${esc(t)}${r.withB[id] ? ' · A' : ''}</option>${r.withB[id] ? `<option value="${id}#B" ${x.jobId === id && x.version === 'B' ? 'selected' : ''}>${esc(t)} · B</option>` : ''}`).join('')}</select>${x.linked ? ' ✓' : x.jobId ? ' <span class="muted">(adivinado)</span>' : ''}</td></tr>`).join('')}</table>
     <p class="muted" style="font-size:12px">Elige qué video es cada reel: así el analista sabe qué hook, escenario y tipo de video tuvo cada resultado. Se tiene en cuenta en el próximo análisis.</p>` : '';
   document.querySelectorAll('[data-link]').forEach((sel) => sel.onchange = () => api('results/link', { url: sel.dataset.link, jobId: sel.value }).then(refreshResults));
 }
@@ -636,6 +640,9 @@ async function refreshSettings() {
   renderDrive();
   const r = await api('research');
   if (document.activeElement !== $('#inAccounts')) $('#inAccounts').value = (r.accounts || []).join('\n');
+  const sug = (r.suggestedAccounts || []).filter((a) => !(r.accounts || []).includes(String(a.account).replace(/^@/, '')));
+  $('#sugAccounts').innerHTML = sug.length ? `<div class="muted" style="font-size:12px;margin-top:8px">Cuentas parecidas que ha encontrado el Investigador (las de 🇺🇸 inglés te adelantan lo que se hará viral en español):</div><div class="btns">${sug.map((a) => `<button class="small" data-addacc="${esc(String(a.account).replace(/^@/, ''))}">＋ ${a.lang === 'en' ? '🇺🇸' : '🇪🇸'} @${esc(String(a.account).replace(/^@/, ''))}${a.followers ? ' · ' + fmt(a.followers) : ''}</button>`).join('')}</div>` : '';
+  document.querySelectorAll('[data-addacc]').forEach((b) => b.onclick = async () => { await api('research/accounts', { accounts: [...(r.accounts || []), b.dataset.addacc] }); refreshSettings(); });
   const o = p.opts;
   const sig = JSON.stringify([o, p.ntfyTopic]);
   if (sig !== pilotFormSig) {
@@ -700,6 +707,7 @@ async function refreshHome() {
   const rep = r.report;
   const top = [...(r.reels || [])].sort((a, b) => (b.views || 0) - (a.views || 0))[0];
   $('#hResults').innerHTML = `<h3>📈 Tus reels</h3>` + (rep ? `<p>${esc((rep.resumen || '').split(/(?<=\.)\s/)[0])}</p>
+    ${rep.horario ? `<p>🕐 <b>Publica:</b> ${esc(rep.horario)}</p>` : ''}
     ${top ? `<p class="muted">Mejor: <b>${fmt(top.views)}</b> vistas${rep.median ? ` · ${(top.views / rep.median).toFixed(1)}× tu media` : ''}</p>` : ''}
     ${(rep.lecciones || []).length ? `<div class="muted" style="font-size:12px">El director ya aplica:</div><ul>${rep.lecciones.slice(0, 3).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}` : '<p class="muted">Todavía no hay análisis.</p>') +
     `<div class="btns"><button data-go="results">Ver todo</button></div>`;

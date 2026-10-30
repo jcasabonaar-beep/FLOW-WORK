@@ -93,6 +93,9 @@ async function run() {
       lock.release();
     }
     const data = JSON.parse(fs.readFileSync(out, 'utf8'));
+    // Cuentas que recomienda Instagram en el mismo nicho (para añadirlas con un clic en Ajustes)
+    const have = new Set(j.accounts.map((a) => a.toLowerCase()));
+    if (Array.isArray(data.suggested)) j.suggestedAccounts = data.suggested.filter((a) => a && a.account && !have.has(String(a.account).toLowerCase().replace(/^@/, ''))).slice(0, 8);
     if (data.blocked) throw new Error('Instagram pide algo: ' + data.blocked + ' — resuélvelo en el Chrome de Flow Studio y vuelve a pulsar Sugerir');
     const seen = new Set(j.seen || []);
     const viral = findViral(data).filter((v) => !seen.has(v.url));

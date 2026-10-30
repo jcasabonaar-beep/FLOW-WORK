@@ -35,6 +35,12 @@ Script sent by the producer (translate or adapt it to the video language if need
 7. For each clip pick the reference second (`refTime`) whose thumbnail best matches the action of that line.
 8. Write the frame prompt and the clip prompt for each clip following the rules below. Before writing each frame prompt, Read the full-size frame of its reference second: {{JOB_DIR}}/ref/sec_<refTime rounded to an even number, 3 digits>.jpg (e.g. refTime 15 → sec_014.jpg or sec_016.jpg) and MEASURE the composition there (sizes, positions, distances, camera height), as the COMPOSITION FIRST rule asks. Use even seconds for refTime when possible.
 9. The hook is the most important part of the video: clip 1 (frame and clip) must be the most striking image and line of the whole video.
+   THE FIRST SECOND decides if people scroll away:
+   - Her first word is already the hook: never start with greetings or warm-ups ("Hola", "Hoy les traigo", "Mira", "Bueno"). Start with the surprising claim, the question or the result.
+   - Frame 1 must already show the hook prop or the action (the prop close to the camera, an exaggerated surprised gesture, mid-movement), never a calm neutral pose.
+   - Clip 1 prompt: the motion starts at the very first frame (camera push-in toward her face or the prop, her gesture already happening), no slow start.
+   LOOP: write the LAST line so that it flows naturally back into the first line when the video restarts (e.g. last line ends "…y por eso lo hago siempre así" and the video restarts on the hook), or ends on an open thought the hook answers. People rewatching without noticing is the strongest retention signal. Keep the CTA in the last clip; the loop is the very last words or the CTA phrasing itself.
+   A/B HOOK: also write `hookB`, a DIFFERENT hook for the same video to test which works better: same frame and action of clip 1, but another style (if hook A is a statement, B is a question or a shocking number; if A is a secret, B is a mistake "Estás haciendo esto mal"). `hookB.line` replaces ONLY the spoken words of clip 1 (same length ±2 words, it must lead naturally into clip 2), `hookB.text` is its on-screen text with *asterisks* like `hook`.
 10. Write the hook in the video language: the first 3 to 6 words of clip 1 as on-screen text, with the 1 or 2 key words wrapped in *asterisks* (they will be shown in elegant italic), e.g. "Así es tu *intestino*".
 
 ## Edit graphics in the reference
@@ -56,6 +62,7 @@ Write the file `plan.json` in the working folder with exactly this shape, and al
 ```json
 {
   "hook": "Así es tu *intestino*",
+  "hookB": {"line": "¿Sabías que tu intestino trabaja así cada mañana?", "text": "¿Así trabaja tu *intestino*?"},
   "ctaWord": "{{CTA_WORD}}",
   "notes": ["Changed 'empties completely' to 'helps me feel lighter' (health claim)"],
   "overlay": null,

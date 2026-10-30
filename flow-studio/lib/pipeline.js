@@ -24,6 +24,8 @@ function finalize(job) {
   fs.mkdirSync(outDir, { recursive: true });
   const name = `${job.id}-${job.title.replace(/[^\w\- áéíóúñÁÉÍÓÚÑ]+/g, '').trim().replace(/\s+/g, '-').slice(0, 50)}.mp4`;
   fs.copyFileSync(path.join(store.jobDir(job.id), job.output), path.join(outDir, name));
+  // 🅰️🅱️ La versión con el otro hook, al lado: …-B.mp4
+  if (job.outputB && fs.existsSync(path.join(store.jobDir(job.id), job.outputB))) fs.copyFileSync(path.join(store.jobDir(job.id), job.outputB), path.join(outDir, name.replace(/\.mp4$/, '-B.mp4')));
   const k = job.kit || {};
   if (k.cover && fs.existsSync(path.join(store.jobDir(job.id), k.cover))) fs.copyFileSync(path.join(store.jobDir(job.id), k.cover), path.join(outDir, name.replace(/\.mp4$/, '-portada.jpg')));
   if (k.caption) fs.writeFileSync(path.join(outDir, name.replace(/\.mp4$/, '-texto.txt')), [k.caption, '', k.hashtags || '', k.disclosure ? '\n' + k.disclosure : ''].join('\n'));

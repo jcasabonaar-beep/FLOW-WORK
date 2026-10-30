@@ -38,7 +38,9 @@ function jobsSummary() {
     const full = store.load(x.id) || x;
     const hook = (full.clips || [])[0];
     return `- id ${x.id} · "${x.title}" · producido ${new Date(x.createdAt).toISOString().slice(0, 10)} · ${full.videoType} · escenario ${full.setting} · CTA ${(full.plan && full.plan.ctaWord) || full.ctaWord} · ${(full.clips || []).filter((c) => !c.skip).length} clips` +
-      `\n  hook: ${(full.plan && full.plan.hook) || ''} | primeras palabras: "${hook ? hook.line : ''}"\n  caption producido: ${((full.kit && full.kit.caption) || '').split('\n')[0].slice(0, 140)}`;
+      `\n  hook A: ${(full.plan && full.plan.hook) || ''} | primeras palabras A: "${hook ? hook.line : ''}"` +
+      (full.hookB ? `\n  hook B (A/B test, same video): ${full.hookB.text || ''} | primeras palabras B: "${full.hookB.line}"` : '') +
+      `\n  caption producido: ${((full.kit && full.kit.caption) || '').split('\n')[0].slice(0, 140)}`;
   }).join('\n') || '(none yet)';
 }
 
@@ -78,8 +80,9 @@ async function run() {
     const now = Date.now();
     const reels = j.reels.map((r) => {
       const age = r.postedAt ? Math.round((now - Date.parse(r.postedAt)) / 3600000) : null;
-      const linked = r.linked && r.jobId ? ` · LINKED BY THE PRODUCER to job id ${r.jobId} (certain)` : '';
-      return `- ${r.url}${linked} · ${r.views || '?'} vistas (${med ? (r.views / med).toFixed(1) : '?'}× la media) · ${r.likes ?? '?'} likes · ${r.comments ?? '?'} comentarios · ${age != null ? `hace ${age} h` : 'fecha ?'}\n  caption: ${r.caption || '-'}`;
+      const linked = r.linked && r.jobId ? ` · LINKED BY THE PRODUCER to job id ${r.jobId}, version ${r.version || 'A'} (certain)` : '';
+      const when = r.postedAt ? ` · publicado ${new Date(r.postedAt).toLocaleString('es-ES', { timeZone: 'Europe/Madrid', weekday: 'short', hour: '2-digit', minute: '2-digit' })} hora España / ${new Date(r.postedAt).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric' })} ET` : '';
+      return `- ${r.url}${linked}${when} · ${r.views || '?'} vistas (${med ? (r.views / med).toFixed(1) : '?'}× la media) · ${r.likes ?? '?'} likes · ${r.comments ?? '?'} comentarios · ${age != null ? `hace ${age} h` : 'fecha ?'}\n  caption: ${r.caption || '-'}`;
     }).join('\n');
     const rep = path.join(dir(), 'report.json');
     if (fs.existsSync(rep)) fs.unlinkSync(rep);
@@ -121,7 +124,8 @@ function link(url, jobId) {
   const j = rjob();
   const r = (j.reels || []).find((x) => x.url === url);
   if (!r) return null;
-  Object.assign(r, { jobId: jobId || null, linked: !!jobId });
+  const [id, version] = String(jobId || '').split('#');
+  Object.assign(r, { jobId: id || null, version: version === 'B' ? 'B' : 'A', linked: !!id });
   store.save(j);
   return r;
 }

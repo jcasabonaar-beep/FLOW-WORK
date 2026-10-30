@@ -139,5 +139,15 @@
     "_nota": "Analista de resultados: lee las visitas de tus reels. autoEveryHours 0 = solo a mano",
     "maxReels": 6,
     "autoEveryHours": 24
+  },
+  "abHooks": true,
+  "edit": {
+    "_nota": "Edición dinámica: cortes con zoom cada pocos segundos, golpe de zoom en la palabra clave y sonidos suaves",
+    "zoom": true,
+    "zoomLevel": 1.12,
+    "punch": 1.2,
+    "every": 2.4,
+    "sfx": true,
+    "sfxVolume": 0.35
   }
 }

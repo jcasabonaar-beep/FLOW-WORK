@@ -136,7 +136,7 @@ function buildAss(job, words, total, segs) {
     lines.push(`Dialogue: 3,${assTime(ov.t0)},${assTime(total)},VsR,,0,0,0,,{\\pos(750,1040)\\fad(150,0)}${esc(ov.right || '')}`);
     for (const it of ov.items) lines.push(`Dialogue: 3,${assTime(it.t)},${assTime(total)},VsItem,,0,0,0,,{\\pos(${it.x},${it.y + ov.size + 22})\\fad(120,0)}${esc(it.label || '')}`);
   }
-  if (hookEnd) lines.push(`Dialogue: 1,${assTime(0)},${assTime(hookEnd)},Hook,,0,0,0,,{\\pos(540,${Math.round(1920 * 0.47)})\\fad(80,120)}${hookText(job.plan.hook)}`);
+  if (hookEnd) lines.push(`Dialogue: 1,${assTime(0)},${assTime(hookEnd)},Hook,,0,0,0,,{\\pos(540,${Math.round(1920 * 0.47)})\\fad(0,120)}${hookText(job.plan.hook)}`);
 
   // Subtítulos estilo "I have *healthy* alternatives": frase de 3-4 palabras en 2 líneas,
   // la palabra clave en cursiva elegante y más grande; las palabras aparecen según las dice
@@ -246,23 +246,93 @@ function cleanRanges(start, end, words, prevWords) {
   return { ranges: ranges.length ? ranges : [[start, end]], notes };
 }
 
+// 🎬 Edición dinámica: dentro de cada trozo, cortes cada ~2,4 s alternando plano normal y más cerrado,
+// y un golpe de zoom en la palabra clave del clip. Devuelve los trozos y dónde pegó el zoom.
+const E = config.edit || {};
+function zoomPieces(ranges, words, still, counter) {
+  const every = E.every || 2.4;
+  const keyWord = still || !words ? null : words.filter((w) => !STOP.has(norm(w.w)) && norm(w.w).length > 5 && ranges.some((r) => w.s >= r[0] && w.e <= r[1]))
+    .sort((a, b) => norm(b.w).length - norm(a.w).length)[0];
+  const out = [];
+  const punches = [];
+  for (const [a, b] of ranges) {
+    const cuts = new Set([a, b]);
+    if (!still && E.zoom !== false) {
+      for (let x = a + every; x < b - 0.8; x += every) {
+        // corta entre palabras, nunca en mitad de una
+        const w = (words || []).find((w) => w.s >= x - 0.5 && w.s <= x + 0.5);
+        cuts.add(w ? Math.max(a, w.s - 0.02) : x);
+      }
+      if (keyWord && keyWord.s >= a && keyWord.e <= b) { cuts.add(Math.max(a, keyWord.s - 0.05)); cuts.add(Math.min(b, keyWord.e + 0.3)); }
+    }
+    const pts = [...cuts].sort((x, y) => x - y).filter((x, i, arr) => i === 0 || x - arr[i - 1] > 0.3 || x === b);
+    for (let i = 0; i < pts.length - 1; i++) {
+      const pa = pts[i], pb = pts[i + 1];
+      if (pb - pa < 0.05) continue;
+      const punch = keyWord && pa >= keyWord.s - 0.06 && pa < keyWord.e;
+      const z = still || E.zoom === false ? 1 : punch ? (E.punch || 1.2) : (counter.n++ % 2 ? (E.zoomLevel || 1.12) : 1);
+      out.push([pa, pb, z]);
+      if (punch) punches.push(pa);
+    }
+  }
+  return { pieces: out.length ? out : ranges.map((r) => [r[0], r[1], 1]), punches };
+}
+const zoomFilter = (z) => {
+  if (z <= 1.001) return '';
+  const W = Math.round(1080 * z / 2) * 2, H = Math.round(1920 * z / 2) * 2;
+  return `,scale=${W}:${H},crop=1080:1920:${(W - 1080) / 2}:${Math.round((H - 1920) * 0.35)},setsar=1`; // un poco hacia arriba: la cara no se corta
+};
+// Sonidos suaves generados al vuelo (sin descargar nada): "whoosh" en los cambios de clip y "pop" en el golpe de zoom
+async function makeSfx(edit) {
+  const w = path.join(edit, 'sfx_whoosh.wav'), p = path.join(edit, 'sfx_pop.wav');
+  if (!fs.existsSync(w)) await ffmpeg(['-f', 'lavfi', '-i', 'anoisesrc=d=0.4:c=pink:a=0.6', '-af', 'bandpass=f=1400:width_type=o:w=2,afade=t=in:d=0.18,afade=t=out:st=0.18:d=0.22,aresample=48000,aformat=channel_layouts=stereo', w]);
+  if (!fs.existsSync(p)) await ffmpeg(['-f', 'lavfi', '-i', 'sine=f=880:d=0.09', '-af', 'afade=t=out:st=0:d=0.09,aresample=48000,aformat=channel_layouts=stereo,volume=0.6', p]);
+  return { whoosh: w, pop: p };
+}
+
 async function run(job) {
+  const tag = await render(job, { clips: job.clips, hook: job.plan && job.plan.hook, tag: '' });
+  job.output = `edit/final${tag}.mp4`;
+  job.outputB = null;
+  job.outputV = Date.now();
+  store.save(job);
+  // 🅰️🅱️ Versión B: el mismo video con el hook B en el clip 1
+  const hb = job.hookB;
+  if (hb && hb.clip && hb.clipStatus === 'done' && fs.existsSync(path.join(store.jobDir(job.id), hb.clip))) {
+    try {
+      const first = job.clips.find((c) => !c.skip && c.clip);
+      const clips = job.clips.map((c) => (c === first ? { ...c, clip: hb.clip, line: hb.line } : c));
+      await render(job, { clips, hook: hb.text || (job.plan && job.plan.hook), tag: 'B' });
+      job.outputB = 'edit/finalB.mp4';
+      store.log(job, 'editor', '🅰️🅱️ Versión B lista (mismo video con el otro hook)');
+    } catch (e) {
+      store.log(job, 'editor', '⚠️ No pude montar la versión B: ' + e.message.slice(0, 120));
+    }
+    store.save(job);
+  }
+  await publishKit(job);
+}
+
+async function render(job, v) {
+  // J = el video con los clips y el hook de esta versión (solo para leer; los registros van al video real)
+  const J = { ...job, clips: v.clips, plan: { ...(job.plan || {}), hook: v.hook } };
+  const T = v.tag;
   const dir = store.jobDir(job.id);
   const edit = path.join(dir, 'edit');
   fs.mkdirSync(path.join(edit, 'fonts'), { recursive: true });
   for (const f of fs.readdirSync(path.join(store.ROOT, 'fonts'))) fs.copyFileSync(path.join(store.ROOT, 'fonts', f), path.join(edit, 'fonts', f));
 
   // 1) Medir la voz de cada clip y buscar palabras repetidas
-  const heard = await clipWords(job);
+  const heard = await clipWords(J);
   const segments = [];
   let t = 0;
   let prevWords = null;
-  for (const c of job.clips) {
+  for (const c of J.clips) {
     if (c.skip || !c.clip) continue;
     const file = path.join(dir, c.clip);
     const [s, e, dur] = await speechBounds(file);
     // El hook arranca hablando desde el primer fotograma
-    let start = Math.max(0, s - (c.n === job.clips[0].n ? 0.04 : 0.12));
+    let start = Math.max(0, s - (c.n === J.clips[0].n ? 0.04 : 0.12));
     const end = Math.min(dur, e + 0.22);
     const words = heard[file] || null;
     const { ranges, notes } = cleanRanges(start, end, words, prevWords);
@@ -277,7 +347,9 @@ async function run(job) {
       const bd = Math.max(0.8, Math.min(len - bs, Number(c.broll.duration) || 2));
       if (fs.existsSync(bf)) broll = { file: bf, from: Math.max(0, Number(c.broll.from) || 0), start: bs, dur: bd, image: /\.(png|jpe?g|webp)$/i.test(bf) };
     }
-    segments.push({ n: c.n, file, line: c.line, start: t, len, cut: [start, end], ranges, speechStart: t + Math.max(0, s - start), speechEnd: t + len - 0.22, audio: await hasAudio(file), broll });
+    // Sin zoom en los clips del libro (la portada no se corta) ni en los clips ya hechos
+    const still = !!(c.book === 'hand' || c.readyClip || c.frameFrom);
+    segments.push({ n: c.n, file, line: c.line, start: t, len, cut: [start, end], ranges, words, still, speechStart: t + Math.max(0, s - start), speechEnd: t + len - 0.22, audio: await hasAudio(file), broll });
     store.log(job, 'editor', `Clip ${c.n}: voz ${s.toFixed(2)}–${e.toFixed(2)} s de ${dur.toFixed(1)} s`);
     t += len;
   }
@@ -286,19 +358,26 @@ async function run(job) {
   // 2) Unir: recorte, 1080x1920, 30 fps
   const args = [];
   const parts = [];
+  const sfx = []; // [segundo, 'whoosh'|'pop']
+  const counter = { n: 0 };
   segments.forEach((sg) => args.push('-i', sg.file));
   let extra = segments.length;
   segments.forEach((sg, i) => {
     const fit = 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,setsar=1';
-    // Trozos que se quedan del clip (sin las palabras repetidas)
+    // Trozos que se quedan del clip (sin las palabras repetidas), cada uno con su zoom
     const R = sg.ranges;
+    const { pieces: P, punches } = zoomPieces(R, sg.words, sg.still || !!sg.broll, counter);
+    // Posición en el video final de cada golpe de zoom
+    const toTimeline = (x) => { let acc = 0; for (const [a, b] of R) { if (x >= a && x <= b) return sg.start + acc + (x - a); acc += b - a; } return null; };
+    punches.forEach((x) => { const tt = toTimeline(x); if (tt != null) sfx.push([tt, 'pop']); });
+    if (i > 0) sfx.push([Math.max(0, sg.start - 0.15), 'whoosh']);
     const vOut = sg.broll ? `vb${i}` : `v${i}`;
-    if (R.length === 1) {
-      parts.push(`[${i}:v]trim=${R[0][0].toFixed(3)}:${R[0][1].toFixed(3)},setpts=PTS-STARTPTS,${fit}[${vOut}]`);
+    if (P.length === 1) {
+      parts.push(`[${i}:v]trim=${P[0][0].toFixed(3)}:${P[0][1].toFixed(3)},setpts=PTS-STARTPTS,${fit}${zoomFilter(P[0][2])}[${vOut}]`);
     } else {
-      parts.push(`[${i}:v]split=${R.length}${R.map((_, k) => `[s${i}_${k}]`).join('')}`);
-      R.forEach((r, k) => parts.push(`[s${i}_${k}]trim=${r[0].toFixed(3)}:${r[1].toFixed(3)},setpts=PTS-STARTPTS,${fit}[p${i}_${k}]`));
-      parts.push(`${R.map((_, k) => `[p${i}_${k}]`).join('')}concat=n=${R.length}:v=1:a=0[${vOut}]`);
+      parts.push(`[${i}:v]split=${P.length}${P.map((_, k) => `[s${i}_${k}]`).join('')}`);
+      P.forEach((r, k) => parts.push(`[s${i}_${k}]trim=${r[0].toFixed(3)}:${r[1].toFixed(3)},setpts=PTS-STARTPTS,${fit}${zoomFilter(r[2])}[p${i}_${k}]`));
+      parts.push(`${P.map((_, k) => `[p${i}_${k}]`).join('')}concat=n=${P.length}:v=1:a=0[${vOut}]`);
     }
     if (sg.broll) {
       // Recorte del b-roll encima del clip, la voz sigue sonando
@@ -320,21 +399,31 @@ async function run(job) {
   });
   const joined = segments.map((_, i) => `[v${i}][a${i}]`).join('');
   parts.push(`${joined}concat=n=${segments.length}:v=1:a=1[vc][ac]`);
-  parts.push('[ac]highpass=f=80,acompressor=threshold=-18dB:ratio=3:attack=5:release=120,loudnorm=I=-14:TP=-1.5:LRA=9[aout]');
-  store.setWorker(job, 'editor', { action: 'Uniendo clips y normalizando la voz…' });
+  parts.push('[ac]highpass=f=80,acompressor=threshold=-18dB:ratio=3:attack=5:release=120,loudnorm=I=-14:TP=-1.5:LRA=9[aout0]');
+  // Sonidos suaves por debajo de la voz (nunca dos seguidos en menos de 1,2 s)
+  const events = [];
+  if (E.sfx !== false) for (const ev of sfx.sort((a, b) => a[0] - b[0])) if (!events.length || ev[0] - events[events.length - 1][0] > 1.2) events.push(ev);
+  if (events.length) {
+    const fx = await makeSfx(edit);
+    const ins = events.map(([tt, kind]) => { const k = extra++; args.push('-i', fx[kind]); const ms = Math.round(tt * 1000); return `[${k}:a]adelay=${ms}|${ms},volume=${E.sfxVolume || 0.35}[fx${k}]`; });
+    parts.push(...ins);
+    const labels = ins.map((x) => x.match(/\[(fx\d+)\]$/)[1]);
+    parts.push(`[aout0]${labels.map((l) => `[${l}]`).join('')}amix=inputs=${labels.length + 1}:duration=first:dropout_transition=0,volume=${labels.length + 1}[aout]`);
+  } else parts.push('[aout0]anull[aout]');
+  store.setWorker(job, 'editor', { action: `Uniendo clips${T ? ' (versión ' + T + ')' : ''}, con zooms y sonidos…` });
   await ffmpeg([...args, '-filter_complex', parts.join(';'), '-map', '[vc]', '-map', '[aout]',
-    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '17', '-c:a', 'aac', '-b:a', '192k', path.join(edit, 'joined.mp4')]);
+    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '17', '-c:a', 'aac', '-b:a', '192k', path.join(edit, `joined${T}.mp4`)]);
 
   // 3) Subtítulos
   const est = estimateWords(segments);
   // Reutiliza la transcripción de los clips (no vuelve a transcribir el video entero)
-  const words = await whisperWords(job, path.join(edit, 'joined.mp4'), segments, est, wordsOnTimeline(segments, heard));
-  fs.writeFileSync(path.join(edit, 'captions.ass'), buildAss(job, words, total, segments));
+  const words = await whisperWords(job, path.join(edit, `joined${T}.mp4`), segments, est, wordsOnTimeline(segments, heard));
+  fs.writeFileSync(path.join(edit, `captions${T}.ass`), buildAss(J, words, total, segments));
 
   // 4) Quemar gráficos (si los hay) + hook + subtítulos
   store.setWorker(job, 'editor', { action: 'Poniendo gráficos, hook y subtítulos…' });
-  const ov = versusLayout(job, segments);
-  const inputs = ['-i', 'joined.mp4'];
+  const ov = versusLayout(J, segments);
+  const inputs = ['-i', `joined${T}.mp4`];
   const fc = [];
   let last = '0:v';
   if (ov) {
@@ -348,14 +437,11 @@ async function run(job) {
       last = `g${k + 1}`;
     });
   }
-  fc.push(`[${last}]ass=captions.ass:fontsdir=fonts[vout]`);
+  fc.push(`[${last}]ass=captions${T}.ass:fontsdir=fonts[vout]`);
   await ffmpeg([...inputs, '-filter_complex', fc.join(';'), '-map', '[vout]', '-map', '0:a', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18',
-    '-pix_fmt', 'yuv420p', '-c:a', 'copy', '-movflags', '+faststart', 'final.mp4'], { cwd: edit });
-  job.output = 'edit/final.mp4';
-  job.outputV = Date.now();
-  store.log(job, 'editor', `✅ Video final listo: ${total.toFixed(1)} s`);
-  store.save(job);
-  await publishKit(job);
+    '-pix_fmt', 'yuv420p', '-c:a', 'copy', '-movflags', '+faststart', `final${T}.mp4`], { cwd: edit });
+  store.log(job, 'editor', `✅ Video final${T ? ' (versión ' + T + ')' : ''} listo: ${total.toFixed(1)} s · ${counter.n} cambios de plano · ${events.length} sonidos`);
+  return T;
 }
 
 // Kit para publicar: portada, descripción, hashtags y aviso de afiliado

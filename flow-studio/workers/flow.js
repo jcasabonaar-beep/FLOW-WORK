@@ -258,7 +258,32 @@ async function runClips(job) {
     }
     store.save(job);
   }
+  await runHookB(job);
   return job.clips.some((c) => c.clipStatus === 'manual') ? 'wait' : 'ok';
+}
+
+// 🅰️🅱️ Segundo hook: el mismo frame del clip 1 con otra frase. Si no sale, el video va solo con el hook A.
+async function runHookB(job) {
+  const hb = job.hookB;
+  const c1 = job.clips[0];
+  if (!hb || hb.clipStatus === 'done' || !c1 || c1.clipStatus !== 'done' || !c1.frame || c1.readyClip || config.flowMode !== 'auto') return;
+  const item = { ...c1, n: hb.n, line: hb.line, clipStatus: 'pending', clipRetried: true };
+  const dest = `clips/clip_${pad(hb.n)}.mp4`;
+  if (!fs.existsSync(abs(job, dest.replace('.mp4', '_a.mp4')))) {
+    store.setWorker(job, 'clips', { action: '🅰️🅱️ Animando el hook B…' });
+    try {
+      await session(job, 'clips', 'CLIPS worker', `${config.clipModel} (video)`, [item], clipTask,
+        `This is an ALTERNATIVE HOOK (version B) of clip 1 for an A/B test: same start frame, same action and energy, only the spoken line changes. Generate it with 1 output (x1) and download it to the path given. It is called "Clip ${hb.n}" only for file naming.`);
+    } catch (e) {
+      store.log(job, 'clips', '⚠️ No pude hacer el hook B: ' + e.message.slice(0, 100));
+      return;
+    }
+  }
+  await pickClip(job, item, dest);
+  if (!fs.existsSync(abs(job, dest))) { store.log(job, 'clips', '⚠️ El hook B no salió: el video irá solo con el hook A'); return; }
+  Object.assign(hb, { clip: dest, clipStatus: 'done', v: Date.now() });
+  store.log(job, 'clips', `🅰️🅱️ Hook B listo: "${hb.line}"`);
+  store.save(job);
 }
 
 // ¿Flow ha metido subtítulos o texto en el clip? Se mira con 3 fotogramas de cada uno y se repite si los hay

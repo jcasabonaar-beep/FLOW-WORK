@@ -117,7 +117,7 @@ async function api(req, res, url) {
   if (parts[1] === 'library') {
     // Videos terminados (los de la carpeta de videos completos)
     const lib = store.list().filter((j) => j.finalFile && fs.existsSync(path.join(store.ROOT, j.finalFile)))
-      .map((j) => ({ id: j.id, title: j.title, file: j.finalFile, videoType: j.videoType, createdAt: j.createdAt, auto: !!j.auto, kit: j.kit || null, driveName: j.driveName || null }));
+      .map((j) => ({ id: j.id, title: j.title, file: j.finalFile, fileB: j.outputB && fs.existsSync(path.join(store.ROOT, j.finalFile.replace(/\.mp4$/, '-B.mp4'))) ? j.finalFile.replace(/\.mp4$/, '-B.mp4') : null, hookB: j.hookB && j.hookB.text, hook: j.plan && j.plan.hook, videoType: j.videoType, createdAt: j.createdAt, auto: !!j.auto, kit: j.kit || null, driveName: j.driveName || null }));
     return send(res, 200, lib);
   }
   if (parts[1] === 'autopilot') {
@@ -140,7 +140,8 @@ async function api(req, res, url) {
     const r = results.rjob();
     if (method === 'GET') {
       const titles = Object.fromEntries(store.list().filter((x) => x.finalFile).map((x) => [x.id, x.title]));
-      return send(res, 200, { ...r, running: results.isRunning(), titles, auto: (config.results || {}).autoEveryHours ?? 24 });
+      const withB = Object.fromEntries(store.list().filter((x) => x.finalFile && x.outputB).map((x) => [x.id, true]));
+      return send(res, 200, { ...r, running: results.isRunning(), titles, withB, auto: (config.results || {}).autoEveryHours ?? 24 });
     }
     if (parts[2] === 'link') {
       const body = JSON.parse((await readBody(req)).toString() || '{}');
@@ -202,7 +203,7 @@ async function api(req, res, url) {
   if (action === 'delete' && method === 'POST') {
     // Borra el proyecto y su video terminado del PC (lo que ya esté en Drive se queda)
     if (pipeline.active.has(job.id)) return send(res, 400, { error: 'Está trabajando: páralo antes de borrarlo' });
-    if (job.finalFile) for (const ext of ['.mp4', '-portada.jpg', '-texto.txt']) fs.rmSync(path.join(store.ROOT, job.finalFile.replace(/\.mp4$/, ext)), { force: true });
+    if (job.finalFile) for (const ext of ['.mp4', '-B.mp4', '-portada.jpg', '-texto.txt']) fs.rmSync(path.join(store.ROOT, job.finalFile.replace(/\.mp4$/, ext)), { force: true });
     store.remove(job.id);
     store.bus.emit('job', job.id);
     return send(res, 200, { ok: true });
@@ -334,12 +335,14 @@ function resetJob(job, from) {
     Object.assign(job, { clips: [], plan: null, notes: [], stage: 'director' });
     store.log(job, 'director', '↻ Plan borrado: lo rehago con las reglas nuevas');
   } else {
-    for (const c of job.clips) Object.assign(c, { frame: null, frameStatus: 'pending', frameNote: '', feedback: '', clip: null, clipStatus: 'pending', clipNote: '', clipRetried: false, textRetries: 0, skip: false });
+    for (const c of job.clips) Object.assign(c, { frame: null, frameStatus: 'pending', frameNote: '', feedback: '', clip: null, clipStatus: 'pending', clipNote: '', clipRetried: false, textRetries: 0, qaRetried: false, skip: false });
     job.stage = 'frames';
     store.log(job, 'frames', '↻ Frames borrados: los hago de nuevo');
   }
   for (const w of ['frames', 'clips', 'editor']) Object.assign(job.workers[w], { state: 'idle', action: '' });
-  Object.assign(job, { output: null, finalFile: null, error: null, paused: false, status: 'running' });
+  if (job.hookB) Object.assign(job.hookB, { clip: null, clipStatus: 'pending' });
+  if (from === 'director') job.hookB = null;
+  Object.assign(job, { output: null, outputB: null, finalFile: null, error: null, paused: false, status: 'running' });
   store.save(job);
   pipeline.drive(job.id);
 }

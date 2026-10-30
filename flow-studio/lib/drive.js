@@ -45,7 +45,7 @@ function nextName(auto = true) {
   return `${(taken.length ? Math.max(...taken) : 0) + 1}-${day}${auto ? 'IA' : ''}`;
 }
 
-const parts = (base) => [[base + '.mp4'], [base + '-texto.txt'], [base + '-portada.jpg']].map((x) => x[0]);
+const parts = (base) => [base + '.mp4', base + '-B.mp4', base + '-texto.txt', base + '-portada.jpg'];
 
 function upload(job, name) {
   const dest = target();
@@ -54,6 +54,7 @@ function upload(job, name) {
   if (fs.existsSync(path.join(dest, base + '.mp4'))) throw new Error(`Ya hay un video llamado ${base} en tu Drive`);
   fs.copyFileSync(path.join(store.jobDir(job.id), job.output), path.join(dest, base + '.mp4'));
   job.driveDir = dest;
+  if (job.outputB && fs.existsSync(path.join(store.jobDir(job.id), job.outputB))) fs.copyFileSync(path.join(store.jobDir(job.id), job.outputB), path.join(dest, base + '-B.mp4'));
   const k = job.kit || {};
   if (k.caption) fs.writeFileSync(path.join(dest, base + '-texto.txt'), [k.caption, '', k.hashtags || '', k.disclosure ? '\n' + k.disclosure : ''].join('\n'));
   if (k.cover && fs.existsSync(path.join(store.jobDir(job.id), k.cover))) fs.copyFileSync(path.join(store.jobDir(job.id), k.cover), path.join(dest, base + '-portada.jpg'));

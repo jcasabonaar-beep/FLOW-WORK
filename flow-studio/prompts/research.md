@@ -11,7 +11,10 @@ If Instagram shows a login page, a captcha, "try again later" or any block: STOP
 3. From the reels grid, collect the most recent {{PER_ACCOUNT}} reels: their URL and the view count shown on each tile (convert "1,2 M" / "1.2M" to 1200000, "35,4 mil" / "35.4K" to 35400). Prefer reading the page with evaluate (DOM) over snapshots; never take a screenshot per reel. Actions do not return the page automatically: call a snapshot only when you need it.
 4. Work out the account's usual level (the median of those view counts). For the reels with at least {{MIN_RATIO}}× that median, open each one and read its publication date (the `datetime` attribute of the `<time>` element) and the first line of the caption. Do not open the others.
 
+## Find more accounts (only on the FIRST account)
+On the first account's profile, open the suggested / similar accounts (the arrow or "Similar accounts" next to Follow) and note up to 6 accounts of the SAME niche (natural home remedies, grandma recipes, wellness tips, healthy food hacks) with big audiences, in English or Spanish, that are not in the list above. English-language accounts are especially useful: what goes viral in English reaches the Spanish-speaking audience weeks later. Do not open them.
+
 ## Output
 Write {{OUT}} as JSON:
-{"blocked": null, "accounts": [{"account": "name", "followers": 12345, "reels": [{"url": "https://www.instagram.com/reel/...", "views": 150000, "postedAt": "2026-10-28T15:00:00.000Z or null", "caption": "first line or null"}]}]}
+{"blocked": null, "suggested": [{"account": "name", "followers": 250000, "lang": "en|es"}], "accounts": [{"account": "name", "followers": 12345, "reels": [{"url": "https://www.instagram.com/reel/...", "views": 150000, "postedAt": "2026-10-28T15:00:00.000Z or null", "caption": "first line or null"}]}]}
 Write it after each account so nothing is lost. Reply with one short line in Spanish when done.

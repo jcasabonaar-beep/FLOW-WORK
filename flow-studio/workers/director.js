@@ -82,6 +82,8 @@ async function run(job) {
   const j = store.load(job.id);
   j.plan = { hook: plan.hook, ctaWord: plan.ctaWord || job.ctaWord, overlay: plan.overlay && plan.overlay.items && plan.overlay.items.length ? plan.overlay : null };
   j.notes = plan.notes || [];
+  // Hook B: otra versión del clip 1 (mismo frame, otra frase) para probar cuál funciona mejor
+  j.hookB = config.abHooks !== false && plan.hookB && plan.hookB.line ? { n: 91, variantOf: 1, line: plan.hookB.line, text: plan.hookB.text || '', clip: null, clipStatus: 'pending', clipNote: '' } : null;
   j.clips = plan.clips.map((c, i) => ({
     n: i + 1, line: c.line, refTime: c.refTime, frameMode: i === 0 ? 1 : 2,
     framePrompt: c.framePrompt, clipPrompt: c.clipPrompt, book: job.videoType === 'venta' ? (c.book || null) : null, broll: c.broll || null, frameFrom: job.videoType === 'venta' ? (c.frameFrom || null) : null, readyClip: job.videoType === 'venta' ? (c.readyClip || null) : null, sameFrameAs: c.sameFrameAs && c.sameFrameAs < i + 1 ? c.sameFrameAs : null,
