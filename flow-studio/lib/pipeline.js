@@ -25,6 +25,13 @@ function finalize(job) {
   job.stage = 'done';
   job.status = 'done';
   job.finalFile = `${outName}/${name}`;
+  // Y a Google Drive, con el número del día y la fecha: 1-30102026IA
+  try {
+    const base = require('./drive').upload(job);
+    if (base) { job.driveName = base; store.log(job, 'editor', `☁️ Subido a tu Google Drive como ${base}`); }
+  } catch (e) {
+    store.log(job, 'editor', '⚠️ No pude subirlo a Drive: ' + e.message);
+  }
   store.save(job);
 }
 

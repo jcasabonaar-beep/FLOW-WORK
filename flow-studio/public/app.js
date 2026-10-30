@@ -502,8 +502,17 @@ $('#btnAnalyze').onclick = async () => {
 // ---------- Videos completos ----------
 async function refreshLibrary() {
   const lib = await api('library');
+  const dv = await api('drive');
+  $('#driveBox').innerHTML = `<b>☁️ Subida automática a Google Drive</b> ${dv.target ? `<span class="badge done">activa → ${esc(dv.target)}</span>` : '<span class="badge">desactivada</span>'}
+    <div class="row" style="margin-top:8px;align-items:end">
+      <label>Carpeta de tu Google Drive en este PC ${dv.detected.length ? `(encontrada: ${dv.detected.map(esc).join(', ')})` : '(instala Google Drive para ordenador)'}<input id="inDrive" value="${esc(dv.driveFolder || dv.detected[0] || '')}" placeholder="G:\\Mi unidad"></label>
+      <label>Subcarpeta<input id="inDriveSub" value="${esc(dv.driveSubfolder)}"></label>
+      <button class="primary" id="btnDrive" style="flex:none">Guardar</button>
+    </div>
+    <div class="muted" style="font-size:12px">Cada video terminado se sube como <b>1-DDMMAAAAIA.mp4</b>, <b>2-DDMMAAAAIA.mp4</b>… (número del día + fecha + IA), con su texto y su portada. Déjalo vacío para no subir.</div>`;
+  $('#btnDrive').onclick = async () => { await api('drive', { driveFolder: $('#inDrive').value, driveSubfolder: $('#inDriveSub').value }); refreshLibrary(); };
   $('#empty').hidden = true; $('#job').hidden = true; $('#ideas').hidden = true; $('#library').hidden = false;
-  $('#libCards').innerHTML = lib.map((v) => `<div class="card"><h3><span>${v.auto ? '🌙 ' : ''}${esc(v.title)}</span><span class="badge">${v.videoType === 'venta' ? '💰 Venta' : '🚀 Crecimiento'}</span></h3>
+  $('#libCards').innerHTML = lib.map((v) => `<div class="card"><h3><span>${v.auto ? '🌙 ' : ''}${esc(v.title)}${v.driveName ? ` <span class="badge done">☁️ ${esc(v.driveName)}</span>` : ''}</span><span class="badge">${v.videoType === 'venta' ? '💰 Venta' : '🚀 Crecimiento'}</span></h3>
     <video controls preload="metadata" src="${rootFile(encodeURI(v.file))}" style="width:100%;aspect-ratio:9/16;border-radius:8px;background:#000"></video>
     <div class="btns"><a href="${rootFile(encodeURI(v.file))}" download><button class="small">⬇ Descargar</button></a>${v.kit ? `<button class="small" data-libkit="${v.id}">📋 Texto</button>` : ''}<button class="small" data-openjob="${v.id}">💬 Cambiar algo</button></div></div>`).join('') || '<p class="muted">Todavía no hay videos terminados.</p>';
   document.querySelectorAll('[data-openjob]').forEach((b) => b.onclick = () => open(b.dataset.openjob));

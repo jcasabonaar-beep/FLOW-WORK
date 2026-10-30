@@ -90,10 +90,19 @@ async function api(req, res, url) {
   const parts = url.pathname.split('/').filter(Boolean); // api, jobs, id, action, n
   const method = req.method;
   if (parts[1] === 'config') return send(res, 200, { settings: Object.keys(config.settings), avatar: config.avatar, flowMode: config.flowMode });
+  if (parts[1] === 'drive') {
+    const drive = require('./lib/drive');
+    if (method === 'POST') {
+      const body = JSON.parse((await readBody(req)).toString() || '{}');
+      drive.saveSettings({ driveFolder: (body.driveFolder || '').trim(), driveSubfolder: (body.driveSubfolder || 'Videos IA').trim() });
+    }
+    const st = drive.settings();
+    return send(res, 200, { driveFolder: st.driveFolder || '', driveSubfolder: st.driveSubfolder || 'Videos IA', detected: drive.detect(), target: drive.folder() });
+  }
   if (parts[1] === 'library') {
     // Videos terminados (los de la carpeta de videos completos)
     const lib = store.list().filter((j) => j.finalFile && fs.existsSync(path.join(store.ROOT, j.finalFile)))
-      .map((j) => ({ id: j.id, title: j.title, file: j.finalFile, videoType: j.videoType, createdAt: j.createdAt, auto: !!j.auto, kit: j.kit || null }));
+      .map((j) => ({ id: j.id, title: j.title, file: j.finalFile, videoType: j.videoType, createdAt: j.createdAt, auto: !!j.auto, kit: j.kit || null, driveName: j.driveName || null }));
     return send(res, 200, lib);
   }
   if (parts[1] === 'research') {
