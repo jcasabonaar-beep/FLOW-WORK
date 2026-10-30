@@ -1,5 +1,12 @@
 // Panel de oficinas
 const $ = (s) => document.querySelector(s);
+function showError(msg) {
+  let bar = document.getElementById('errBar');
+  if (!bar) { bar = document.createElement('div'); bar.id = 'errBar'; bar.onclick = () => bar.remove(); document.body.appendChild(bar); }
+  bar.textContent = '⚠️ Algo falló en la página (mándame una captura de esto): ' + msg + '  ✕';
+}
+window.addEventListener('error', (e) => showError(e.message + (e.filename ? ` (${e.filename.split('/').pop()}:${e.lineno})` : '')));
+window.addEventListener('unhandledrejection', (e) => showError(String((e.reason && e.reason.message) || e.reason)));
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const WORKERS = [
   ['capture', '🎞️', 'Capturador', 'Descarga el reel y saca los fotogramas'],
@@ -31,6 +38,8 @@ function show(view) {
   for (const v of VIEWS) $('#' + v).hidden = v !== view;
   document.querySelectorAll('.nav [data-view]').forEach((b) => b.classList.toggle('sel', b.dataset.view === view));
 }
+// El menú de la izquierda se enlaza lo primero: así funciona aunque algo de más abajo falle
+document.querySelectorAll('.nav [data-view]').forEach((b) => b.onclick = () => go(b.dataset.view));
 const file = (p, v) => `/files/${job.id}/${p}${v ? '?v=' + v : ''}`;
 const rootFile = (p) => '/root/' + p;
 
@@ -722,12 +731,13 @@ async function refreshHome() {
 function go(view) {
   current = view;
   location.hash = view;
+  show(view);
   if (view === 'ideas') ideasSig = '';
   if (view === 'settings') pilotFormSig = '';
   refresh();
   loadList();
 }
-document.querySelectorAll('.nav [data-view]').forEach((b) => b.onclick = () => go(b.dataset.view));
+// (enlazado al principio del archivo, para que funcione aunque algo de abajo falle)
 $('#btnHomeNew').onclick = () => $('#btnNew').onclick();
 $('#btnHomeIdeas').onclick = () => go('ideas');
 $('#btnArchive').onclick = async () => {
