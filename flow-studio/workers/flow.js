@@ -67,10 +67,15 @@ function lessonsFile() {
 }
 
 const PICK = {
-  frames: () => `Frame 1 is the HOOK: set Flow to ${config.framesPerPrompt.hook} outputs, look at both and download ONLY the best (our avatar's face, same sweater, the composition of the reference, natural, no text, good hands). It must be the most striking image of the video; if neither is great, generate ${config.framesPerPrompt.hook} more with an improved prompt and pick from all.
+  frames: () => `ORDER (saves credits): set the selector to x${config.framesPerPrompt.rest} and CHECK it, generate every frame except frame 1; only then switch to x${config.framesPerPrompt.hook} for frame 1. Never leave x${config.framesPerPrompt.hook} on for the other frames.
+REUSE FIRST: if an image from an earlier attempt of this same video already exists in the project for an item and it was never downloaded, download that one instead of generating it again.
+Frame 1 is the HOOK: set Flow to ${config.framesPerPrompt.hook} outputs, look at both and download ONLY the best (our avatar's face, same sweater, the composition of the reference, natural, no text, good hands). It must be the most striking image of the video; if neither is great, generate ${config.framesPerPrompt.hook} more with an improved prompt and pick from all.
 Every other frame: set Flow to ${config.framesPerPrompt.rest} output. If it is good at the first try, keep it. If it fails the quality check, regenerate ONCE more with an improved prompt and keep the better one. Do not spend more time on it.
 Speed: upload the avatar photos only once per session and then reuse them from Flow's Uploads/library instead of uploading them again for every frame.`,
-  clips: () => `Clip 1 is the HOOK: set Flow to ${config.clipsPerPrompt.hook} outputs and download both (as <destination>_a.mp4 and _b.mp4). If both look bad (face changes, glitches, text on screen, she does not move or speak), generate ${config.clipsPerPrompt.hook} more with an improved prompt and download the best two.
+  clips: () => `ORDER (saves credits): first set the selector to x${config.clipsPerPrompt.rest} and CHECK it shows x${config.clipsPerPrompt.rest}, submit every clip except clip 1; only then switch to x${config.clipsPerPrompt.hook} and submit clip 1 last. Never leave x${config.clipsPerPrompt.hook} on for the other clips.
+REUSE FIRST: before submitting anything, look at the project grid. If a clip from an earlier attempt of this same video already exists for an item (same start frame) and it was never downloaded, download that one instead of generating it again.
+Only regenerate a clip when it is clearly broken (see below), never just because it could be a bit better.
+Clip 1 is the HOOK: set Flow to ${config.clipsPerPrompt.hook} outputs and download both (as <destination>_a.mp4 and _b.mp4). If both look bad (face changes, glitches, text on screen, she does not move or speak), generate ${config.clipsPerPrompt.hook} more with an improved prompt and download the best two.
 Every other clip: set Flow to ${config.clipsPerPrompt.rest} output and download it as <destination>_a.mp4. If it is visually broken, regenerate ONCE with an improved prompt. The system then listens to every clip; if one does not say the whole line or the voice changes, it will send it back once.
 If one candidate is visually broken, do not download it and write "bad": "a" or "b" for that item.`,
 };
@@ -236,9 +241,9 @@ async function runClips(job) {
         learn(`Clip de ${c.line.split(/\s+/).length} palabras: ${bad}. ${q.text != null && q.text < 0.7 ? 'Acortar la frase o pedir ritmo más claro.' : 'Insistir en "same voice, tone and energy as the previous clips".'}`);
       }
     }
-    // Subtítulos puestos por Flow: se repite (hasta 2 veces) para que no salgan nunca
+    // Subtítulos puestos por Flow: se repite (una vez) para que no salgan nunca
     for (const c of await checkText(job, todo.filter((x) => x.clipStatus === 'done'))) {
-      if ((c.textRetries || 0) >= 2) { store.log(job, 'clips', `⚠️ Clip ${c.n}: Flow insiste en poner texto; lo dejo así`); continue; }
+      if ((c.textRetries || 0) >= 1) { store.log(job, 'clips', `⚠️ Clip ${c.n}: Flow insiste en poner texto; lo dejo así`); continue; }
       c.textRetries = (c.textRetries || 0) + 1;
       Object.assign(c, { clipStatus: 'regen', clipNote: 'Flow puso subtítulos o texto en pantalla: repite SIN ningún texto' });
       store.log(job, 'clips', `🔁 Clip ${c.n}: tenía subtítulos de Flow. Lo repito sin texto.`);
