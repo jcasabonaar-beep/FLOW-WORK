@@ -392,7 +392,7 @@ async function refreshIdeas() {
   const st = r.running ? 'working' : w.state;
   $('#btnRunIdeas').disabled = r.running;
   $('#btnStopIdeas').hidden = !r.running;
-  $('#iMeta').textContent = r.lastRun ? `Última búsqueda: ${new Date(r.lastRun).toLocaleString()} · cuenta @${'laabuelaemma'}` : 'Todavía no has buscado. Añade cuentas y pulsa Sugerir.';
+  $('#iMeta').textContent = r.lastRun ? `Última búsqueda: ${new Date(r.lastRun).toLocaleString()} · cuenta @laabuelaemma_` : 'Todavía no has buscado. Añade cuentas y pulsa Sugerir.';
   $('#iRoom').innerHTML = room('research', '🔎', 'Investigador', st, st === 'working' || st === 'error' ? w.action : (w.action || 'Listo para buscar')) + `<pre class="log">${esc(w.log.slice(-8).join('\n'))}</pre>`;
   const sig = JSON.stringify([r.lastRun, (r.suggestions || []).length]);
   if (sig === ideasSig) return;

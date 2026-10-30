@@ -9,7 +9,7 @@ const config = require('../config.json');
 
 const RID = '_resultados';
 const C = config.results || {};
-const ACCOUNT = (config.research || {}).instagramAccount || 'laabuelaemma';
+const ACCOUNT = (config.research || {}).instagramAccount || 'laabuelaemma_';
 const P = (f) => fs.readFileSync(path.join(store.ROOT, 'prompts', f), 'utf8');
 const dir = () => store.jobDir(RID);
 const MEMORY = path.join(store.ROOT, 'memory', 'resultados.md');
