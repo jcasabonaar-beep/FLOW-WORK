@@ -514,8 +514,17 @@ async function refreshLibrary() {
   $('#empty').hidden = true; $('#job').hidden = true; $('#ideas').hidden = true; $('#library').hidden = false;
   $('#libCards').innerHTML = lib.map((v) => `<div class="card"><h3><span>${v.auto ? '🌙 ' : ''}${esc(v.title)}${v.driveName ? ` <span class="badge done">☁️ ${esc(v.driveName)}</span>` : ''}</span><span class="badge">${v.videoType === 'venta' ? '💰 Venta' : '🚀 Crecimiento'}</span></h3>
     <video controls preload="metadata" src="${rootFile(encodeURI(v.file))}" style="width:100%;aspect-ratio:9/16;border-radius:8px;background:#000"></video>
-    <div class="btns"><a href="${rootFile(encodeURI(v.file))}" download><button class="small">⬇ Descargar</button></a>${v.kit ? `<button class="small" data-libkit="${v.id}">📋 Texto</button>` : ''}<button class="small" data-openjob="${v.id}">💬 Cambiar algo</button></div></div>`).join('') || '<p class="muted">Todavía no hay videos terminados.</p>';
+    <div class="btns"><a href="${rootFile(encodeURI(v.file))}" download><button class="small">⬇ Descargar</button></a>${v.kit ? `<button class="small" data-libkit="${v.id}">📋 Texto</button>` : ''}<button class="small" data-openjob="${v.id}">💬 Cambiar algo</button><button class="small" data-drive="${v.id}">☁️ ${v.driveName ? 'Renombrar en Drive' : 'Subir a Drive'}</button></div></div>`).join('') || '<p class="muted">Todavía no hay videos terminados.</p>';
   document.querySelectorAll('[data-openjob]').forEach((b) => b.onclick = () => open(b.dataset.openjob));
+  document.querySelectorAll('[data-drive]').forEach((b) => b.onclick = async () => {
+    const cur = await api('drive/' + b.dataset.drive);
+    const name = prompt(cur.uploaded ? 'Nuevo nombre en Drive:' : 'Nombre con el que se sube a Drive:', cur.name);
+    if (!name) return;
+    b.textContent = '☁️ Subiendo…';
+    const r = await fetch('/api/drive/' + b.dataset.drive, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) }).then((x) => x.json());
+    if (r.error) alert(r.error);
+    refreshLibrary();
+  });
   document.querySelectorAll('[data-libkit]').forEach((b) => b.onclick = () => { const v = lib.find((x) => x.id === b.dataset.libkit); navigator.clipboard.writeText(kitText(v.kit)); b.textContent = '✓ Copiado'; });
 }
 $('#btnLibrary').onclick = () => { current = 'library'; location.hash = 'library'; refreshLibrary(); loadList(); };

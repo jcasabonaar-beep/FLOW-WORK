@@ -90,6 +90,19 @@ async function api(req, res, url) {
   const parts = url.pathname.split('/').filter(Boolean); // api, jobs, id, action, n
   const method = req.method;
   if (parts[1] === 'config') return send(res, 200, { settings: Object.keys(config.settings), avatar: config.avatar, flowMode: config.flowMode });
+  if (parts[1] === 'drive' && parts[2]) {
+    // Subir a mano o cambiar el nombre en Drive: POST /api/drive/<jobId> { name }
+    const drive = require('./lib/drive');
+    const job = store.load(parts[2]);
+    if (method === 'GET') return send(res, 200, { name: job.driveName || drive.nextName(false), uploaded: !!job.driveName });
+    const body = JSON.parse((await readBody(req)).toString() || '{}');
+    try {
+      const name = job.driveName ? drive.rename(job, body.name) : drive.upload(job, body.name || drive.nextName(false));
+      if (!name) return send(res, 400, { error: 'Activa primero la subida a Google Drive (recuadro de arriba)' });
+      job.driveName = name; store.log(job, 'editor', `☁️ En tu Google Drive como ${name}`); store.save(job);
+      return send(res, 200, { name });
+    } catch (e) { return send(res, 400, { error: e.message }); }
+  }
   if (parts[1] === 'drive') {
     const drive = require('./lib/drive');
     if (method === 'POST') {
