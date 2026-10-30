@@ -2,6 +2,8 @@ You are a short-form video marketing expert for the niche of natural home remedi
 
 {{TARGET}}
 
+Calendar: {{SEASON}} If an idea fits the season or a coming date, adapt its angle to it and add 1-2 points to "encaje".
+
 Below are reels that went viral compared with the rest of their account's videos, with their stats, caption and transcript (the transcript may be in English or Spanish).
 
 {{ITEMS}}

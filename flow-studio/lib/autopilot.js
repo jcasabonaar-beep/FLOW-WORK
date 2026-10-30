@@ -138,9 +138,34 @@ function watch() {
     const mins = Math.round((Date.now() - cur.at) / 60000);
     store.setWorker(j, 'autopilot', { state: 'done', action: `✅ ${ok.length}/${jobs.length} videos listos en ${mins} min` });
     store.log(j, 'autopilot', `✅ Tanda terminada: ${ok.length} listos, ${bad.length} con problemas`);
-    notify.send(`🌙 ${ok.length}/${jobs.length} videos listos`, [...ok.map((x) => `✅ ${x.driveName || ''} ${x.title.replace('🌙 ', '')}`), ...bad.map((x) => `❌ ${x.title.replace('🌙 ', '')}: ${(x.error || '').slice(0, 80)}`)].join('\n'), { tags: 'tada' });
+    const when = whenToPost();
+    notify.send(`🌙 ${ok.length}/${jobs.length} videos listos`, [...(when ? [`🕐 Prográmalos para: ${when}`] : []),...ok.map((x) => `✅ ${x.driveName || ''} ${x.title.replace('🌙 ', '')}`), ...bad.map((x) => `❌ ${x.title.replace('🌙 ', '')}: ${(x.error || '').slice(0, 80)}`)].join('\n'), { tags: 'tada' });
   }
   store.save(j);
+}
+
+// Mejor hora para publicar según el Analista de resultados
+function whenToPost() {
+  try { return ((store.load('_resultados') || {}).report || {}).horario || ''; } catch { return ''; }
+}
+
+// 📊 Domingo por la mañana: resumen de la semana al móvil (sin gastar créditos)
+function weekly(j) {
+  const now = new Date();
+  if (now.getDay() !== 0 || now.getHours() !== 11 || j.lastWeekly === now.toDateString()) return;
+  j.lastWeekly = now.toDateString();
+  store.save(j);
+  require('./health').updateYtdlp(); // de paso, yt-dlp al día (Instagram cambia a menudo)
+  const week = store.list().filter((x) => x.status === 'done' && Date.now() - x.createdAt < 7 * 86400000);
+  const r = store.load('_resultados') || {};
+  const top = [...(r.reels || [])].filter((x) => x.postedAt && Date.now() - Date.parse(x.postedAt) < 7 * 86400000).sort((a, b) => (b.views || 0) - (a.views || 0))[0];
+  const lesson = ((r.report || {}).lecciones || [])[0];
+  notify.send('📊 Tu semana', [
+    `🎬 ${week.length} videos hechos (${week.filter((x) => x.autopilot).length} por el piloto automático)`,
+    top ? `🏆 Mejor reel de la semana: ${top.views.toLocaleString('es-ES')} vistas` : '',
+    lesson ? `💡 Lo que más funciona: ${lesson}` : '',
+    whenToPost() ? `🕐 Publica: ${whenToPost()}` : '',
+  ].filter(Boolean).join('\n'), { tags: 'bar_chart' });
 }
 
 // Que Windows no se duerma mientras el piloto automático esté activado (la pantalla sí puede apagarse)
@@ -162,6 +187,7 @@ function start() {
     const j = pjob();
     if (o.enabled && new Date().getHours() === Number(o.hour) && j.lastDate !== today()) run();
     try { watch(); } catch {}
+    try { weekly(j); } catch {}
   }, 60000);
 }
 

@@ -9,7 +9,7 @@ const P = (f) => fs.readFileSync(path.join(store.ROOT, 'prompts', f), 'utf8');
 
 // {{TARGET}} (el público al que queremos llegar) está disponible en todos los prompts
 function fill(text, vars) {
-  const all = { TARGET: config.target || '', ...vars };
+  const all = { TARGET: config.target || '', SEASON: require('../lib/calendar').upcoming(), ...vars };
   return text.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in all ? all[k] : m));
 }
 

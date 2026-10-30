@@ -120,6 +120,7 @@ async function api(req, res, url) {
       .map((j) => ({ id: j.id, title: j.title, file: j.finalFile, fileB: j.outputB && fs.existsSync(path.join(store.ROOT, j.finalFile.replace(/\.mp4$/, '-B.mp4'))) ? j.finalFile.replace(/\.mp4$/, '-B.mp4') : null, hookB: j.hookB && j.hookB.text, hook: j.plan && j.plan.hook, videoType: j.videoType, createdAt: j.createdAt, auto: !!j.auto, kit: j.kit || null, driveName: j.driveName || null }));
     return send(res, 200, lib);
   }
+  if (parts[1] === 'health') return send(res, 200, await require('./lib/health').check());
   if (parts[1] === 'autopilot') {
     const settings = require('./lib/settings');
     if (method === 'POST') {

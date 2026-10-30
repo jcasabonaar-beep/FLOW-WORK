@@ -569,7 +569,8 @@ async function refreshLibrary() {
 
 // ---------- Kit para publicar ----------
 const kitText = (k) => [k.caption || '', '', k.hashtags || '', k.disclosure ? '\n' + k.disclosure : ''].join('\n').trim();
-const kitPlace = (k) => k && k.ubicacion ? `<div class="muted" style="font-size:12px;margin-top:6px">📍 Pon de ubicación: <b>${esc(k.ubicacion)}</b> (ayuda a que salga en EE. UU.)</div>` : '';
+const kitPlace = (k) => (k && k.comentario ? `<div class="muted" style="font-size:12px;margin-top:6px">📌 Comentario para fijar: <b>${esc(k.comentario)}</b> <button class="small" onclick="navigator.clipboard.writeText(${esc(JSON.stringify(k.comentario))});this.textContent='✓'">📋</button></div>` : '') +
+  (k && k.ubicacion ? `<div class="muted" style="font-size:12px;margin-top:6px">📍 Pon de ubicación: <b>${esc(k.ubicacion)}</b> (ayuda a que salga en EE. UU.)</div>` : '');
 function kitHtml() {
   const k = job.kit;
   if (!k) return '';
@@ -735,3 +736,11 @@ $('#btnArchive').onclick = async () => {
   go('home');
 };
 document.querySelectorAll('.more .menu button').forEach((b) => b.addEventListener('click', () => { $('.more').open = false; }));
+
+// ---------- 🩺 Estado del sistema ----------
+$('#btnHealth').onclick = async () => {
+  $('#healthBox').innerHTML = '<span class="muted">Comprobando…</span>';
+  const list = await api('health');
+  const bad = list.filter((x) => !x.ok && !x.soft).length;
+  $('#healthBox').innerHTML = `<p>${bad ? `⚠️ <b>${bad} cosa(s) por arreglar</b>` : '✅ <b>Todo listo</b>'}</p><ul>${list.map((x) => `<li>${x.ok ? '✅' : x.soft ? '➖' : '❌'} <b>${esc(x.name)}</b> <span class="muted">${esc(x.info || 'no encontrado')}</span>${!x.ok && x.fix ? `<br><span style="font-size:12px">👉 ${esc(x.fix)}</span>` : ''}</li>`).join('')}</ul>`;
+};
