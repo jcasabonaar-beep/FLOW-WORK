@@ -583,10 +583,13 @@ async function refreshResults() {
     ${(p.probar || []).length ? `<b>Para probar</b><ul>${p.probar.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>` : '';
   const med = p && p.median;
   const reels = [...(r.reels || [])].sort((a, b) => (b.views || 0) - (a.views || 0));
-  $('#rTable').innerHTML = reels.length ? `<table class="rtable"><tr><th>Vistas</th><th>vs media</th><th>Likes</th><th>Coment.</th><th>Publicado</th><th>Video</th></tr>${reels.map((x) => `<tr>
+  $('#rTable').innerHTML = reels.length ? `<table class="rtable"><tr><th>Vistas</th><th>vs media</th><th>Likes</th><th>Coment.</th><th>Publicado</th><th>Reel</th><th>Video de Flow Studio</th></tr>${reels.map((x) => `<tr>
     <td><b>${fmt(x.views || 0)}</b></td><td style="color:${med && x.views / med >= 1.5 ? '#86efac' : med && x.views / med < 0.6 ? '#fca5a5' : 'inherit'}">${med ? (x.views / med).toFixed(1) + '×' : ''}</td>
     <td>${x.likes ?? ''}</td><td>${x.comments ?? ''}</td><td>${x.postedAt ? new Date(x.postedAt).toLocaleDateString() : ''}</td>
-    <td><a href="${esc(x.url)}" target="_blank" style="color:#93c5fd">${esc(x.jobId && r.titles[x.jobId] ? r.titles[x.jobId] : (x.caption || 'Ver').slice(0, 60))}</a></td></tr>`).join('')}</table>` : '';
+    <td><a href="${esc(x.url)}" target="_blank" style="color:#93c5fd">Ver reel</a></td>
+    <td><select data-link="${esc(x.url)}" style="max-width:260px"><option value="">— ¿Qué video es? —</option>${Object.entries(r.titles).map(([id, t]) => `<option value="${id}" ${x.jobId === id ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>${x.linked ? ' ✓' : x.jobId ? ' <span class="muted">(adivinado)</span>' : ''}</td></tr>`).join('')}</table>
+    <p class="muted" style="font-size:12px">Elige qué video es cada reel: así el analista sabe qué hook, escenario y tipo de video tuvo cada resultado. Se tiene en cuenta en el próximo análisis.</p>` : '';
+  document.querySelectorAll('[data-link]').forEach((sel) => sel.onchange = () => api('results/link', { url: sel.dataset.link, jobId: sel.value }).then(refreshResults));
 }
 $('#btnResults').onclick = () => { current = 'results'; location.hash = 'results'; refreshResults(); loadList(); };
 $('#btnRunResults').onclick = async () => { await api('results/run', {}); refreshResults(); };

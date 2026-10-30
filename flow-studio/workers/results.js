@@ -78,7 +78,8 @@ async function run() {
     const now = Date.now();
     const reels = j.reels.map((r) => {
       const age = r.postedAt ? Math.round((now - Date.parse(r.postedAt)) / 3600000) : null;
-      return `- ${r.url} · ${r.views || '?'} vistas (${med ? (r.views / med).toFixed(1) : '?'}× la media) · ${r.likes ?? '?'} likes · ${r.comments ?? '?'} comentarios · ${age != null ? `hace ${age} h` : 'fecha ?'}\n  caption: ${r.caption || '-'}`;
+      const linked = r.linked && r.jobId ? ` · LINKED BY THE PRODUCER to job id ${r.jobId} (certain)` : '';
+      return `- ${r.url}${linked} · ${r.views || '?'} vistas (${med ? (r.views / med).toFixed(1) : '?'}× la media) · ${r.likes ?? '?'} likes · ${r.comments ?? '?'} comentarios · ${age != null ? `hace ${age} h` : 'fecha ?'}\n  caption: ${r.caption || '-'}`;
     }).join('\n');
     const rep = path.join(dir(), 'report.json');
     if (fs.existsSync(rep)) fs.unlinkSync(rep);
@@ -86,7 +87,7 @@ async function run() {
       prompt: fill(P('results_ideas.md'), { ACCOUNT, REELS: reels, JOBS: jobsSummary(), OUT: rep }) });
     const report = fs.existsSync(rep) ? JSON.parse(fs.readFileSync(rep, 'utf8')) : claude.extractJson(text);
     j.report = { ...report, median: med, at: now };
-    for (const r of j.reels) r.jobId = (report.matches || {})[r.url] || r.jobId || null;
+    for (const r of j.reels) if (!r.linked) r.jobId = (report.matches || {})[r.url] || r.jobId || null;
     // Se reescribe entero cada vez (no crece sin fin): el director siempre lee lo último
     fs.mkdirSync(path.dirname(MEMORY), { recursive: true });
     fs.writeFileSync(MEMORY, `Results of OUR published videos on @${ACCOUNT} (updated ${new Date(now).toISOString().slice(0, 10)}, account median ${med} views). Apply these when planning:\n` +
@@ -115,4 +116,14 @@ function schedule() {
   }, 30 * 60000);
 }
 
-module.exports = { RID, rjob, run, schedule, memory, isRunning: () => running };
+// Tú dices qué video es cada reel (los captions de Instagram suelen ser iguales y no se pueden emparejar solos)
+function link(url, jobId) {
+  const j = rjob();
+  const r = (j.reels || []).find((x) => x.url === url);
+  if (!r) return null;
+  Object.assign(r, { jobId: jobId || null, linked: !!jobId });
+  store.save(j);
+  return r;
+}
+
+module.exports = { RID, rjob, run, schedule, memory, link, isRunning: () => running };

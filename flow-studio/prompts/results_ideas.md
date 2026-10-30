@@ -7,9 +7,9 @@ You are the performance analyst of an Instagram account (@{{ACCOUNT}}) that post
 {{JOBS}}
 
 ## Task
-1. Match each reel with the produced video it most likely is (compare caption with the produced caption/title/hook and dates: published usually 0–7 days after production). Leave unmatched if unsure.
+1. Reels marked LINKED BY THE PRODUCER are certain: use that match. For the others, match each reel with the produced video it most likely is (compare caption with the produced caption/title/hook and dates: published usually 0–7 days after production). Leave unmatched if unsure.
 2. Compare performance (views vs the account median, likes and comments per view) and find what really makes a difference on OUR account: topic, hook style and first words, setting, video type, CTA word, length, number of clips… Only state patterns supported by the numbers; say how strong the evidence is (few videos = weak). Do not invent.
-3. Turn them into short, concrete instructions for the video director (what to repeat, what to avoid).
+3. Turn them into short, concrete instructions for the video director about the VIDEO itself (topic, hook, setting, script, length, ending). The producer reuses the same Instagram caption on purpose: never recommend changing captions just to make matching easier.
 
 Write {{OUT}} as JSON, all text in Spanish (Spain, "tú"), short:
 {"matches": {"<reel url>": "<job id>"}, "resumen": "3-4 lines: how the account is doing, best and worst videos and why", "patrones": [{"texto": "pattern with numbers", "fuerza": "fuerte|media|débil"}], "lecciones": ["instruction for the director", "..."], "probar": ["2-3 concrete experiments for the next videos"]}

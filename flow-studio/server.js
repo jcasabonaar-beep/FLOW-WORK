@@ -122,8 +122,12 @@ async function api(req, res, url) {
   if (parts[1] === 'results') {
     const r = results.rjob();
     if (method === 'GET') {
-      const titles = Object.fromEntries(store.list().map((x) => [x.id, x.title]));
+      const titles = Object.fromEntries(store.list().filter((x) => x.finalFile).map((x) => [x.id, x.title]));
       return send(res, 200, { ...r, running: results.isRunning(), titles, auto: (config.results || {}).autoEveryHours ?? 24 });
+    }
+    if (parts[2] === 'link') {
+      const body = JSON.parse((await readBody(req)).toString() || '{}');
+      return send(res, 200, results.link(body.url, body.jobId) || {});
     }
     if (parts[2] === 'run') { results.run(); return send(res, 200, { ok: true }); }
     if (parts[2] === 'stop') return send(res, 200, { ok: claude.stop(results.RID, 'results') });
