@@ -11,7 +11,7 @@ const assistant = require('../workers/assistant');
 const config = require('../config.json');
 
 const PID = '_piloto';
-const DEFAULTS = { enabled: false, hour: 1, videos: 5, venta: 1, setting: 'kitchen' };
+const DEFAULTS = { enabled: false, hour: 1, videos: config.dailyMax || 6, venta: 1, setting: 'kitchen' };
 const MIX = ['kitchen', 'walmart', 'kitchen', 'target', 'kitchen', 'supermarket'];
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 let running = false;
@@ -73,8 +73,10 @@ async function run(reason = 'programado') {
       .map((p) => ({ key: 'p2:' + p.key, title: p.title, url: p.url, script: p.script, videoType: p.videoType }));
     const pool = [...p2, ...sugs.filter((s) => !used.has(s.url)).map((s) => ({ key: s.url, title: s.tema || 'Idea viral', url: s.url, script: s.guion }))];
     // Si no hay bastantes ideas nuevas: variaciones de la más viral (mismo formato, otro ingrediente o remedio)
-    for (const base of sugs) {
-      if (pool.length >= o.videos) break;
+    // Para elegir bien hacen falta más candidatas que huecos: unas cuantas variaciones de las más virales
+    const want = Math.min(16, o.videos * 2 + 2);
+    for (const base of sugs.slice(0, 3)) {
+      if (pool.length >= want) break;
       if (!base.analysis) {
         setW({ action: `Sacando variaciones de "${base.tema || base.url}"…` });
         base.analysis = await untilLimitOk(j, 'variaciones', () => assistant.analyze(rj, 'research', { title: base.tema, url: base.url, stats: `${base.views} vistas, ${base.ratio}× la media de @${base.account}`, text: `${base.caption || ''}\n${base.transcript || base.guion || ''}` }));
@@ -82,7 +84,7 @@ async function run(reason = 'programado') {
       }
       for (const v of base.analysis.variaciones || []) {
         const key = `${base.url}#${v.titulo}`;
-        if (!used.has(key) && v.guion && pool.length < o.videos) pool.push({ key, title: v.titulo, url: base.url, script: v.guion });
+        if (!used.has(key) && v.guion && pool.length < want) pool.push({ key, title: v.titulo, url: base.url, script: v.guion, from: `variación de un viral de @${base.account} (${base.ratio}× su media)` });
       }
     }
     if (!pool.length) {
@@ -91,12 +93,16 @@ async function run(reason = 'programado') {
       return { error: 'sin ideas' };
     }
 
+    // 🎯 Los mejores del día: un solo paso que compara todas las candidatas y elige las {videos} más fuertes y variadas
+    const chosen = await pickBest(j, pool, o, sugs);
     const ids = [];
-    for (const [i, it] of pool.slice(0, o.videos).entries()) {
+    for (const [i, it] of chosen.entries()) {
       const setting = o.setting === 'mix' ? MIX[i % MIX.length] : o.setting;
       const job = store.create({ title: '🌙 ' + it.title, url: it.url, script: it.script, setting: config.settings[setting] ? setting : 'kitchen',
-        videoType: it.videoType || (i < o.venta ? 'venta' : 'crecimiento'), mode: 'auto', language: config.language });
+        videoType: it.videoType || (it.venta != null ? (it.venta ? 'venta' : 'crecimiento') : i < o.venta ? 'venta' : 'crecimiento'), mode: 'auto', language: config.language });
       job.autopilot = true;
+      job.priority = i; // orden de publicación: el 1 sale a la mejor hora
+      job.pickReason = it.porque || '';
       store.save(job);
       ids.push(job.id);
       j.used = [...(j.used || []), it.key].slice(-1000);
@@ -146,6 +152,34 @@ function watch() {
   }
   store.save(j);
 }
+
+async function pickBest(j, pool, o, sugs) {
+  const fallback = pool.slice(0, o.videos);
+  if (pool.length <= o.videos) return fallback;
+  setW(j, { action: `🎯 Eligiendo los ${o.videos} mejores de ${pool.length} candidatas…` });
+  const info = Object.fromEntries(sugs.map((s) => [s.url, s]));
+  const cands = pool.map((p) => {
+    const s = info[p.key];
+    return `- key: ${p.key}\n  ${p.title}${p.key.startsWith('p2:') ? ' · PARTE 2 de un reel nuestro que funciona' : ''}${s ? ` · @${s.account}: ${s.views} vistas (${s.ratio}× su media), hace ${s.ageHours ?? '?'} h, encaje ${s.encaje ?? '?'}/10, por qué: ${s.porque || ''}` : p.from ? ' · ' + p.from : ''}\n  guion: ${(p.script || '').slice(0, 300)}`;
+  }).join('\n');
+  const out = require('path').join(store.jobDir(PID), 'pick.json');
+  try {
+    const fs = require('fs');
+    if (fs.existsSync(out)) fs.unlinkSync(out);
+    const { fill } = require('../workers/director');
+    const P = fs.readFileSync(require('path').join(store.ROOT, 'prompts', 'pick.md'), 'utf8');
+    const text = await untilLimitOk(j, 'elegir los mejores', () => require('./claude').run({ job: j, worker: 'autopilot', tools: ['Write'], cwd: store.jobDir(PID),
+      prompt: fill(P, { ACCOUNT: (config.research || {}).instagramAccount || '', N: o.videos, VENTA: o.venta, CANDIDATES: cands, OUT: out, LESSONS: require('../workers/results').memory() || '(no data yet)' }) }));
+    const res = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, 'utf8')) : require('./claude').extractJson(text);
+    const byKey = Object.fromEntries(pool.map((p) => [p.key, p]));
+    const picked = (res.pick || []).map((x) => byKey[x.key] && { ...byKey[x.key], venta: x.venta, porque: x.porque }).filter(Boolean).slice(0, o.videos);
+    if (picked.length) { store.log(j, 'autopilot', `🎯 Elegidos: ${picked.map((p, i) => `${i + 1}. ${p.title}`).join(' · ')}`); return picked; }
+  } catch (e) {
+    store.log(j, 'autopilot', '⚠️ No pude comparar las candidatas, uso el orden por viralidad: ' + e.message.slice(0, 100));
+  }
+  return fallback;
+}
+const setW = (j, patch) => store.setWorker(j, 'autopilot', patch);
 
 // Mejor hora para publicar según el Analista de resultados
 function whenToPost() {

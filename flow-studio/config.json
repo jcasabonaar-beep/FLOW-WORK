@@ -93,7 +93,7 @@
     "perAccount": 12,
     "minRatio": 2.5,
     "minViews": 50000,
-    "maxIdeas": 5,
+    "maxIdeas": 12,
     "accounts": [
       "saludconisabel",
       "allnaturalyouneed",
@@ -135,6 +135,10 @@
       "effort": "low"
     },
     "results": {
+      "model": "sonnet",
+      "effort": "low"
+    },
+    "autopilot": {
       "model": "sonnet",
       "effort": "low"
     }
@@ -217,6 +221,11 @@
   },
   "publishHours": [
     "14:00",
-    "20:00"
-  ]
+    "16:30",
+    "19:00",
+    "21:30",
+    "00:30",
+    "03:00"
+  ],
+  "dailyMax": 6
 }

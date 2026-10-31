@@ -802,6 +802,7 @@ async function refreshPublish() {
       <div style="flex:1;min-width:0">
         <div class="pubwhen">${i + 1}. ${v.at ? when(v.at) : ''}</div>
         <h3>${esc(v.title)} <span class="badge">${v.videoType === 'venta' ? '💰 Venta' : '🚀 Crecimiento'}</span>${v.driveName ? ` <span class="badge done">☁️ ${esc(v.driveName)}</span>` : ''}</h3>
+        ${v.why ? `<div class="muted" style="font-size:12px;margin:-4px 0 6px">🎯 ${esc(v.why)}</div>` : ''}
         <div class="btns">
           <a href="${rootFile(encodeURI(v.file))}" download><button class="small">⬇ Video</button></a>
           ${v.fileB ? `<a href="${rootFile(encodeURI(v.fileB))}" download><button class="small" title="${esc(v.hookB || '')}">⬇ Versión B (súbela como reel de prueba)</button></a>` : ''}
