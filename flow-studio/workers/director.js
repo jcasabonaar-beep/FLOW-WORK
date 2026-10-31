@@ -38,7 +38,7 @@ function typeRules(job) {
   const b = brolls();
   return `- Goal: sell the book "${config.product.name}". The recipe part stays, then the last clips sell the book.
 - The producer APPROVED this pitch, so do not soften it (only shorten it if time is very tight, keeping every fact): "${config.product.pitch}"
-  Usually split it into 2 or 3 clips at the end, then the CTA. In VENTA videos the CTA word is ALWAYS LIBRO, whatever the producer selected ("Comenta LIBRO y te lo mando personalmente").
+  Usually split it into 2 or 3 clips at the end, then the CTA. In VENTA videos the CTA word is ALWAYS LIBRO, whatever the producer selected, and the CTA ALSO says the book is in the link of her profile, in one natural sentence (e.g. "Comenta LIBRO y te lo mando, o búscalo en el enlace de mi perfil" / "Lo tienes en el link de mi perfil, o comenta LIBRO y te lo mando"). Vary the wording between videos.
 - The book must appear: in the pitch clips she holds it ("book": "hand"). In some videos (vary it: about half of them) also show it lying on the table in 1 or 2 earlier clips ("book": "table").
 - Ready-made frames of her holding the real book: ${(config.product.bookInHand || []).map((f) => path.basename(f)).join(', ')}. For 1 pitch clip you may set "frameFrom": "<one of those file names>" to use it as the start frame as is (fast and the cover is perfect); vary which one.
 - Ready-made clips (already animated, with her real voice) in product/clips: ${readyClips()}. If one fits better than generating a new clip (usually the CTA one for the last clip), set "readyClip": "<file name>" on that clip and make its "line" exactly what she says in it. Only use clips whose spoken text is listed.
