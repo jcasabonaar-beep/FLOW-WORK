@@ -8,3 +8,4 @@ tools/pw-output/
 memory/
 Videos completos/
 cache/
+__pycache__/
