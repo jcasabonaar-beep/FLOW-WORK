@@ -25,7 +25,8 @@
     "target": "standing right in front of the entrance of a Target store in the USA, daylight. Behind her, clearly visible: the big red Target bullseye logo and the word TARGET on the facade, the red-and-white entrance, the big red spherical bollards and shopping carts",
     "supermarket": "inside a bright American supermarket aisle, colorful shelves with plain unbranded products, small US flag in her cart",
     "bathroom": "a bright, clean modern American bathroom: white vanity with a large mirror behind her, white subway tile, soft daylight, a small potted plant and a small US flag on the shelf (no toilet in frame)",
-    "reference": "THE SAME KIND OF PLACE AS THE REFERENCE in each clip: look at the reference frame of that clip and recreate that location as a bright, clean American home or store (e.g. if the hook happens in a bathroom, the hook is in a bright modern American bathroom with white vanity and mirror, no toilet in frame; if the reference then moves to the kitchen, use the modern American kitchen from the avatar images). Describe the location fully in every frame prompt and keep small US flag details in the background"
+    "reference": "THE SAME KIND OF PLACE AS THE REFERENCE in each clip: look at the reference frame of that clip and recreate that location as a bright, clean American home or store (e.g. if the hook happens in a bathroom, the hook is in a bright modern American bathroom with white vanity and mirror, no toilet in frame; if the reference then moves to the kitchen, use the modern American kitchen from the avatar images). Describe the location fully in every frame prompt and keep small US flag details in the background",
+    "porch": "the front porch / backyard of a typical American suburban house, daylight: wooden porch with a big US flag hanging, white siding, flower pots, green lawn; a wooden outdoor table in front of her for the props"
   },
   "captions": {
     "font": "Montserrat ExtraBold",
@@ -96,7 +97,9 @@
       "allnaturalyouneed",
       "wellnesseverydayh",
       "soyclaireholloway"
-    ]
+    ],
+    "recentHours": 72,
+    "maxAgeDays": 5
   },
   "scoreModel": "base",
   "models": {

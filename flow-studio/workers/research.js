@@ -43,8 +43,10 @@ function findViral(data) {
       out.push({ ...r, account: acc.account, followers: acc.followers || null, median: med, ratio: Math.round(ratio * 10) / 10, ageHours: age != null ? Math.round(age) : null });
     }
   }
-  const recent = out.filter((r) => r.ageHours != null && r.ageHours <= 72);
-  const older = out.filter((r) => !(r.ageHours != null && r.ageHours <= 72) && (r.ageHours == null || r.ageHours <= 24 * 7));
+  // Solo lo que está pegando AHORA: primero lo de las últimas 72 h, como mucho 5 días; sin fecha, fuera
+  const H = R.recentHours || 72, MAX = (R.maxAgeDays || 5) * 24;
+  const recent = out.filter((r) => r.ageHours != null && r.ageHours <= H);
+  const older = out.filter((r) => r.ageHours != null && r.ageHours > H && r.ageHours <= MAX);
   const pick = [...recent.sort((a, b) => b.ratio - a.ratio), ...older.sort((a, b) => b.ratio - a.ratio).map((r) => ({ ...r, older: true }))];
   return pick.slice(0, R.maxIdeas || 8);
 }

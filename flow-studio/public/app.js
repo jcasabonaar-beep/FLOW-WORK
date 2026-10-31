@@ -394,7 +394,7 @@ async function upload(kind, n, f) {
 // ---------- Botones generales ----------
 $('#btnNew').onclick = async () => {
   const cfg = await api('config');
-  $('#selSetting').innerHTML = cfg.settings.map((s) => `<option value="${s}">${({ kitchen: 'Cocina americana', walmart: 'Frente a Walmart', target: 'Frente a Target', supermarket: 'Dentro del súper', bathroom: 'Baño', reference: 'Como la referencia (cambia de sitio si ella cambia)' })[s] || s}</option>`).join('');
+  $('#selSetting').innerHTML = cfg.settings.map((s) => `<option value="${s}">${({ kitchen: 'Cocina americana', walmart: 'Frente a Walmart', target: 'Frente a Target', supermarket: 'Dentro del súper', porch: 'Porche / jardín con bandera', bathroom: 'Baño', reference: 'Como la referencia (cambia de sitio si ella cambia)' })[s] || s}</option>`).join('');
   $('#dlgNew').showModal();
 };
 $('#formNew').onsubmit = async (e) => {
@@ -643,7 +643,7 @@ $('#btnRunResults').onclick = async () => { await api('results/run', {}); refres
 $('#btnStopResults').onclick = () => api('results/stop', {}).then(refreshResults);
 
 // ---------- Piloto automático y avisos al móvil ----------
-const SETTING_ES = { kitchen: 'Cocina', walmart: 'Walmart', target: 'Target', supermarket: 'Supermercado', bathroom: 'Baño', reference: 'Como la referencia', mix: 'Variado (cocina, Walmart, Target…)' };
+const SETTING_ES = { kitchen: 'Cocina', walmart: 'Walmart', target: 'Target', supermarket: 'Supermercado', porch: 'Porche / jardín', bathroom: 'Baño', reference: 'Como la referencia', mix: 'Variado (cocina, Walmart, Target…)' };
 const STATUS_ES = { done: '✅ listo', running: '⏳ en marcha', waiting_limit: '💤 esperando límite', error: '❌ atascado', waiting_you: '✋ te espera', paused: '⏸ parado', stopped: '⏹ parado' };
 let pilotFormSig = '';
 async function refreshSettings() {

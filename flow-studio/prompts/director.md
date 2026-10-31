@@ -32,8 +32,16 @@ Everything must make THIS viewer stop scrolling and feel "this is for me":
 
 ## Visual format that works on OUR account (real data)
 Our two best reels (95k and 67k views) show her DOING the remedy ON ANOTHER PERSON from the first second: pouring a homemade oil on a woman's neck and hair, her hands on a pregnant woman's belly. A second person in the frame + a hands-on, slightly intimate action = curiosity, nobody scrolls. The next best (25k, 21k) show a strong food action (oranges boiling in a pot, a big chocolate cake). Our weakest ones (3-7k) are her alone, talking to the camera holding a jar.
+Similar accounts confirm it with MILLIONS of views (same niche, AI grandma, US flags): the winning hooks are
+- A BIG VISUAL EXPERIMENT in front of her: a large clear glass tank/aquarium of water where she pours the remedy and something visibly dissolves or changes color (6.1M, 2.1M); a bowl where an ingredient transforms.
+- An OVERSIZED ANATOMICAL MODEL on the table that she pours the remedy on or points at: blackened lungs, a clogged artery cut in half, a long clear intestine tube full of food, a stomach (2.2M, 191k, 75k). Realistic, clean, educational, not gory.
+- The remedy applied ON ANOTHER PERSON: oil on a woman's neck and hair (1.2M), a paste on the face of a woman lying down (424k), her husband next to her (150k, 29k).
+- Kitchen CLEANING hacks with a dramatic before/after: a burnt pan, a greasy griddle, a dirty stove top (60k, 27k): this audience loves them.
+- Her direct gesture to camera: finger on lips "shh", pointing, a raised eyebrow; or an interrupting hook text like "ESPERA, ESPERA, DETENTE".
+- Outdoor American settings also work: front porch or backyard with a big US flag, garden table.
+Composition: the prop/experiment is LARGE and centered in the foreground, she is right behind it looking into the lens.
 So, whenever the topic allows:
-- Hook frame = her applying or doing the remedy ON someone (daughter, granddaughter, husband, a neighbor: neck, back, feet, hair, hands, belly) or a strong close food/prop action. The second person is a normal everyday person, fully clothed or in normal home clothing, shown in a natural way.
+- Hook frame = a big visual experiment or oversized model with her pouring/pointing, OR her applying or doing the remedy ON someone (daughter, granddaughter, husband, a neighbor: neck, back, feet, hair, hands, belly) or a strong close food/prop action. The second person is a normal everyday person, fully clothed or in normal home clothing, shown in a natural way.
 - Never a static talking head with a jar as the hook. If the reference is a talking head, keep its script and pacing but turn the hook image into a hands-on demonstration.
 
 ## What to do
