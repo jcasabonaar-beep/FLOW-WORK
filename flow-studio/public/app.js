@@ -107,6 +107,7 @@ async function refresh() {
   if (job.url) $('#jMeta').insertAdjacentHTML('beforeend', `<a href="${esc(job.url)}" target="_blank" style="color:#93c5fd">referencia</a>`);
   $('#btnPauseAll').textContent = job.paused || job.status === 'paused' ? '▶ Reanudar' : '⏹ Parar ahora';
   $('#btnResetFrames').hidden = job.running || !job.clips.length;
+  $('#btnReEdit').hidden = job.running || !['editor', 'review_final', 'done'].includes(job.stage);
   $('#btnAnalyze').hidden = !job.script;
   $('#btnAnalyze').textContent = job.analysis ? '🧠 Ver ideas' : '🧠 Ideas como esta';
   $('#btnResetPlan').hidden = job.running || !job.clips.length;
@@ -758,6 +759,11 @@ function go(view) {
 // (enlazado al principio del archivo, para que funcione aunque algo de abajo falle)
 $('#btnHomeNew').onclick = () => $('#btnNew').onclick();
 $('#btnHomeIdeas').onclick = () => go('ideas');
+$('#btnReEdit').onclick = async () => {
+  if (!confirm('¿Volver a montar este video con los ajustes de edición actuales? No gasta créditos de Flow; tarda 1-2 minutos.')) return;
+  await api('jobs/' + job.id + '/final', { action: 'redo-edit' });
+  panelSig = ''; refresh();
+};
 $('#btnArchive').onclick = async () => {
   if (!confirm('¿Archivar este video? Desaparece de la lista, pero sus archivos se quedan en el PC.')) return;
   await api('jobs/' + job.id + '/archive', {});

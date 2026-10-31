@@ -22,6 +22,8 @@ function finalize(job) {
   const outName = `${require('../config.json').outputDir || 'output'}/${day}`;
   const outDir = path.join(store.ROOT, outName);
   fs.mkdirSync(outDir, { recursive: true });
+  // Si se rehace un video ya guardado, se borra la copia anterior (no se duplica)
+  if (job.finalFile) for (const ext of ['.mp4', '-B.mp4', '-portada.jpg', '-texto.txt']) fs.rmSync(path.join(store.ROOT, job.finalFile.replace(/\.mp4$/, ext)), { force: true });
   const name = `${job.id}-${job.title.replace(/[^\w\- áéíóúñÁÉÍÓÚÑ]+/g, '').trim().replace(/\s+/g, '-').slice(0, 50)}.mp4`;
   fs.copyFileSync(path.join(store.jobDir(job.id), job.output), path.join(outDir, name));
   // 🅰️🅱️ La versión con el otro hook, al lado: …-B.mp4
@@ -34,7 +36,8 @@ function finalize(job) {
   job.finalFile = `${outName}/${name}`;
   // Y a Google Drive, con el número del día y la fecha: 1-30102026IA
   try {
-    const base = require('./drive').upload(job);
+    const drive = require('./drive');
+    const base = job.driveName ? drive.replace(job) : drive.upload(job);
     if (base) { job.driveName = base; store.log(job, 'editor', `☁️ Subido a tu Google Drive como ${base}`); }
   } catch (e) {
     store.log(job, 'editor', '⚠️ No pude subirlo a Drive: ' + e.message);

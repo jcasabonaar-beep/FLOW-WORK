@@ -54,8 +54,8 @@ function nextName(auto = true) {
 
 const parts = (base) => [base + '.mp4', base + '-B.mp4', base + '-texto.txt', base + '-portada.jpg'];
 
-function upload(job, name) {
-  const dest = target();
+function upload(job, name, into) {
+  const dest = into || target();
   if (!dest) return null;
   fs.mkdirSync(path.join(dest, VIDEOS), { recursive: true });
   const base = clean(name) || nextName(!name);
@@ -67,6 +67,14 @@ function upload(job, name) {
   if (k.caption) fs.writeFileSync(where(dest, base + '-texto.txt'), require('./kit').driveText(k));
   if (k.cover && fs.existsSync(path.join(store.jobDir(job.id), k.cover))) fs.copyFileSync(path.join(store.jobDir(job.id), k.cover), where(dest, base + '-portada.jpg'));
   return base;
+}
+
+// Video rehecho: sustituye los archivos en Drive con el mismo nombre y en la misma carpeta (no gasta un número nuevo)
+function replace(job) {
+  const dest = job.driveDir && fs.existsSync(job.driveDir) ? job.driveDir : null;
+  if (!dest || !job.driveName) return upload(job);
+  for (const f of parts(job.driveName)) { const old = find(dest, f); if (old) fs.rmSync(old, { force: true }); }
+  return upload(job, job.driveName, dest);
 }
 
 // Cambia el nombre de un video ya subido (y de su versión B, texto y portada)
@@ -84,4 +92,4 @@ function rename(job, name) {
   return base;
 }
 
-module.exports = { settings, saveSettings, detect, folder, nextName, upload, rename };
+module.exports = { settings, saveSettings, detect, folder, nextName, upload, rename, replace };
