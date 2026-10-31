@@ -497,6 +497,14 @@ async function render(job, v) {
   return T;
 }
 
+// Hashtags: Instagram deja 5. Primero los fijos del productor (⚙️ Ajustes) y luego los que elige el kit
+const fixedTags = () => (require('../lib/settings').get().fixedTags || []).slice(0, 5);
+function fiveTags(text) {
+  const norm = (t) => '#' + t.replace(/^#+/, '').trim();
+  const all = [...fixedTags(), ...String(text || '').split(/[\s,]+/).filter((t) => t.replace(/#/g, ''))].map(norm);
+  return [...new Map(all.map((t) => [t.toLowerCase(), t])).values()].slice(0, 5).join(' ');
+}
+
 // Kit para publicar: portada, descripción, hashtags y aviso de afiliado
 async function publishKit(job) {
   const edit = path.join(store.jobDir(job.id), 'edit');
@@ -507,13 +515,14 @@ async function publishKit(job) {
     const { fill } = require('./director');
     const claude = require('../lib/claude');
     const prompt = fill(fs.readFileSync(path.join(store.ROOT, 'prompts', 'kit.md'), 'utf8'), {
+      FIXED_TAGS: fixedTags().join(' ') || '(none)', FREE_TAGS: String(5 - fixedTags().length),
       TYPE: job.videoType === 'venta' ? 'sales video for the book' : 'growth video (max virality)', HOOK: (job.plan && job.plan.hook || '').replace(/\*/g, ''),
       CTA: (job.plan && job.plan.ctaWord) || job.ctaWord, LINES: job.clips.filter((c) => !c.skip).map((c) => c.line).join('\n'), OUT: out,
     });
     if (!job.workers.kit) job.workers.kit = { state: 'idle', action: '', log: [], paused: false };
     const text = await claude.run({ job, worker: 'kit', prompt, tools: ['Write'] });
     const k = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, 'utf8')) : claude.extractJson(text);
-    job.kit = { ...k, disclosure: job.videoType === 'venta' ? config.amazonDisclosure : '', cover: fs.existsSync(path.join(edit, 'cover.jpg')) ? 'edit/cover.jpg' : null };
+    job.kit = { ...k, hashtags: fiveTags(k.hashtags), disclosure: job.videoType === 'venta' ? config.amazonDisclosure : '', cover: fs.existsSync(path.join(edit, 'cover.jpg')) ? 'edit/cover.jpg' : null };
   } catch (e) {
     store.log(job, 'editor', '⚠️ No pude preparar el texto para publicar: ' + e.message.slice(0, 100));
     job.kit = { cover: fs.existsSync(path.join(edit, 'cover.jpg')) ? 'edit/cover.jpg' : null };
