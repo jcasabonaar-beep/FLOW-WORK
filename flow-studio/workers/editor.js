@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const store = require('../lib/store');
 const config = require('../config.json');
-const { exec, ffmpeg, speechBounds, hasAudio } = require('../lib/ff');
+const { exec, ffmpeg, speechBounds, hasAudio, silences } = require('../lib/ff');
 
 const C = config.captions;
 
@@ -296,6 +296,15 @@ async function makeSfx(edit) {
   return { whoosh: w, pop: p };
 }
 
+// Quita de los tramos que se quedan los trozos indicados
+function subtract(ranges, cuts) {
+  let out = ranges.map((r) => [...r]);
+  for (const [a, b] of cuts) {
+    out = out.flatMap(([x, y]) => (b <= x || a >= y ? [[x, y]] : [[x, Math.max(x, a)], [Math.min(y, b), y]]).filter(([p, q]) => q - p > 0.06));
+  }
+  return out.length ? out : ranges;
+}
+
 async function run(job) {
   const tag = await render(job, { clips: job.clips, hook: job.plan && job.plan.hook, tag: '' });
   job.output = `edit/final${tag}.mp4`;
@@ -346,7 +355,17 @@ async function render(job, v) {
     // El hook arranca hablando desde el primer fotograma
     let start = Math.max(0, s - (c.n === J.clips[0].n ? 0.04 : pc.pad));
     const end = Math.min(dur, e + pc.tail);
-    const { ranges, notes } = cleanRanges(start, end, words, prevWords, pc);
+    let { ranges, notes } = cleanRanges(start, end, words, prevWords, pc);
+    // Además, cualquier silencio real dentro del clip ("mi abuela dormía… gracias a") se deja en casi nada,
+    // aunque la transcripción no lo marque como pausa
+    try {
+      const gaps = (await silences(file, '-32dB', pc.gap)).filter((g) => g.s > start + 0.05 && g.e < end - 0.05)
+        .map((g) => [g.s + pc.keep / 2, g.e - pc.keep / 2]).filter(([a, b]) => b - a > 0.05);
+      if (gaps.length) {
+        ranges = subtract(ranges, gaps);
+        notes = [...notes, `${gaps.length} silencio(s) dentro de la frase: los acorto`];
+      }
+    } catch {}
     for (const n of notes) store.log(job, 'editor', `✂️ Clip ${c.n}: ${n}`);
     prevWords = words;
     start = ranges[0][0];

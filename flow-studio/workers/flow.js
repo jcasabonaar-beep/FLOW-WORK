@@ -13,7 +13,9 @@ const avatarImgs = () => config.avatar.images.map((i) => path.join(store.ROOT, i
 
 function clipPromptFor(c, job) {
   const lang = config.languages[(job && job.language) || config.language];
-  return c.clipPrompt.replace(/\{\{LINE\}\}/g, `"${c.line}"`)
+  // Puntos suspensivos y comas dobles hacen que la voz se pare: fuera
+  const line = c.line.replace(/\.{2,}|…/g, ',').replace(/,\s*,+/g, ',').replace(/\s+,/g, ',');
+  return c.clipPrompt.replace(/\{\{LINE\}\}/g, `"${line}"`)
     .replace(/Spoken in (English|Spanish) with an? [\w ]*?accent/i, lang.speech);
 }
 

@@ -25,9 +25,9 @@ async function hasAudio(file) {
 }
 
 // Devuelve [inicioVoz, finVoz] en segundos usando silencedetect
-async function speechBounds(file, noise = '-34dB', minSil = 0.25) {
+// Tramos en silencio del audio: [{ s, e }]
+async function silences(file, noise = '-34dB', minSil = 0.25) {
   const dur = await duration(file);
-  if (!(await hasAudio(file))) return [0, dur, dur];
   const { err } = await exec('ffmpeg', ['-hide_banner', '-i', file, '-af', `silencedetect=noise=${noise}:d=${minSil}`, '-f', 'null', '-']);
   const sil = [];
   let cur = null;
@@ -38,6 +38,13 @@ async function speechBounds(file, noise = '-34dB', minSil = 0.25) {
     if (m && cur) { cur.e = parseFloat(m[1]); sil.push(cur); cur = null; }
   }
   if (cur) sil.push({ s: cur.s, e: dur });
+  return sil;
+}
+
+async function speechBounds(file, noise = '-34dB', minSil = 0.25) {
+  const dur = await duration(file);
+  if (!(await hasAudio(file))) return [0, dur, dur];
+  const sil = await silences(file, noise, minSil);
   let start = 0, end = dur;
   if (sil.length && sil[0].s <= 0.05) start = sil[0].e;
   const last = sil[sil.length - 1];
@@ -45,4 +52,4 @@ async function speechBounds(file, noise = '-34dB', minSil = 0.25) {
   return [start, end, dur];
 }
 
-module.exports = { exec, ffmpeg, duration, hasAudio, speechBounds };
+module.exports = { exec, ffmpeg, duration, hasAudio, speechBounds, silences };
