@@ -42,16 +42,21 @@ function findViral(data) {
     for (const r of acc.reels || []) {
       if (!r.views || !med) continue;
       const ratio = r.views / med;
-      if (ratio < (R.minRatio || 3) || r.views < (R.minViews || 50000)) continue;
+      const strong = ratio >= (R.minRatio || 3) && r.views >= (R.minViews || 50000);
+      const soft = ratio >= 1.6 && r.views >= 30000;
+      if (!strong && !soft) continue;
       const age = r.postedAt ? (now - Date.parse(r.postedAt)) / 3600000 : null;
-      out.push({ ...r, account: acc.account, followers: acc.followers || null, median: med, ratio: Math.round(ratio * 10) / 10, ageHours: age != null ? Math.round(age) : null });
+      out.push({ soft: !strong, ...r, account: acc.account, followers: acc.followers || null, median: med, ratio: Math.round(ratio * 10) / 10, ageHours: age != null ? Math.round(age) : null });
     }
   }
   // Solo lo que está pegando AHORA: primero lo de las últimas 72 h, como mucho 5 días; sin fecha, fuera
   const H = R.recentHours || 72, MAX = (R.maxAgeDays || 5) * 24;
   const recent = out.filter((r) => r.ageHours != null && r.ageHours <= H);
   const older = out.filter((r) => r.ageHours != null && r.ageHours > H && r.ageHours <= MAX);
-  const pick = [...recent.sort((a, b) => b.ratio - a.ratio), ...older.sort((a, b) => b.ratio - a.ratio).map((r) => ({ ...r, older: true }))];
+  const by = (a, b) => b.ratio - a.ratio;
+  const pick = [...recent.filter((r) => !r.soft).sort(by), ...older.filter((r) => !r.soft).sort(by).map((r) => ({ ...r, older: true }))];
+  // Si los virales claros no llegan a 8, se completa con los que están tirando fuerte en las últimas 72 h
+  if (pick.length < 8) pick.push(...recent.filter((r) => r.soft).sort(by).slice(0, 8 - pick.length));
   return pick.slice(0, R.maxIdeas || 8);
 }
 
@@ -107,7 +112,13 @@ async function run() {
     const viral = findViral(data).filter((v) => !seen.has(v.url));
     j.seen = [...seen, ...viral.map((v) => v.url)].slice(-500);
     store.log(j, 'research', `📈 ${viral.length} reels nuevos con un salto claro de visitas (los que ya te sugerí no se repiten)`);
-    if (!viral.length) { j.lastRun = Date.now(); store.save(j); setW({ state: 'done', action: 'No hay ningún reel viral nuevo en esas cuentas desde la última búsqueda' }); return { ok: true, count: 0 }; }
+    const usedUrls = new Set(store.list().map((x) => x.url).filter(Boolean));
+    const keep = (j.suggestions || []).filter((s) => s.postedAt && Date.now() - Date.parse(s.postedAt) < (R.maxAgeDays || 5) * 86400000 && !usedUrls.has(s.url));
+    if (!viral.length) {
+      j.suggestions = keep; j.lastRun = Date.now(); store.save(j);
+      setW({ state: 'done', action: keep.length ? `Nada nuevo; sigues teniendo ${keep.length} ideas recientes` : 'No hay ningún reel viral nuevo en esas cuentas desde la última búsqueda' });
+      return { ok: true, count: keep.length };
+    }
 
     for (const [i, item] of viral.entries()) {
       setW({ action: `Descargando y transcribiendo ${i + 1}/${viral.length}…` });
@@ -119,7 +130,18 @@ async function run() {
     const text = await claude.run({ job: j, worker: 'research', prompt: fill(P('research_ideas.md'), { ITEMS: items, OUT: ideasFile }), tools: ['Write'], cwd: dir() });
     const ideas = fs.existsSync(ideasFile) ? JSON.parse(fs.readFileSync(ideasFile, 'utf8')) : claude.extractJson(text);
     const clean = (t) => String(t || '').replace(/\[[^\]]*\]/g, '').replace(/\n{3,}/g, '\n\n').trim();
-    j.suggestions = viral.map((v) => { const it = { ...v, ...(ideas[v.url] || {}) }; it.guion = clean(it.guion); return it; });
+    const fresh = viral.map((v) => { const it = { ...v, ...(ideas[v.url] || {}) }; it.guion = clean(it.guion); return it; });
+    j.suggestions = [...fresh, ...keep.filter((k) => !fresh.some((f) => f.url === k.url))];
+    // Siempre al menos 4 para elegir: si faltan, variaciones de la mejor (mismo formato, otro remedio)
+    const good = j.suggestions.filter((s) => s.guion && (s.encaje == null || s.encaje >= 6));
+    if (good.length < 4 && good[0] && !good[0].analysis) {
+      setW({ action: 'Pocas ideas fuertes: saco variaciones de la mejor…' });
+      try {
+        const b = good[0];
+        b.analysis = await require('./assistant').analyze(j, 'research', { title: b.tema, url: b.url, stats: `${b.views} vistas, ${b.ratio}× la media de @${b.account}`, text: `${b.caption || ''}\n${b.transcript || b.guion || ''}` });
+        store.log(j, 'research', `🧠 Añadidas ${(b.analysis.variaciones || []).length} variaciones de "${b.tema}" (ábrelas en su tarjeta)`);
+      } catch (e) { store.log(j, 'research', '⚠️ No pude sacar variaciones: ' + e.message.slice(0, 80)); }
+    }
     j.lastRun = Date.now();
     store.save(j);
     setW({ state: 'done', action: `✅ ${j.suggestions.length} ideas listas` });
