@@ -59,6 +59,7 @@ async function run(job) {
     CLIP_SECONDS: config.clipSeconds,
     MAX_WORDS: config.maxWordsPerClip,
     ANCHORS: config.avatar.anchors,
+    HOUSE: config.house ? `${config.house.style}.\nRooms:\n${Object.entries(config.house.rooms).map(([k, v]) => `- ${k}: ${v}`).join('\n')}` : '',
     FACE_ANCHORS: config.avatar.faceAnchors || config.avatar.anchors,
     WARDROBE: Object.entries(config.wardrobe || {}).filter(([k]) => !k.startsWith('_')).map(([k, v]) => `- ${k}: ${v}`).join('\n'),
     VOICE: config.avatar.voice,
@@ -90,7 +91,7 @@ async function run(job) {
   j.hookB = config.abHooks !== false && plan.hookB && plan.hookB.line ? { n: 91, variantOf: 1, line: plan.hookB.line, text: plan.hookB.text || '', clip: null, clipStatus: 'pending', clipNote: '' } : null;
   j.clips = plan.clips.map((c, i) => ({
     n: i + 1, line: c.line, refTime: c.refTime, frameMode: i === 0 ? 1 : 2,
-    framePrompt: c.framePrompt, clipPrompt: c.clipPrompt, book: job.videoType === 'venta' ? (c.book || null) : null, broll: c.broll || null, frameFrom: job.videoType === 'venta' ? (c.frameFrom || null) : null, readyClip: job.videoType === 'venta' ? (c.readyClip || null) : null, sameFrameAs: c.sameFrameAs && c.sameFrameAs < i + 1 ? c.sameFrameAs : null,
+    framePrompt: c.framePrompt, clipPrompt: c.clipPrompt, room: c.room || null, book: job.videoType === 'venta' ? (c.book || null) : null, broll: c.broll || null, frameFrom: job.videoType === 'venta' ? (c.frameFrom || null) : null, readyClip: job.videoType === 'venta' ? (c.readyClip || null) : null, sameFrameAs: c.sameFrameAs && c.sameFrameAs < i + 1 ? c.sameFrameAs : null,
     frame: null, frameStatus: 'pending', frameNote: '', feedback: '',
     clip: null, clipStatus: 'pending', clipNote: '',
   }));

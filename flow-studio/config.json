@@ -21,13 +21,13 @@
     "faceAnchors": "the same face with real wrinkles and freckles, the same wavy silver-white shoulder-length hair"
   },
   "settings": {
-    "kitchen": "the modern American kitchen from the avatar images: white flat-panel cabinets, light marble-look tile backsplash, stainless steel range hood, white quartz countertop, small US flags on the counter",
+    "kitchen": "her kitchen (the one in the avatar images): white flat-panel cabinets, light marble-look tile backsplash, stainless steel range hood, white quartz countertop, small US flags on the counter",
     "walmart": "standing right in front of the entrance of a Walmart store in the USA, daylight. Behind her, clearly visible and readable: the big blue Walmart sign with white letters and the yellow spark logo above the entrance, the blue-and-gray facade, automatic glass doors, a row of shopping carts and part of the parking lot",
     "target": "standing right in front of the entrance of a Target store in the USA, daylight. Behind her, clearly visible: the big red Target bullseye logo and the word TARGET on the facade, the red-and-white entrance, the big red spherical bollards and shopping carts",
     "supermarket": "inside a bright American supermarket aisle, colorful shelves with plain unbranded products, small US flag in her cart",
-    "bathroom": "a bright, clean modern American bathroom: white vanity with a large mirror behind her, white subway tile, soft daylight, a small potted plant and a small US flag on the shelf (no toilet in frame)",
+    "bathroom": "her bathroom: white vanity with a large mirror, white subway tile, light-oak details, a plant and a small US flag on the shelf (no toilet in frame)",
     "reference": "THE SAME KIND OF PLACE AS THE REFERENCE in each clip: look at the reference frame of that clip and recreate that location as a bright, clean American home or store (e.g. if the hook happens in a bathroom, the hook is in a bright modern American bathroom with white vanity and mirror, no toilet in frame; if the reference then moves to the kitchen, use the modern American kitchen from the avatar images). Describe the location fully in every frame prompt and keep small US flag details in the background",
-    "porch": "the front porch / backyard of a typical American suburban house, daylight: wooden porch with a big US flag hanging, white siding, flower pots, green lawn; a wooden outdoor table in front of her for the props"
+    "porch": "the front porch / backyard of her house: white siding, a wooden porch with a big US flag hanging, flower pots, green lawn, a wooden outdoor table for the props, daylight"
   },
   "captions": {
     "font": "Montserrat ExtraBold",
@@ -188,5 +188,16 @@
     "stripes": "a cozy red-and-white striped knit sweater with a small navy patch of white stars on the chest (US flag colors)",
     "sporty": "a fitted navy-blue athletic tank top and matching leggings, a small US flag pin on the top (a fit, active grandmother look)",
     "denim": "a light-blue denim shirt with rolled sleeves and a small US flag pin on the collar"
+  },
+  "house": {
+    "_nota": "La casa de Emma: siempre la misma en todos los videos. La cocina es la principal; el resto solo para algún clip.",
+    "style": "HER HOUSE (always the same house in every video): a bright, modern American suburban home: white walls, warm light-oak wood floors, white flat-panel cabinets, light marble-look surfaces, brushed-nickel details, green plants, natural daylight from big windows, and small US flags as decoration",
+    "rooms": {
+      "kitchen": "her kitchen (the one in the avatar images): white flat-panel cabinets, light marble-look tile backsplash, stainless steel range hood, white quartz countertop, small US flags on the counter",
+      "living": "her living room: a light-beige sofa with cream cushions and a knitted throw, light-oak floor, a white bookshelf with family photos, a big window with sheer curtains, a small US flag in a vase",
+      "hallway": "the hallway of her house (for walking-and-talking shots): white walls with framed family photos, light-oak floor, a small console table with a plant and a little US flag, daylight from the end of the hall",
+      "bathroom": "her bathroom: white vanity with a large mirror, white subway tile, light-oak details, a plant and a small US flag on the shelf (no toilet in frame)",
+      "porch": "the front porch / backyard of her house: white siding, a wooden porch with a big US flag hanging, flower pots, green lawn, a wooden outdoor table for the props"
+    }
   }
 }

@@ -44,6 +44,10 @@ So, whenever the topic allows:
 - Hook frame = a big visual experiment or oversized model with her pouring/pointing, OR her applying or doing the remedy ON someone (daughter, granddaughter, husband, a neighbor: neck, back, feet, hair, hands, belly) or a strong close food/prop action. The second person is a normal everyday person, fully clothed or in normal home clothing, shown in a natural way.
 - Never a static talking head with a jar as the hook. If the reference is a talking head, keep its script and pacing but turn the hook image into a hands-on demonstration.
 
+## Her house (ALWAYS the same house, so the profile looks like one real person)
+{{HOUSE}}
+The kitchen is where she mostly records. When it makes the video feel more real or dynamic, 1 or 2 clips (never more, usually not the hook) can happen in another room of the SAME house: talking while she walks down the hallway toward the camera, sitting on the living-room sofa, at the bathroom mirror, on the porch. Set "room": "<living|hallway|bathroom|porch>" on those clips and describe that room with the exact words above in its frame prompt. Never invent a different house style.
+
 ## Her outfit (pick ONE per video, the same in all clips)
 {{WARDROBE}}
 Default: sweater (her signature look). Choose another when it makes the video more viral: "sporty" for experiments and body/energy topics (the fit-grandmother look gets millions of views in similar accounts), "apron" for cooking and cleaning hacks, "stripes" or "denim" for variety. Do not use the same non-sweater outfit in every video. Put the chosen key in "outfit".
@@ -102,6 +106,7 @@ Write the file `plan.json` in the working folder with exactly this shape, and al
       "frameMode": 1,
       "framePrompt": "...",
       "clipPrompt": "... uses {{LINE}} where the spoken line goes ...",
+      "room": null,
       "book": null,
       "broll": null
     }
