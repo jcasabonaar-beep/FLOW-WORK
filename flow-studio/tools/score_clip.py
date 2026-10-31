@@ -9,6 +9,9 @@ import sys
 
 import numpy as np
 
+# Una frase de ejemplo con repeticiones hace que whisper escriba literal (si no, se "come" las palabras repetidas)
+VERBATIM = {"es": "Eh, el, el yogur yogur griego, congelado congelado, mira mira, esto esto es así.", "en": "Uh, the, the yogurt yogurt, frozen frozen, look look, this this is it."}
+
 out, lang, line, ref = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 cands = sys.argv[5:]
 
@@ -56,7 +59,7 @@ for c in cands:
         x = audio(c)
         r["voice"] = voice(x)
         if model:
-            segs, _ = model.transcribe(c, language=lang, vad_filter=True, word_timestamps=True)
+            segs, _ = model.transcribe(c, language=lang, vad_filter=True, word_timestamps=True, condition_on_previous_text=False, initial_prompt=VERBATIM.get(lang, VERBATIM["en"]))
             segs = list(segs)
             heard = " ".join(s.text for s in segs)
             r["words"] = [{"w": w.word.strip(), "s": round(w.start, 3), "e": round(w.end, 3)} for s in segs for w in (s.words or [])]
