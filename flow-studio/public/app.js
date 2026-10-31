@@ -578,7 +578,7 @@ async function refreshLibrary() {
 
 // ---------- Kit para publicar ----------
 const kitText = (k) => [k.caption || '', '', k.hashtags || '', k.disclosure ? '\n' + k.disclosure : ''].join('\n').trim();
-const kitPlace = (k) => (k && k.comentario ? `<div class="muted" style="font-size:12px;margin-top:6px">📌 Comentario para fijar: <b>${esc(k.comentario)}</b> <button class="small" onclick="navigator.clipboard.writeText(${esc(JSON.stringify(k.comentario))});this.textContent='✓'">📋</button></div>` : '') +
+const kitPlace = (k) => `<div style="font-size:12px;margin-top:6px;color:#fcd34d">🤖 Al publicar: activa <b>"Hecho con IA"</b> (junto a Reels de prueba). Siempre.</div>` + (k && k.comentario ? `<div class="muted" style="font-size:12px;margin-top:6px">📌 Comentario para fijar: <b>${esc(k.comentario)}</b> <button class="small" onclick="navigator.clipboard.writeText(${esc(JSON.stringify(k.comentario))});this.textContent='✓'">📋</button></div>` : '') +
   (k && k.ubicacion ? `<div class="muted" style="font-size:12px;margin-top:6px">📍 Pon de ubicación: <b>${esc(k.ubicacion)}</b> (ayuda a que salga en EE. UU.)</div>` : '');
 function kitHtml() {
   const k = job.kit;

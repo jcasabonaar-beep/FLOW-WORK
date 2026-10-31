@@ -64,7 +64,7 @@ function upload(job, name) {
   job.driveDir = dest;
   if (job.outputB && fs.existsSync(path.join(store.jobDir(job.id), job.outputB))) fs.copyFileSync(path.join(store.jobDir(job.id), job.outputB), where(dest, base + '-B.mp4'));
   const k = job.kit || {};
-  if (k.caption) fs.writeFileSync(where(dest, base + '-texto.txt'), [k.caption, '', k.hashtags || '', k.disclosure ? '\n' + k.disclosure : '', k.comentario ? '\n📌 Comentario para fijar: ' + k.comentario : '', k.ubicacion ? '📍 Ubicación: ' + k.ubicacion : ''].join('\n'));
+  if (k.caption) fs.writeFileSync(where(dest, base + '-texto.txt'), [k.caption, '', k.hashtags || '', k.disclosure ? '\n' + k.disclosure : '', k.comentario ? '\n📌 Comentario para fijar: ' + k.comentario : '', k.ubicacion ? '📍 Ubicación: ' + k.ubicacion : '', '🤖 Al publicar: activa "Hecho con IA"'].join('\n'));
   if (k.cover && fs.existsSync(path.join(store.jobDir(job.id), k.cover))) fs.copyFileSync(path.join(store.jobDir(job.id), k.cover), where(dest, base + '-portada.jpg'));
   return base;
 }

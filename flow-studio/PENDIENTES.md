@@ -40,3 +40,10 @@
 - Comparar calidad con un video hecho a mano.
 - Valorar plan Max si el límite de Pro se queda corto.
 - Opcional: `actualizar.bat` con Git para actualizar con doble clic.
+
+## Para cuando se suba a Instagram automáticamente (obligatorio)
+- Activar SIEMPRE la etiqueta **"Hecho con IA"** justo antes de publicar (está en las opciones junto a "Reels de prueba"). Sin excepción, en todos los videos (A y B).
+- 5 hashtags: 3 elegidos + `#syntheticperformer #ad` al final.
+- Marca "Synthetic Performer" ya va quemada en el video.
+- Publicar de 1 en 1, separados 5-6 h, a la hora que diga el Analista de resultados.
+- Fijar el 📌 comentario y poner la 📍 ubicación del kit.
