@@ -15,4 +15,8 @@ function save(patch) {
   return s;
 }
 
+// Recordatorios que me pediste apuntar (se añaden una sola vez)
+const SEED = [{ id: 1, text: 'Obsidian: decidir qué guardar ahí (ideas, guiones, lecciones, resultados) y conectarlo con Flow Studio' }];
+if (!get().remindersSeeded) save({ reminders: [...(get().reminders || []), ...SEED], remindersSeeded: true });
+
 module.exports = { get, save };

@@ -50,3 +50,4 @@
 
 ## Recordatorio
 - 📌 Añadir más cuentas al Investigador (objetivo 8-10, estilo @saludconisabel: experimentos, maquetas, remedio sobre otra persona). Quitar `wellnesseverydayh` (ya no existe). Sale en 🏠 Hoy y en el resumen del domingo hasta llegar a 8.
+- 📌 Obsidian (pendiente de concretar qué: ¿guardar ahí ideas, guiones, lecciones y resultados?).

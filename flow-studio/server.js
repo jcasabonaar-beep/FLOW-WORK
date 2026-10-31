@@ -141,6 +141,18 @@ async function api(req, res, url) {
     }
     return send(res, 200, { ...pub.queue(), reminders: require('./lib/settings').get().publishReminders !== false });
   }
+  if (parts[1] === 'reminders') {
+    // 📌 Recordatorios que salen en 🏠 Hoy hasta que los marcas como hechos
+    const st = require('./lib/settings');
+    let list = st.get().reminders || [];
+    if (method === 'POST') {
+      const body = JSON.parse((await readBody(req)).toString() || '{}');
+      if (body.add) list = [...list, { id: Date.now(), text: String(body.add).slice(0, 300) }];
+      if (body.done) list = list.filter((r) => r.id !== Number(body.done));
+      st.save({ reminders: list });
+    }
+    return send(res, 200, list);
+  }
   if (parts[1] === 'health') return send(res, 200, await require('./lib/health').check());
   if (parts[1] === 'autopilot') {
     const settings = require('./lib/settings');
