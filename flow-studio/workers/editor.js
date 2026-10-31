@@ -337,11 +337,15 @@ async function render(job, v) {
   for (const c of J.clips) {
     if (c.skip || !c.clip) continue;
     const file = path.join(dir, c.clip);
-    const [s, e, dur] = await speechBounds(file);
-    // El hook arranca hablando desde el primer fotograma
-    let start = Math.max(0, s - (c.n === J.clips[0].n ? 0.03 : pc.pad));
-    const end = Math.min(dur, e + pc.tail);
+    const [s0, e0, dur] = await speechBounds(file);
     const words = heard[file] || null;
+    // Se corta por la primera y la última palabra que se entienden (el volumen confunde respiraciones y ruido con voz)
+    const ws = words && words.length ? words : null;
+    const s = ws ? Math.max(ws[0].s, s0 - 0.15) : s0;
+    const e = ws ? Math.min(Math.max(ws[ws.length - 1].e, s), e0 + 0.1) : e0;
+    // El hook arranca hablando desde el primer fotograma
+    let start = Math.max(0, s - (c.n === J.clips[0].n ? 0.04 : pc.pad));
+    const end = Math.min(dur, e + pc.tail);
     const { ranges, notes } = cleanRanges(start, end, words, prevWords, pc);
     for (const n of notes) store.log(job, 'editor', `✂️ Clip ${c.n}: ${n}`);
     prevWords = words;
