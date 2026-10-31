@@ -218,7 +218,8 @@ async function runClips(job) {
     }
   }
   store.save(job);
-  for (let round = 0; round < 3; round++) {
+  // Hasta 5 rondas: así un clip con subtítulos de Flow se puede repetir varias veces
+  for (let round = 0; round < 5; round++) {
     const todo = job.clips.filter((c) => ['pending', 'regen'].includes(c.clipStatus));
     if (!todo.length) break;
     if (config.flowMode !== 'auto') return manual(job, 'clips', todo);
@@ -243,7 +244,7 @@ async function runClips(job) {
         learn(`Clip de ${c.line.split(/\s+/).length} palabras: ${bad}. ${q.text != null && q.text < 0.7 ? 'Acortar la frase o pedir ritmo más claro.' : 'Insistir en "same voice, tone and energy as the previous clips".'}`);
       }
     }
-    // 👀 Revisor: subtítulos de Flow (se repite una vez) y fallos visuales claros (cara distinta, manos raras, glitches)
+    // 👀 Revisor: subtítulos de Flow (se repite hasta 3 veces: los subtítulos los pone nuestro editor) y fallos visuales claros
     const review = await checkText(job, todo.filter((x) => x.clipStatus === 'done'));
     for (const { c, why } of review.broken) {
       if (c.qaRetried) { store.log(job, 'clips', `⚠️ Clip ${c.n}: ${why} (ya repetido una vez, lo dejo)`); continue; }
@@ -253,10 +254,19 @@ async function runClips(job) {
     }
     for (const c of review.text) {
       if (c.clipStatus === 'regen') continue;
-      if ((c.textRetries || 0) >= 1) { store.log(job, 'clips', `⚠️ Clip ${c.n}: Flow insiste en poner texto; lo dejo así`); continue; }
+      if ((c.textRetries || 0) >= 3) {
+        store.log(job, 'clips', `⚠️ Clip ${c.n}: Flow insiste en poner texto después de 3 intentos`);
+        require('../lib/notify').send(`⚠️ Subtítulos de Flow: ${job.title}`, `El clip ${c.n} sigue saliendo con texto. Míralo antes de publicar o pide en el chat "repite el clip ${c.n} sin texto".`, { tags: 'warning' });
+        continue;
+      }
       c.textRetries = (c.textRetries || 0) + 1;
-      Object.assign(c, { clipStatus: 'regen', clipNote: 'Flow puso subtítulos o texto en pantalla: repite SIN ningún texto' });
-      store.log(job, 'clips', `🔁 Clip ${c.n}: tenía subtítulos de Flow. Lo repito sin texto.`);
+      // Cada intento aprieta más el prompt
+      const how = ['Write at the START and at the END of the prompt: "No subtitles, no captions, no on-screen text of any kind." Describe the speech as audio only.',
+        'Remove the quotation marks around the spoken line and write: she says, out loud (audio only, never written on screen): <line>. Repeat "absolutely no text on screen" twice.',
+        'Shorten the prompt to the essentials (action, camera, speech as audio only) and end with: "Clean video frame, no letters, no words, no subtitles anywhere."'][c.textRetries - 1];
+      Object.assign(c, { clipStatus: 'regen', clipNote: `Flow puso subtítulos o texto en pantalla (intento ${c.textRetries}/3). Repite SIN ningún texto. ${how}` });
+      store.log(job, 'clips', `🔁 Clip ${c.n}: tenía subtítulos de Flow. Lo repito sin texto (intento ${c.textRetries}/3).`);
+      learn(`Clip con subtítulos de Flow: ${how.split('.')[0]}.`);
     }
     store.save(job);
   }
@@ -283,6 +293,15 @@ async function runHookB(job) {
   }
   await pickClip(job, item, dest);
   if (!fs.existsSync(abs(job, dest))) { store.log(job, 'clips', '⚠️ El hook B no salió: el video irá solo con el hook A'); return; }
+  const withText = await checkText(job, [{ ...item, clip: dest }]);
+  if (withText.text.length && !hb.textRetried) {
+    hb.textRetried = true;
+    store.log(job, 'clips', '🔁 Hook B tenía subtítulos de Flow: lo repito una vez sin texto');
+    for (const k of ['_a', '_b', '']) fs.rmSync(abs(job, dest.replace('.mp4', `${k}.mp4`)), { force: true });
+    store.save(job);
+    return runHookB(job);
+  }
+  if (withText.text.length) { store.log(job, 'clips', '⚠️ El hook B sigue con texto: el video irá solo con el hook A'); return; }
   Object.assign(hb, { clip: dest, clipStatus: 'done', v: Date.now() });
   store.log(job, 'clips', `🅰️🅱️ Hook B listo: "${hb.line}"`);
   store.save(job);
