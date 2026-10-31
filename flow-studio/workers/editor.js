@@ -392,22 +392,39 @@ async function render(job, v) {
   const counter = { n: 0 };
   segments.forEach((sg) => args.push('-i', sg.file));
   let extra = segments.length;
+  // 🎥 Acercamientos suaves: 1-2 por video (el hook y el clip más largo del medio), como alguien grabando que se acerca despacio
+  const smooth = E.style !== 'cuts';
+  const pushIn = new Set();
+  if (smooth) {
+    const ok = segments.map((sg, i) => ({ sg, i })).filter(({ sg }) => !sg.still && !sg.broll && sg.len > 1.2);
+    if (ok[0] && ok[0].i === 0) pushIn.add(0);
+    const mid = ok.filter(({ i }) => i > 0 && i < segments.length - 1).sort((a, b) => b.sg.len - a.sg.len)[0];
+    if (mid && pushIn.size < (E.smoothZooms ?? 2)) pushIn.add(mid.i);
+  }
   segments.forEach((sg, i) => {
     const fit = 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,setsar=1';
     // Trozos que se quedan del clip (sin las palabras repetidas), cada uno con su zoom
     const R = sg.ranges;
-    const { pieces: P, punches } = zoomPieces(R, sg.words, sg.still || !!sg.broll, counter);
+    const { pieces: P, punches } = smooth ? { pieces: R.map((r) => [r[0], r[1], 1]), punches: [] } : zoomPieces(R, sg.words, sg.still || !!sg.broll, counter);
     // Posición en el video final de cada golpe de zoom
     const toTimeline = (x) => { let acc = 0; for (const [a, b] of R) { if (x >= a && x <= b) return sg.start + acc + (x - a); acc += b - a; } return null; };
     punches.forEach((x) => { const tt = toTimeline(x); if (tt != null) sfx.push([tt, 'pop']); });
     if (i > 0) sfx.push([Math.max(0, sg.start - 0.15), 'whoosh']);
-    const vOut = sg.broll ? `vb${i}` : `v${i}`;
+    const vFinal = sg.broll ? `vb${i}` : `v${i}`;
+    const vOut = pushIn.has(i) ? `vz${i}` : vFinal;
     if (P.length === 1) {
       parts.push(`[${i}:v]trim=${P[0][0].toFixed(3)}:${P[0][1].toFixed(3)},setpts=PTS-STARTPTS,${fit}${zoomFilter(P[0][2])}[${vOut}]`);
     } else {
       parts.push(`[${i}:v]split=${P.length}${P.map((_, k) => `[s${i}_${k}]`).join('')}`);
       P.forEach((r, k) => parts.push(`[s${i}_${k}]trim=${r[0].toFixed(3)}:${r[1].toFixed(3)},setpts=PTS-STARTPTS,${fit}${zoomFilter(r[2])}[p${i}_${k}]`));
       parts.push(`${P.map((_, k) => `[p${i}_${k}]`).join('')}concat=n=${P.length}:v=1:a=0[${vOut}]`);
+    }
+    if (pushIn.has(i)) {
+      // Se acerca despacio durante todo el clip (con un leve vaivén de mano), sin cortes
+      const N = Math.max(1, Math.round(sg.len * 30));
+      const A = E.smoothAmount || 0.09;
+      counter.n++;
+      parts.push(`[${vOut}]scale=2160:3840,zoompan=z='1+${A}*on/${N}':x='iw/2-iw/zoom/2+4*sin(on/23)':y='(ih-ih/zoom)*0.35+3*sin(on/31)':d=1:s=1080x1920:fps=30,setsar=1[${vFinal}]`);
     }
     if (sg.broll) {
       // Recorte del b-roll encima del clip, la voz sigue sonando

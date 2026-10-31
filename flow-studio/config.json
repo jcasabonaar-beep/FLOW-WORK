@@ -142,14 +142,17 @@
   },
   "abHooks": true,
   "edit": {
-    "_nota": "Edición dinámica: cortes con zoom cada pocos segundos, golpe de zoom en la palabra clave y sonidos suaves",
+    "_nota": "Edición: acercamientos suaves de cámara (1-2 por video, como alguien grabando con el móvil). style \"cuts\" = cortes con zoom de golpe (lo de antes)",
     "zoom": true,
     "zoomLevel": 1.12,
     "punch": 1.2,
     "every": 2.4,
     "sfx": true,
     "sfxVolume": 0.35,
-    "speed": 1.1
+    "speed": 1.1,
+    "style": "smooth",
+    "smoothZooms": 2,
+    "smoothAmount": 0.09
   },
   "target": "TARGET VIEWER: Spanish-speaking Hispanic WOMEN living in the UNITED STATES, mostly 60+ (also 45+ and 50+): moms and grandmothers from Mexico, Central America, the Caribbean and South America, family-oriented, practical, shop at Walmart/Target/Costco/Sam's, cook at home, trust grandma's remedies and want to save money. What they care about: joint and knee pain, energy and tiredness, sleep, digestion and bloating, belly fat after 50, blood sugar and blood pressure (only softened, never cure claims), menopause and hot flashes, strong bones, skin, hair and nails after 50, memory, swollen feet and legs, staying independent and healthy for the grandchildren. They do NOT care about gym, dating, babies, young-people trends or slang."
 }
