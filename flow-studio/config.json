@@ -17,7 +17,8 @@
       "avatar/avatar_table.png"
     ],
     "anchors": "the same heather-gray knit crew-neck sweater with the knitted US flag on the chest, the same face with real wrinkles and freckles, the same wavy silver-white shoulder-length hair",
-    "voice": "Warm, energetic grandmother voice in her seventies, bright and enthusiastic, slightly raspy, fast confident delivery, always the same voice"
+    "voice": "Warm, energetic grandmother voice in her seventies, bright and enthusiastic, slightly raspy, fast confident delivery, always the same voice",
+    "faceAnchors": "the same face with real wrinkles and freckles, the same wavy silver-white shoulder-length hair"
   },
   "settings": {
     "kitchen": "the modern American kitchen from the avatar images: white flat-panel cabinets, light marble-look tile backsplash, stainless steel range hood, white quartz countertop, small US flags on the counter",
@@ -179,5 +180,13 @@
     "hashtags": "5: 3 elegidos + #syntheticperformer #ad al final",
     "watermark": "Synthetic Performer arriba a la izquierda (ya va quemado en el video)"
   },
-  "location": "Miami"
+  "location": "Miami",
+  "wardrobe": {
+    "_nota": "Ropa de Emma. El director elige una por video (la misma en todos los clips). Todas llevan algo de EE. UU.",
+    "sweater": "the same heather-gray knit crew-neck sweater with the knitted US flag on the chest (exactly as in the avatar images; same color, knitted flag and neckline)",
+    "apron": "a navy-blue long-sleeve top with a white cotton kitchen apron that has a small embroidered US flag and the name \"Emma\" on the chest",
+    "stripes": "a cozy red-and-white striped knit sweater with a small navy patch of white stars on the chest (US flag colors)",
+    "sporty": "a fitted navy-blue athletic tank top and matching leggings, a small US flag pin on the top (a fit, active grandmother look)",
+    "denim": "a light-blue denim shirt with rolled sleeves and a small US flag pin on the collar"
+  }
 }

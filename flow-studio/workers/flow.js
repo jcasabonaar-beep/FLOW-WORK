@@ -45,7 +45,7 @@ function frameTask(job, c) {
   if (c.feedback && c.frame) {
     return { dest, text: `### Frame ${c.n} — CORRECTION\n${look}Upload in this order: ${imgs.map((p, i) => `Image ${L[i]} = ${p}`).join(' ; ')}\n` +
       `The producer wants this change (translate it to a clear English instruction for the image model): "${c.feedback}".\n` +
-      `Prompt: "Edit Image A: <the change in English>. Use Image B to keep the face and the sweater exactly as the avatar. Keep everything else the same."\n` +
+      `Prompt: "Edit Image A: <the change in English>. Use Image B to keep the face and hair exactly as the avatar, and keep her clothes exactly as in Image A. Keep everything else the same."\n` +
       `Then download and save to: ${dest}` };
   }
   return { dest, text: `### Frame ${c.n}\n${look}Upload in this order: ${imgs.map((p, i) => `Image ${L[i]} = ${p}`).join(' ; ')}\n` +
@@ -71,7 +71,7 @@ function lessonsFile() {
 const PICK = {
   frames: () => `ORDER (saves credits): set the selector to x${config.framesPerPrompt.rest} and CHECK it, generate every frame except frame 1; only then switch to x${config.framesPerPrompt.hook} for frame 1. Never leave x${config.framesPerPrompt.hook} on for the other frames.
 REUSE FIRST: if an image from an earlier attempt of this same video already exists in the project for an item and it was never downloaded, download that one instead of generating it again.
-Frame 1 is the HOOK: set Flow to ${config.framesPerPrompt.hook} outputs, look at both and download ONLY the best (our avatar's face, same sweater, the composition of the reference, natural, no text, good hands). It must be the most striking image of the video; if neither is great, generate ${config.framesPerPrompt.hook} more with an improved prompt and pick from all.
+Frame 1 is the HOOK: set Flow to ${config.framesPerPrompt.hook} outputs, look at both and download ONLY the best (our avatar's face, the outfit of the prompt, a visible US element, the composition of the reference, natural, no text, good hands). It must be the most striking image of the video; if neither is great, generate ${config.framesPerPrompt.hook} more with an improved prompt and pick from all.
 Every other frame: set Flow to ${config.framesPerPrompt.rest} output. If it is good at the first try, keep it. If it fails the quality check, regenerate ONCE more with an improved prompt and keep the better one. Do not spend more time on it.
 Speed: upload the avatar photos only once per session and then reuse them from Flow's Uploads/library instead of uploading them again for every frame.`,
   clips: () => `ORDER (saves credits): first set the selector to x${config.clipsPerPrompt.rest} and CHECK it shows x${config.clipsPerPrompt.rest}, submit every clip except clip 1; only then switch to x${config.clipsPerPrompt.hook} and submit clip 1 last. Never leave x${config.clipsPerPrompt.hook} on for the other clips.
