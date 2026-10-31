@@ -532,7 +532,7 @@ async function publishKit(job) {
     if (!job.workers.kit) job.workers.kit = { state: 'idle', action: '', log: [], paused: false };
     const text = await claude.run({ job, worker: 'kit', prompt, tools: ['Write'] });
     const k = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, 'utf8')) : claude.extractJson(text);
-    job.kit = { ...k, hashtags: fiveTags(k.hashtags), disclosure: job.videoType === 'venta' ? config.amazonDisclosure : '', cover: fs.existsSync(path.join(edit, 'cover.jpg')) ? 'edit/cover.jpg' : null };
+    job.kit = { ...k, ubicacion: config.location || k.ubicacion || '', hashtags: fiveTags(k.hashtags), disclosure: job.videoType === 'venta' ? config.amazonDisclosure : '', cover: fs.existsSync(path.join(edit, 'cover.jpg')) ? 'edit/cover.jpg' : null };
   } catch (e) {
     store.log(job, 'editor', '⚠️ No pude preparar el texto para publicar: ' + e.message.slice(0, 100));
     job.kit = { cover: fs.existsSync(path.join(edit, 'cover.jpg')) ? 'edit/cover.jpg' : null };
