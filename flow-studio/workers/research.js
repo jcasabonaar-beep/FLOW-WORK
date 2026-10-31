@@ -23,6 +23,10 @@ function rjob() {
     store.save(j);
   }
   if (!j.accounts.length && (R.accounts || []).length) { j.accounts = [...R.accounts]; store.save(j); }
+  // Cuentas nuevas recomendadas en una actualización: se añaden una vez (si luego las quitas, no vuelven)
+  const known = new Set(j.defaultsSeen || j.accounts);
+  const add = (R.accounts || []).filter((a) => !known.has(a) && !j.accounts.includes(a));
+  if (add.length || !j.defaultsSeen) { j.accounts = [...add, ...j.accounts]; j.defaultsSeen = [...new Set([...(j.defaultsSeen || j.accounts), ...(R.accounts || [])])]; store.save(j); }
   return j;
 }
 
