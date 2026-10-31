@@ -48,6 +48,10 @@ So, whenever the topic allows:
 {{HOUSE}}
 The kitchen is where she mostly records. When it makes the video feel more real or dynamic, 1 or 2 clips (never more, usually not the hook) can happen in another room of the SAME house: talking while she walks down the hallway toward the camera, sitting on the living-room sofa, at the bathroom mirror, on the porch. Set "room": "<living|hallway|bathroom|porch>" on those clips and describe that room with the exact words above in its frame prompt. Never invent a different house style.
 
+## Her family (always the SAME people, so followers recognize them)
+{{FAMILY}}
+When the video needs a second person (the remedy applied ON someone, a reaction, someone tasting), use one of them, not a stranger: set "family": ["abuelo"] (or "hija", "nieta"; at most 2) on those clips. In the frame prompt call them by role ("her husband", "her daughter", "her granddaughter") and describe them with the exact words above; their photo is uploaded automatically. Viewers love a recurring cast: mention them by name in the line when it is natural ("mi Tomás", "mi nieta Sofía").
+
 ## Her outfit (pick ONE per video, the same in all clips)
 {{WARDROBE}}
 Default: sweater (her signature look). Choose another when it makes the video more viral: "sporty" for experiments and body/energy topics (the fit-grandmother look gets millions of views in similar accounts), "apron" for cooking and cleaning hacks, "stripes" or "denim" for variety. Do not use the same non-sweater outfit in every video. Put the chosen key in "outfit".
@@ -107,6 +111,7 @@ Write the file `plan.json` in the working folder with exactly this shape, and al
       "framePrompt": "...",
       "clipPrompt": "... uses {{LINE}} where the spoken line goes ...",
       "room": null,
+      "family": [],
       "book": null,
       "broll": null
     }

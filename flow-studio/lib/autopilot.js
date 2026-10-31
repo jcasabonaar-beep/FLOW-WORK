@@ -68,7 +68,10 @@ async function run(reason = 'programado') {
     // Viralidad × encaje con nuestro público (señoras hispanas 60+ en EE. UU.); las que no encajan, fuera
     const score = (s) => (s.ratio || 0) * (s.encaje || 6) / 10;
     const sugs = [...(rj.suggestions || [])].filter((s) => s.guion && (s.encaje == null || s.encaje >= 5)).sort((a, b) => score(b) - score(a));
-    const pool = sugs.filter((s) => !used.has(s.url)).map((s) => ({ key: s.url, title: s.tema || 'Idea viral', url: s.url, script: s.guion }));
+    // 🔁 Primero las partes 2 de tus reels que funcionan (de las últimas 48 h), luego las ideas virales
+    const p2 = ((store.load('_resultados') || {}).part2 || []).filter((p) => !used.has('p2:' + p.key) && Date.now() - p.at < 48 * 3600000)
+      .map((p) => ({ key: 'p2:' + p.key, title: p.title, url: p.url, script: p.script, videoType: p.videoType }));
+    const pool = [...p2, ...sugs.filter((s) => !used.has(s.url)).map((s) => ({ key: s.url, title: s.tema || 'Idea viral', url: s.url, script: s.guion }))];
     // Si no hay bastantes ideas nuevas: variaciones de la más viral (mismo formato, otro ingrediente o remedio)
     for (const base of sugs) {
       if (pool.length >= o.videos) break;
@@ -92,7 +95,7 @@ async function run(reason = 'programado') {
     for (const [i, it] of pool.slice(0, o.videos).entries()) {
       const setting = o.setting === 'mix' ? MIX[i % MIX.length] : o.setting;
       const job = store.create({ title: '🌙 ' + it.title, url: it.url, script: it.script, setting: config.settings[setting] ? setting : 'kitchen',
-        videoType: i < o.venta ? 'venta' : 'crecimiento', mode: 'auto', language: config.language });
+        videoType: it.videoType || (i < o.venta ? 'venta' : 'crecimiento'), mode: 'auto', language: config.language });
       job.autopilot = true;
       store.save(job);
       ids.push(job.id);

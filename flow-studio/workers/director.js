@@ -33,6 +33,7 @@ function typeRules(job) {
   if (job.videoType !== 'venta') {
     return `- Goal: maximum views, shares and comments. Do NOT mention or show any book or product.
 - Hook: the strongest curiosity or shock line in the first 2 seconds. Fast pacing, short lines.
+- LENGTH: 20 to 35 seconds in total (the share of people who watch to the end decides the reach). Use at most ${config.maxClips.crecimiento || 5} clips: keep only the hook, the 2-3 key steps and the CTA; cut every extra explanation.
 - Ending: ask to comment the CTA word to receive the full recipe (CTA word RECETA or SÍ) and to follow for more. book and broll are always null.`;
   }
   const b = brolls();
@@ -60,6 +61,7 @@ async function run(job) {
     MAX_WORDS: config.maxWordsPerClip,
     ANCHORS: config.avatar.anchors,
     HOUSE: config.house ? `${config.house.style}.\nRooms:\n${Object.entries(config.house.rooms).map(([k, v]) => `- ${k}: ${v}`).join('\n')}` : '',
+    FAMILY: Object.entries(config.family || {}).filter(([k]) => !k.startsWith('_')).map(([k, v]) => `- ${k}: ${v.name} — ${v.desc}`).join('\n'),
     FACE_ANCHORS: config.avatar.faceAnchors || config.avatar.anchors,
     WARDROBE: Object.entries(config.wardrobe || {}).filter(([k]) => !k.startsWith('_')).map(([k, v]) => `- ${k}: ${v}`).join('\n'),
     VOICE: config.avatar.voice,
@@ -91,7 +93,7 @@ async function run(job) {
   j.hookB = config.abHooks !== false && plan.hookB && plan.hookB.line ? { n: 91, variantOf: 1, line: plan.hookB.line, text: plan.hookB.text || '', clip: null, clipStatus: 'pending', clipNote: '' } : null;
   j.clips = plan.clips.map((c, i) => ({
     n: i + 1, line: c.line, refTime: c.refTime, frameMode: i === 0 ? 1 : 2,
-    framePrompt: c.framePrompt, clipPrompt: c.clipPrompt, room: c.room || null, book: job.videoType === 'venta' ? (c.book || null) : null, broll: c.broll || null, frameFrom: job.videoType === 'venta' ? (c.frameFrom || null) : null, readyClip: job.videoType === 'venta' ? (c.readyClip || null) : null, sameFrameAs: c.sameFrameAs && c.sameFrameAs < i + 1 ? c.sameFrameAs : null,
+    framePrompt: c.framePrompt, clipPrompt: c.clipPrompt, room: c.room || null, family: (Array.isArray(c.family) ? c.family : c.family ? [c.family] : []).filter((k) => (config.family || {})[k]).slice(0, 2), book: job.videoType === 'venta' ? (c.book || null) : null, broll: c.broll || null, frameFrom: job.videoType === 'venta' ? (c.frameFrom || null) : null, readyClip: job.videoType === 'venta' ? (c.readyClip || null) : null, sameFrameAs: c.sameFrameAs && c.sameFrameAs < i + 1 ? c.sameFrameAs : null,
     frame: null, frameStatus: 'pending', frameNote: '', feedback: '',
     clip: null, clipStatus: 'pending', clipNote: '',
   }));

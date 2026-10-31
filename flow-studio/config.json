@@ -76,7 +76,7 @@
   ],
   "maxClips": {
     "venta": 8,
-    "crecimiento": 7
+    "crecimiento": 5
   },
   "uploadReference": false,
   "framesPerPrompt": {
@@ -198,6 +198,21 @@
       "hallway": "the hallway of her house (for walking-and-talking shots): white walls with framed family photos, light-oak floor, a small console table with a plant and a little US flag, daylight from the end of the hall",
       "bathroom": "her bathroom: white vanity with a large mirror, white subway tile, light-oak details, a plant and a small US flag on the shelf (no toilet in frame)",
       "porch": "the front porch / backyard of her house: white siding, a wooden porch with a big US flag hanging, flower pots, green lawn, a wooden outdoor table for the props"
+    }
+  },
+  "family": {
+    "_nota": "La familia de Emma: siempre las mismas caras. La foto de cada uno se crea sola la primera vez (avatar/family/<clave>.png) y se puede cambiar.",
+    "abuelo": {
+      "name": "Tomás, su marido",
+      "desc": "a kind 76-year-old man with short white hair, a neat gray mustache, warm brown eyes and smile lines, wearing a light-blue denim shirt"
+    },
+    "hija": {
+      "name": "Laura, su hija",
+      "desc": "a friendly 46-year-old woman with dark-brown shoulder-length wavy hair and brown eyes, wearing a simple cream knit top"
+    },
+    "nieta": {
+      "name": "Sofía, su nieta",
+      "desc": "a cheerful 22-year-old young woman with long dark-brown hair in a high ponytail and brown eyes, wearing a light-gray hoodie"
     }
   }
 }

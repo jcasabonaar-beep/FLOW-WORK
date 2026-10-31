@@ -28,14 +28,39 @@ function frameInputs(job, c) {
   const cover = path.join(store.ROOT, config.product.cover);
   const bookImg = c.book === 'hand' && inHand.length ? inHand[c.n % inHand.length] : cover;
   const book = c.book && fs.existsSync(bookImg) ? [bookImg] : [];
-  if (c.feedback && c.frame) return [abs(job, c.frame), front, ...book];
+  // Su familia: siempre las mismas caras (fotos fijas)
+  const fam = (c.family || []).map((k) => familyImg(k)).filter((f) => fs.existsSync(f));
+  if (c.feedback && c.frame) return [abs(job, c.frame), front, ...fam, ...book];
   // Flow rechaza las capturas con personas reales: por defecto la pose va descrita en el prompt
   const refs = config.uploadReference ? [ref] : [];
-  if (c.frameMode === 1) return [...refs, front, table, ...book];
+  if (c.frameMode === 1) return [...refs, front, table, ...fam, ...book];
   const first = job.clips[0];
-  return [...refs, first.frame ? abs(job, first.frame) : table, front, ...book];
+  return [...refs, first.frame ? abs(job, first.frame) : table, front, ...fam, ...book];
 }
-const L = 'ABCDE';
+const L = 'ABCDEFG';
+const familyImg = (k) => path.join(store.ROOT, 'avatar', 'family', `${k}.png`);
+// Quién es quién en las imágenes subidas (para que Flow no cambie las caras de la familia)
+function whoIsWho(job, c, imgs) {
+  const role = { abuelo: 'her husband', hija: 'her daughter', nieta: 'her granddaughter' };
+  return (c.family || []).map((k) => { const i = imgs.indexOf(familyImg(k)); return i >= 0 ? `Image ${L[i]} is ${role[k] || k}: keep this person's face and hair exactly as in that image.` : ''; }).filter(Boolean).join(' ');
+}
+
+// La primera vez que sale alguien de la familia se crea su foto fija (luego se reutiliza en todos los videos)
+async function ensureFamily(job) {
+  const need = [...new Set(job.clips.flatMap((c) => c.family || []))].filter((k) => (config.family || {})[k] && !fs.existsSync(familyImg(k)));
+  if (!need.length) return;
+  fs.mkdirSync(path.dirname(familyImg('x')), { recursive: true });
+  store.setWorker(job, 'frames', { action: `👨‍👩‍👧 Creando la foto fija de ${need.join(', ')} (solo esta vez)…` });
+  const tasks = need.map((k) => ({ dest: familyImg(k), text: `### Family portrait: ${k}\nNo images to upload. Aspect ratio 9:16, 1 output.\nPrompt: "Ultra-realistic smartphone photo, waist-up portrait of ${config.family[k].desc}, standing in a bright modern American kitchen with white cabinets and small US flags, looking at the camera with a natural warm expression, natural daylight, natural skin texture, no beauty filter, no text."\nThen download and save to: ${familyImg(k)}` }));
+  const statusFile = abs(job, 'frames/family_status.json');
+  try {
+    await require('../lib/chrome').ensure(job, 'frames');
+    await claude.run({ job, worker: 'frames', prompt: operatorPrompt(job, 'FRAMES worker', `${config.frameModel} (image generation)`, tasks, statusFile, 'Generate each portrait, pick a natural, realistic one and download it. No retries unless it is clearly broken.\n\n'), browser: true, cwd: store.ROOT, tools: ['Read', 'Write', 'Edit', 'Bash(node:*)'] });
+  } catch (e) {
+    store.log(job, 'frames', '⚠️ No pude crear la foto de la familia: ' + e.message.slice(0, 100));
+  }
+  for (const k of need) if (fs.existsSync(familyImg(k))) store.log(job, 'frames', `👨‍👩‍👧 Foto fija de ${config.family[k].name} creada: avatar/family/${k}.png (puedes cambiarla por otra)`);
+}
 
 function frameTask(job, c) {
   const dest = abs(job, `frames/frame_${pad(c.n)}.png`);
@@ -48,7 +73,9 @@ function frameTask(job, c) {
       `Prompt: "Edit Image A: <the change in English>. Use Image B to keep the face and hair exactly as the avatar, and keep her clothes exactly as in Image A. Keep everything else the same."\n` +
       `Then download and save to: ${dest}` };
   }
+  const who = whoIsWho(job, c, imgs);
   return { dest, text: `### Frame ${c.n}\n${look}Upload in this order: ${imgs.map((p, i) => `Image ${L[i]} = ${p}`).join(' ; ')}\n` +
+    (who ? `${who} Add this sentence at the end of the prompt.\n` : '') +
     `Paste this prompt exactly:\n\`\`\`\n${c.framePrompt}\n\`\`\`\nThen download and save to: ${dest}` };
 }
 
@@ -147,6 +174,7 @@ async function runStickers(job) {
 
 // Genera los frames pendientes. Devuelve 'ok' | 'wait'
 async function runFrames(job) {
+  await ensureFamily(job);
   // Clips ya hechos: se usan tal cual (frame = su primer fotograma)
   for (const c of job.clips) {
     const src = c.readyClip && path.join(store.ROOT, 'product', 'clips', path.basename(c.readyClip));

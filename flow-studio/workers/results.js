@@ -96,6 +96,7 @@ async function run() {
     fs.mkdirSync(path.dirname(MEMORY), { recursive: true });
     fs.writeFileSync(MEMORY, `Results of OUR published videos on @${ACCOUNT} (updated ${new Date(now).toISOString().slice(0, 10)}, account median ${med} views). Apply these when planning:\n` +
       (report.lecciones || []).map((l) => '- ' + l).join('\n') + (report.probar && report.probar.length ? '\nWorth trying:\n' + report.probar.map((l) => '- ' + l).join('\n') : '') + '\n');
+    await makePart2(j, med);
     j.lastRun = now;
     store.save(j);
     setW({ state: 'done', action: `✅ Analizados ${j.reels.length} reels · ${(report.lecciones || []).length} lecciones para el director` });
@@ -118,6 +119,38 @@ function schedule() {
     if (running || !j.lastRun || lock.isBusy() || Date.now() - j.lastRun < hours * 3600000) return;
     run();
   }, 30 * 60000);
+}
+
+// 🔁 Parte 2: los reels que superan 2× la media (y son de los últimos 5 días) tienen continuación en 24-48 h
+async function makePart2(j, med) {
+  const done = new Set(j.part2Done || []);
+  const wins = (j.reels || []).filter((r) => med && r.views >= 2 * med && r.postedAt && Date.now() - Date.parse(r.postedAt) < 5 * 86400000 && !done.has(r.url));
+  if (!wins.length) return;
+  store.setWorker(j, 'results', { action: `🔁 Preparando la parte 2 de ${wins.length} reel(s) que funcionan…` });
+  const items = wins.map((r) => {
+    const job = r.jobId && store.load(r.jobId);
+    return `### ${r.url}\n${r.views} views (${(r.views / med).toFixed(1)}× our median), ${r.comments ?? '?'} comments\nCaption: ${r.caption || '-'}` +
+      (job ? `\nTitle: ${job.title}\nOur script: ${(job.clips || []).map((c) => c.line).join(' ') || job.script}` : '');
+  }).join('\n\n');
+  const out = path.join(dir(), 'part2.json');
+  if (fs.existsSync(out)) fs.unlinkSync(out);
+  try {
+    const text = await claude.run({ job: j, worker: 'results', cwd: dir(), tools: ['Write'], prompt: fill(P('part2.md'), { WINNERS: items, OUT: out }) });
+    const res = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, 'utf8')) : claude.extractJson(text);
+    for (const r of wins) {
+      const p = res[r.url];
+      if (!p || !p.guion) continue;
+      const job = r.jobId && store.load(r.jobId);
+      // La referencia de composición: la del video original (o el propio reel si no salió de Flow Studio)
+      j.part2 = [{ key: r.url, title: 'Parte 2: ' + (p.titulo || (job && job.title) || 'idea'), hook: p.hook, script: p.guion, url: (job && job.url) || r.url, videoType: (job && job.videoType) || 'crecimiento', views: r.views, at: Date.now() }, ...(j.part2 || [])].slice(0, 20);
+      done.add(r.url);
+      store.log(j, 'results', `🔁 Parte 2 lista: "${p.titulo}" (el original lleva ${r.views} vistas)`);
+      require('../lib/notify').send('🔁 Parte 2 lista', `Tu reel va ${(r.views / med).toFixed(1)}× por encima de tu media. Parte 2: "${p.titulo}". ${require('../lib/autopilot').opts().enabled ? 'El piloto la hará esta noche.' : 'Créala desde 🏠 Hoy.'}`, { tags: 'repeat' });
+    }
+    j.part2Done = [...done].slice(-200);
+  } catch (e) {
+    store.log(j, 'results', '⚠️ No pude preparar la parte 2: ' + e.message.slice(0, 100));
+  }
 }
 
 // 🔗 Enlace automático: la duración exacta del reel coincide con la de un video nuestro (A o B)
@@ -153,4 +186,4 @@ function link(url, jobId) {
   return r;
 }
 
-module.exports = { RID, rjob, run, schedule, memory, link, autoLink, isRunning: () => running };
+module.exports = { RID, rjob, run, schedule, memory, link, autoLink, makePart2, isRunning: () => running };

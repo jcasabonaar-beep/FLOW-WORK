@@ -724,15 +724,24 @@ async function refreshHome() {
     ${p.running || w.state === 'working' || w.state === 'paused' ? `<p class="muted">Ahora: ${esc(w.action)}</p>` : ''}
     ${last ? `<div class="muted" style="font-size:12px">Última tanda (${new Date(last.at).toLocaleString()}):</div>${last.jobs.map((x) => row(x, (STATUS_ES[x.status] || x.status) + (x.driveName ? ' · ☁️ ' + x.driveName : ''))).join('')}` : ''}
     <div class="btns"><button id="hPilotRun" ${p.running ? 'disabled' : ''}>▶ Lanzar ahora</button><button data-go="settings">⚙️ Cambiar</button></div>`;
+  const p2 = (r.part2 || []).filter((p) => Date.now() - p.at < 72 * 3600000);
   const rep = r.report;
   const top = [...(r.reels || [])].sort((a, b) => (b.views || 0) - (a.views || 0))[0];
-  $('#hResults').innerHTML = `<h3>📈 Tus reels</h3>` + (rep ? `<p>${esc((rep.resumen || '').split(/(?<=\.)\s/)[0])}</p>
+  $('#hResults').innerHTML = `<h3>📈 Tus reels</h3>` +
+    (p2.length ? `<div class="notes" style="border-color:#86efac"><b>🔁 Parte 2 lista</b> (tu reel funcionó: aprovéchalo en 24-48 h)${p2.map((p, i) => `<div class="hrow"><div><b>${esc(p.title)}</b><small>Hook: ${esc(p.hook || '')}</small></div><button class="small good" data-p2="${i}" style="margin-left:auto">🎬 Crear</button></div>`).join('')}</div>` : '') + (rep ? `<p>${esc((rep.resumen || '').split(/(?<=\.)\s/)[0])}</p>
     ${rep.horario ? `<p>🕐 <b>Publica:</b> ${esc(rep.horario)}</p>` : ''}
     ${top ? `<p class="muted">Mejor: <b>${fmt(top.views)}</b> vistas${rep.median ? ` · ${(top.views / rep.median).toFixed(1)}× tu media` : ''}</p>` : ''}
     ${(rep.lecciones || []).length ? `<div class="muted" style="font-size:12px">El director ya aplica:</div><ul>${rep.lecciones.slice(0, 3).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}` : '<p class="muted">Todavía no hay análisis.</p>') +
     `<div class="btns"><button data-go="results">Ver todo</button></div>`;
   document.querySelectorAll('#home [data-openjob]').forEach((b) => b.onclick = () => open(b.dataset.openjob));
   document.querySelectorAll('#home [data-go]').forEach((b) => b.onclick = () => go(b.dataset.go));
+  document.querySelectorAll('[data-p2]').forEach((b) => b.onclick = async () => {
+    const p = p2[b.dataset.p2];
+    await $('#btnNew').onclick();
+    const f = $('#formNew');
+    f.title.value = p.title; f.url.value = p.url || ''; f.script.value = cleanScript(p.script);
+    const t = f.querySelector(`[name=videoType][value=${p.videoType || 'crecimiento'}]`); if (t) t.checked = true;
+  });
   $('#hPilotRun').onclick = async () => { if (!confirm('¿Lanzar el piloto automático ahora? Buscará ideas y empezará los videos.')) return; await api('autopilot/run', {}); refreshHome(); };
 }
 
