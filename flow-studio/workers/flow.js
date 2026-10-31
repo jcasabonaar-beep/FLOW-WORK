@@ -307,6 +307,8 @@ async function runHookB(job) {
   const hb = job.hookB;
   const c1 = job.clips[0];
   if (!hb || hb.clipStatus === 'done' || !c1 || c1.clipStatus !== 'done' || !c1.frame || c1.readyClip || config.flowMode !== 'auto') return;
+  // En el piloto, solo los 2 más fuertes llevan versión B (reel de prueba): 6 publicaciones al día en total
+  if (job.autopilot && (job.priority ?? 0) >= (config.abTop ?? 2)) { store.log(job, 'clips', '🅰️🅱️ Sin versión B: hoy solo la llevan los 2 videos más fuertes'); return; }
   const item = { ...c1, n: hb.n, line: hb.line, clipStatus: 'pending', clipRetried: true };
   const dest = `clips/clip_${pad(hb.n)}.mp4`;
   if (!fs.existsSync(abs(job, dest.replace('.mp4', '_a.mp4')))) {

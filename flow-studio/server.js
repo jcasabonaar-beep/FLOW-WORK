@@ -127,12 +127,12 @@ async function api(req, res, url) {
     const pub = require('./lib/publish');
     if (method === 'POST' && parts[2] === 'all') {
       // Los que ya subiste antes de tener esta pantalla
-      for (const j of store.list()) if (j.status === 'done' && j.finalFile && !j.published) pub.mark(j.id, true, j.createdAt);
+      for (const j of store.list()) if (j.status === 'done' && j.finalFile) { if (!j.published) pub.mark(j.id, true, j.createdAt); if (j.outputB && !j.publishedB) pub.mark(j.id, true, j.createdAt, true); }
       return send(res, 200, pub.queue());
     }
     if (method === 'POST' && parts[2]) {
       const body = JSON.parse((await readBody(req)).toString() || '{}');
-      return send(res, 200, { published: pub.mark(parts[2], body.published !== false, body.at) });
+      return send(res, 200, { published: pub.mark(parts[2], body.published !== false, body.at, body.trial) });
     }
     if (method === 'POST') {
       const body = JSON.parse((await readBody(req)).toString() || '{}');

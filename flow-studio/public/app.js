@@ -801,22 +801,22 @@ async function refreshPublish() {
       ${v.cover ? `<img src="${v.cover}">` : '<div class="ph"></div>'}
       <div style="flex:1;min-width:0">
         <div class="pubwhen">${i + 1}. ${v.at ? when(v.at) : ''}</div>
-        <h3>${esc(v.title)} <span class="badge">${v.videoType === 'venta' ? '💰 Venta' : '🚀 Crecimiento'}</span>${v.driveName ? ` <span class="badge done">☁️ ${esc(v.driveName)}</span>` : ''}</h3>
+        <h3>${v.trial ? '🧪 ' : ''}${esc(v.title)} ${v.trial ? '<span class="badge waiting_you">REEL DE PRUEBA · versión B</span>' : ''}<span class="badge">${v.videoType === 'venta' ? '💰 Venta' : '🚀 Crecimiento'}</span>${v.driveName ? ` <span class="badge done">☁️ ${esc(v.driveName)}</span>` : ''}</h3>
         ${v.why ? `<div class="muted" style="font-size:12px;margin:-4px 0 6px">🎯 ${esc(v.why)}</div>` : ''}
         <div class="btns">
-          <a href="${rootFile(encodeURI(v.file))}" download><button class="small">⬇ Video</button></a>
-          ${v.fileB ? `<a href="${rootFile(encodeURI(v.fileB))}" download><button class="small" title="${esc(v.hookB || '')}">⬇ Versión B (súbela como reel de prueba)</button></a>` : ''}
+          <a href="${rootFile(encodeURI(v.file))}" download><button class="small">⬇ Video${v.trial ? ' B' : ''}</button></a>
+          ${v.trial ? `<span class="muted" style="font-size:12px">Hook B: “${esc(v.hookB || '')}” · al publicar elige <b>Reel de prueba</b></span>` : ''}
           ${v.kit ? `<button class="small" data-pubcopy="${i}">📋 Copiar descripción</button>` : ''}
           ${v.kit && v.kit.comentario ? `<button class="small" data-pubcom="${i}">📌 Copiar comentario</button>` : ''}
         </div>
         <div class="muted" style="font-size:12px;margin-top:6px">📍 Ubicación: <b>${esc((v.kit && v.kit.ubicacion) || 'Miami')}</b> · 🤖 Activa <b>"Hecho con IA"</b> · Responde los primeros comentarios en la primera hora</div>
       </div>
-      <button class="good" data-pubdone="${v.id}" data-at="${v.at || ''}" style="align-self:center">✓ Publicado</button>
+      <button class="good" data-pubdone="${v.id}" data-trial="${v.trial ? 1 : ''}" data-at="${v.at || ''}" style="align-self:center">✓ Publicado</button>
     </div>`).join('') : '<p class="muted">No hay videos pendientes de publicar. 👌</p>') +
     (q.published.length ? `<h2 class="sec">Ya publicados</h2>${q.published.map((p) => `<div class="hrow"><div><b>${esc(p.title)}</b><small>${new Date(p.at).toLocaleString('es-ES')}</small></div><button class="small" data-pubundo="${p.id}" style="margin-left:auto">↩ Deshacer</button></div>`).join('')}` : '');
   document.querySelectorAll('[data-pubcopy]').forEach((b) => b.onclick = () => { navigator.clipboard.writeText(kitText(q.items[b.dataset.pubcopy].kit)); b.textContent = '✓ Copiado'; });
   document.querySelectorAll('[data-pubcom]').forEach((b) => b.onclick = () => { navigator.clipboard.writeText(q.items[b.dataset.pubcom].kit.comentario); b.textContent = '✓ Copiado'; });
-  document.querySelectorAll('[data-pubdone]').forEach((b) => b.onclick = async () => { await api('publish/' + b.dataset.pubdone, { published: true, at: b.dataset.at || Date.now() }); refreshPublish(); loadList(); });
+  document.querySelectorAll('[data-pubdone]').forEach((b) => b.onclick = async () => { await api('publish/' + b.dataset.pubdone, { published: true, at: b.dataset.at || Date.now(), trial: !!b.dataset.trial }); refreshPublish(); loadList(); });
   document.querySelectorAll('[data-pubundo]').forEach((b) => b.onclick = async () => { await api('publish/' + b.dataset.pubundo, { published: false }); refreshPublish(); });
   if ($('#btnPubAll')) $('#btnPubAll').onclick = async () => { if (confirm('¿Marcar TODOS los videos de esta lista como ya publicados?')) { await api('publish/all', {}); refreshPublish(); loadList(); } };
   $('#navPub').hidden = !q.items.length;

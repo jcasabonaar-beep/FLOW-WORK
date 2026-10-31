@@ -11,7 +11,8 @@ const assistant = require('../workers/assistant');
 const config = require('../config.json');
 
 const PID = '_piloto';
-const DEFAULTS = { enabled: false, hour: 1, videos: config.dailyMax || 6, venta: 1, setting: 'kitchen' };
+// 6 al día en total: 4 normales + 2 reels de prueba (la versión B de los 2 más fuertes)
+const DEFAULTS = { enabled: false, hour: 1, videos: config.dailyMain || 4, venta: 1, setting: 'kitchen' };
 const MIX = ['kitchen', 'walmart', 'kitchen', 'target', 'kitchen', 'supermarket'];
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 let running = false;
