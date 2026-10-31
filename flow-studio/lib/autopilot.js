@@ -203,6 +203,7 @@ function weekly(j) {
     top ? `🏆 Mejor reel de la semana: ${top.views.toLocaleString('es-ES')} vistas` : '',
     lesson ? `💡 Lo que más funciona: ${lesson}` : '',
     whenToPost() ? `🕐 Publica: ${whenToPost()}` : '',
+    (research.rjob().accounts || []).length < 8 ? `📌 Pendiente: añade más cuentas al Investigador (tienes ${(research.rjob().accounts || []).length}; mejor 8-10)` : '',
   ].filter(Boolean).join('\n'), { tags: 'bar_chart' });
 }
 

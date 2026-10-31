@@ -713,14 +713,16 @@ async function renderDrive() {
 // ---------- 🏠 Hoy ----------
 async function refreshHome() {
   show('home');
-  const [list, p, r] = await Promise.all([loadList(), api('autopilot'), api('results')]);
+  const [list, p, r, rs] = await Promise.all([loadList(), api('autopilot'), api('results'), api('research')]);
   const wait = list.filter(needsYou);
   const run = list.filter((j) => !needsYou(j) && j.status !== 'done');
   const today = list.filter((j) => j.status === 'done' && new Date(j.createdAt).toDateString() === new Date().toDateString());
+  // 📌 Recordatorio: con 8-10 cuentas buenas hay virales claros casi cada día
+  const nAcc = (rs.accounts || []).length;
   $('#hMeta').textContent = `${new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} · ${today.length} videos terminados hoy`;
   const why = (j) => j.status === 'error' ? '❌ Se atascó: ábrelo y pulsa Continuar' : ['paused', 'stopped'].includes(j.status) ? '⏸ Parado: ábrelo y pulsa Continuar (o archívalo en ⋯ Más)' : j.stage === 'review_frames' ? 'Revisa los frames' : j.stage === 'review_final' ? 'Dale el OK final' : 'Necesita que lo mires';
   const row = (j, txt) => `<div class="hrow" data-openjob="${j.id}"><span class="dot ${j.status}"></span><div><b>${esc(j.title)}</b><small>${esc(txt)}</small></div></div>`;
-  $('#hWait').innerHTML = `<h3>✋ Te esperan <span class="badge ${wait.length ? 'waiting_you' : ''}">${wait.length}</span></h3>` +
+  $('#hWait').innerHTML = (nAcc < 8 ? `<div class="notes" style="border-color:#fcd34d;margin-top:0">📌 <b>Pendiente: añade cuentas al Investigador</b> (tienes ${nAcc}; con 8-10 cuentas buenas del estilo de @saludconisabel habrá virales claros casi cada día). <button class="small" data-go="settings">Añadir</button></div>` : '') + `<h3>✋ Te esperan <span class="badge ${wait.length ? 'waiting_you' : ''}">${wait.length}</span></h3>` +
     (wait.map((j) => row(j, why(j))).join('') || '<p class="muted">Nada pendiente. 👌</p>');
   $('#hRun').innerHTML = `<h3>⏳ En marcha <span class="badge ${run.length ? 'working' : ''}">${run.length}</span></h3>` +
     (run.map((j) => row(j, j.status === 'waiting_limit' ? '💤 Esperando a que se renueve el límite de Claude' : stageName(j.stage))).join('') || '<p class="muted">Ningún video trabajando ahora.</p>');

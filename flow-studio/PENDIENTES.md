@@ -47,3 +47,6 @@
 - Marca "Synthetic Performer" ya va quemada en el video.
 - Publicar de 1 en 1, separados 5-6 h, a la hora que diga el Analista de resultados.
 - Fijar el 📌 comentario y poner la 📍 ubicación: siempre Miami.
+
+## Recordatorio
+- 📌 Añadir más cuentas al Investigador (objetivo 8-10, estilo @saludconisabel: experimentos, maquetas, remedio sobre otra persona). Quitar `wellnesseverydayh` (ya no existe). Sale en 🏠 Hoy y en el resumen del domingo hasta llegar a 8.
