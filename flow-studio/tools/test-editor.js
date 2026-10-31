@@ -27,5 +27,5 @@ const editor = require('../workers/editor');
   job.status = 'waiting_you';
   await editor.run(job);
   store.save(job);
-  console.log('OK → ' + path.join(dir, 'edit', 'final.mp4'));
+  console.log('OK → ' + path.join(dir, job.output));
 })().catch((e) => { console.error(e); process.exit(1); });

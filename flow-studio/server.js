@@ -40,10 +40,13 @@ function serveFile(req, res, file) {
     const [a, b] = range.replace('bytes=', '').split('-');
     const start = parseInt(a, 10), end = b ? parseInt(b, 10) : size - 1;
     res.writeHead(206, { 'Content-Type': type, 'Content-Range': `bytes ${start}-${end}/${size}`, 'Accept-Ranges': 'bytes', 'Content-Length': end - start + 1 });
-    return fs.createReadStream(file, { start, end }).pipe(res);
+    // Al cerrar el reproductor se suelta el archivo (en Windows, si no, no se puede reemplazar)
+    const st = fs.createReadStream(file, { start, end }); res.on('close', () => st.destroy());
+    return st.pipe(res);
   }
   res.writeHead(200, { 'Content-Type': type, 'Content-Length': size, 'Cache-Control': 'no-cache' });
-  fs.createReadStream(file).pipe(res);
+  const st = fs.createReadStream(file); res.on('close', () => st.destroy());
+  st.pipe(res);
 }
 
 function safeJoin(base, rel) {

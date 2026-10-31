@@ -321,9 +321,15 @@ function subtract(ranges, cuts) {
   return out.length ? out : ranges;
 }
 
+// Cada montaje se guarda con un nombre nuevo: en Windows no se puede sustituir un video que la página está reproduciendo
+function cleanOld(edit, keep) {
+  for (const f of fs.readdirSync(edit)) if (/^final.*\.mp4$/.test(f) && !keep.includes(f)) { try { fs.unlinkSync(path.join(edit, f)); } catch {} }
+}
+
 async function run(job) {
-  const tag = await render(job, { clips: job.clips, hook: job.plan && job.plan.hook, tag: '' });
-  job.output = `edit/final${tag}.mp4`;
+  const stamp = Date.now();
+  const nameA = await render(job, { clips: job.clips, hook: job.plan && job.plan.hook, tag: '', stamp });
+  job.output = `edit/${nameA}`;
   job.outputB = null;
   job.outputV = Date.now();
   store.save(job);
@@ -333,14 +339,15 @@ async function run(job) {
     try {
       const first = job.clips.find((c) => !c.skip && c.clip);
       const clips = job.clips.map((c) => (c === first ? { ...c, clip: hb.clip, line: hb.line } : c));
-      await render(job, { clips, hook: hb.text || (job.plan && job.plan.hook), tag: 'B' });
-      job.outputB = 'edit/finalB.mp4';
+      const nameB = await render(job, { clips, hook: hb.text || (job.plan && job.plan.hook), tag: 'B', stamp });
+      job.outputB = `edit/${nameB}`;
       store.log(job, 'editor', '🅰️🅱️ Versión B lista (mismo video con el otro hook)');
     } catch (e) {
       store.log(job, 'editor', '⚠️ No pude montar la versión B: ' + e.message.slice(0, 120));
     }
     store.save(job);
   }
+  cleanOld(path.join(store.jobDir(job.id), 'edit'), [path.basename(job.output), job.outputB ? path.basename(job.outputB) : ''].filter(Boolean));
   await publishKit(job);
 }
 
@@ -502,15 +509,15 @@ async function render(job, v) {
   }
   fc.push(`[${last}]ass=captions${T}.ass:fontsdir=fonts[vout]`);
   await ffmpeg([...inputs, '-filter_complex', fc.join(';'), '-map', '[vout]', '-map', '0:a', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18',
-    '-pix_fmt', 'yuv420p', '-c:a', 'copy', '-movflags', '+faststart', `final${T}.mp4`], { cwd: edit });
+    '-pix_fmt', 'yuv420p', '-c:a', 'copy', '-movflags', '+faststart', `pre${T}.mp4`], { cwd: edit });
+  const out = `final${T}_${v.stamp || Date.now()}.mp4`;
   if (pc.speed > 1.001 || pc.speed < 0.999) {
     store.setWorker(job, 'editor', { action: `⚡ Acelerando a x${pc.speed}…` });
-    await ffmpeg(['-i', `final${T}.mp4`, '-filter_complex', `[0:v]setpts=PTS/${pc.speed}[v];[0:a]atempo=${pc.speed}[a]`, '-map', '[v]', '-map', '[a]',
-      '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', `final${T}_x.mp4`], { cwd: edit });
-    fs.renameSync(path.join(edit, `final${T}_x.mp4`), path.join(edit, `final${T}.mp4`));
-  }
+    await ffmpeg(['-i', `pre${T}.mp4`, '-filter_complex', `[0:v]setpts=PTS/${pc.speed}[v];[0:a]atempo=${pc.speed}[a]`, '-map', '[v]', '-map', '[a]',
+      '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', out], { cwd: edit });
+  } else fs.copyFileSync(path.join(edit, `pre${T}.mp4`), path.join(edit, out));
   store.log(job, 'editor', `✅ Video final${T ? ' (versión ' + T + ')' : ''} listo: ${(total / pc.speed).toFixed(1)} s${pc.speed !== 1 ? ` (x${pc.speed})` : ''} · ${counter.n} cambios de plano · ${events.length} sonidos`);
-  return T;
+  return out;
 }
 
 // Hashtags: Instagram deja 5. Los que elige el kit primero y, al final, los fijos del productor (⚙️ Ajustes)
@@ -528,7 +535,9 @@ function fiveTags(text) {
 async function publishKit(job) {
   const edit = path.join(store.jobDir(job.id), 'edit');
   store.setWorker(job, 'editor', { action: 'Preparando portada y texto para publicar…' });
-  try { await ffmpeg(['-ss', '0.6', '-i', 'final.mp4', '-frames:v', '1', '-q:v', '2', 'cover.jpg'], { cwd: edit }); } catch {}
+  const cover = `cover_${Date.now()}.jpg`;
+  for (const f of fs.readdirSync(edit)) if (/^cover.*\.jpg$/.test(f)) { try { fs.unlinkSync(path.join(edit, f)); } catch {} }
+  try { await ffmpeg(['-ss', '0.6', '-i', path.basename(job.output), '-frames:v', '1', '-q:v', '2', cover], { cwd: edit }); } catch {}
   const out = path.join(edit, 'kit.json');
   try {
     const { fill } = require('./director');
@@ -541,10 +550,10 @@ async function publishKit(job) {
     if (!job.workers.kit) job.workers.kit = { state: 'idle', action: '', log: [], paused: false };
     const text = await claude.run({ job, worker: 'kit', prompt, tools: ['Write'] });
     const k = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, 'utf8')) : claude.extractJson(text);
-    job.kit = { ...k, ubicacion: config.location || k.ubicacion || '', hashtags: fiveTags(k.hashtags), disclosure: job.videoType === 'venta' ? config.amazonDisclosure : '', cover: fs.existsSync(path.join(edit, 'cover.jpg')) ? 'edit/cover.jpg' : null };
+    job.kit = { ...k, ubicacion: config.location || k.ubicacion || '', hashtags: fiveTags(k.hashtags), disclosure: job.videoType === 'venta' ? config.amazonDisclosure : '', cover: fs.existsSync(path.join(edit, cover)) ? `edit/${cover}` : null };
   } catch (e) {
     store.log(job, 'editor', '⚠️ No pude preparar el texto para publicar: ' + e.message.slice(0, 100));
-    job.kit = { cover: fs.existsSync(path.join(edit, 'cover.jpg')) ? 'edit/cover.jpg' : null };
+    job.kit = { cover: fs.existsSync(path.join(edit, cover)) ? `edit/${cover}` : null };
   }
   store.save(job);
 }
