@@ -37,11 +37,18 @@ function target() {
   return day;
 }
 
+// Dentro de cada día, los videos van solos en "Videos" (para cogerlos directamente); texto y portada se quedan en la carpeta del día
+const VIDEOS = 'Videos';
+const where = (dest, f) => (f.endsWith('.mp4') ? path.join(dest, VIDEOS, f) : path.join(dest, f));
+// Los subidos antes de este cambio tienen el video suelto en la carpeta del día
+const find = (dest, f) => [where(dest, f), path.join(dest, f)].find((x) => fs.existsSync(x));
+
 // Siguiente nombre libre del día: automáticos con "IA" (1-30102026IA), manuales sin ella (3-30102026). Comparten el contador.
 function nextName(auto = true) {
   const dest = folder() && path.join(folder(), dayFolder());
   const day = today();
-  const taken = dest && fs.existsSync(dest) ? fs.readdirSync(dest).map((f) => f.match(new RegExp(`^(\\d+)-${day}(IA)?\\.mp4$`))).filter(Boolean).map((m) => +m[1]) : [];
+  const files = dest ? [dest, path.join(dest, VIDEOS)].filter((d) => fs.existsSync(d)).flatMap((d) => fs.readdirSync(d)) : [];
+  const taken = files.map((f) => f.match(new RegExp(`^(\\d+)-${day}(IA)?\\.mp4$`))).filter(Boolean).map((m) => +m[1]);
   return `${(taken.length ? Math.max(...taken) : 0) + 1}-${day}${auto ? 'IA' : ''}`;
 }
 
@@ -50,28 +57,30 @@ const parts = (base) => [base + '.mp4', base + '-B.mp4', base + '-texto.txt', ba
 function upload(job, name) {
   const dest = target();
   if (!dest) return null;
+  fs.mkdirSync(path.join(dest, VIDEOS), { recursive: true });
   const base = clean(name) || nextName(!name);
-  if (fs.existsSync(path.join(dest, base + '.mp4'))) throw new Error(`Ya hay un video llamado ${base} en tu Drive`);
-  fs.copyFileSync(path.join(store.jobDir(job.id), job.output), path.join(dest, base + '.mp4'));
+  if (find(dest, base + '.mp4')) throw new Error(`Ya hay un video llamado ${base} en tu Drive`);
+  fs.copyFileSync(path.join(store.jobDir(job.id), job.output), where(dest, base + '.mp4'));
   job.driveDir = dest;
-  if (job.outputB && fs.existsSync(path.join(store.jobDir(job.id), job.outputB))) fs.copyFileSync(path.join(store.jobDir(job.id), job.outputB), path.join(dest, base + '-B.mp4'));
+  if (job.outputB && fs.existsSync(path.join(store.jobDir(job.id), job.outputB))) fs.copyFileSync(path.join(store.jobDir(job.id), job.outputB), where(dest, base + '-B.mp4'));
   const k = job.kit || {};
-  if (k.caption) fs.writeFileSync(path.join(dest, base + '-texto.txt'), [k.caption, '', k.hashtags || '', k.disclosure ? '\n' + k.disclosure : '', k.comentario ? '\n📌 Comentario para fijar: ' + k.comentario : '', k.ubicacion ? '📍 Ubicación: ' + k.ubicacion : ''].join('\n'));
-  if (k.cover && fs.existsSync(path.join(store.jobDir(job.id), k.cover))) fs.copyFileSync(path.join(store.jobDir(job.id), k.cover), path.join(dest, base + '-portada.jpg'));
+  if (k.caption) fs.writeFileSync(where(dest, base + '-texto.txt'), [k.caption, '', k.hashtags || '', k.disclosure ? '\n' + k.disclosure : '', k.comentario ? '\n📌 Comentario para fijar: ' + k.comentario : '', k.ubicacion ? '📍 Ubicación: ' + k.ubicacion : ''].join('\n'));
+  if (k.cover && fs.existsSync(path.join(store.jobDir(job.id), k.cover))) fs.copyFileSync(path.join(store.jobDir(job.id), k.cover), where(dest, base + '-portada.jpg'));
   return base;
 }
 
-// Cambia el nombre de un video ya subido (y de su texto y portada)
+// Cambia el nombre de un video ya subido (y de su versión B, texto y portada)
 function rename(job, name) {
   // En la carpeta donde se subió (puede ser de otro día)
   const dest = job.driveDir && fs.existsSync(job.driveDir) ? job.driveDir : target();
   const base = clean(name);
   if (!dest || !base || !job.driveName) return null;
   if (base === job.driveName) return base;
-  if (!fs.existsSync(path.join(dest, job.driveName + '.mp4'))) return upload(job, base);
-  if (fs.existsSync(path.join(dest, base + '.mp4'))) throw new Error(`Ya hay un video llamado ${base} en tu Drive`);
+  if (!find(dest, job.driveName + '.mp4')) return upload(job, base);
+  if (find(dest, base + '.mp4')) throw new Error(`Ya hay un video llamado ${base} en tu Drive`);
+  fs.mkdirSync(path.join(dest, VIDEOS), { recursive: true });
   const from = parts(job.driveName), to = parts(base);
-  from.forEach((f, i) => { if (fs.existsSync(path.join(dest, f))) fs.renameSync(path.join(dest, f), path.join(dest, to[i])); });
+  from.forEach((f, i) => { const src = find(dest, f); if (src) fs.renameSync(src, where(dest, to[i])); });
   return base;
 }
 
