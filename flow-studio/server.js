@@ -123,6 +123,23 @@ async function api(req, res, url) {
       .map((j) => ({ id: j.id, title: j.title, file: j.finalFile, fileB: j.outputB && fs.existsSync(path.join(store.ROOT, j.finalFile.replace(/\.mp4$/, '-B.mp4'))) ? j.finalFile.replace(/\.mp4$/, '-B.mp4') : null, hookB: j.hookB && j.hookB.text, hook: j.plan && j.plan.hook, videoType: j.videoType, createdAt: j.createdAt, auto: !!j.auto, kit: j.kit || null, driveName: j.driveName || null }));
     return send(res, 200, lib);
   }
+  if (parts[1] === 'publish') {
+    const pub = require('./lib/publish');
+    if (method === 'POST' && parts[2] === 'all') {
+      // Los que ya subiste antes de tener esta pantalla
+      for (const j of store.list()) if (j.status === 'done' && j.finalFile && !j.published) pub.mark(j.id, true, j.createdAt);
+      return send(res, 200, pub.queue());
+    }
+    if (method === 'POST' && parts[2]) {
+      const body = JSON.parse((await readBody(req)).toString() || '{}');
+      return send(res, 200, { published: pub.mark(parts[2], body.published !== false, body.at) });
+    }
+    if (method === 'POST') {
+      const body = JSON.parse((await readBody(req)).toString() || '{}');
+      require('./lib/settings').save({ publishHours: String(body.hours || '').split(/[\s,]+/).filter((h) => /^\d{1,2}(:\d{2})?$/.test(h)) });
+    }
+    return send(res, 200, pub.queue());
+  }
   if (parts[1] === 'health') return send(res, 200, await require('./lib/health').check());
   if (parts[1] === 'autopilot') {
     const settings = require('./lib/settings');
@@ -182,7 +199,7 @@ async function api(req, res, url) {
   if (parts[1] !== 'jobs') return send(res, 404, { error: 'ruta' });
 
   if (parts.length === 2 && method === 'GET') {
-    return send(res, 200, store.list().map((j) => ({ id: j.id, title: j.title, stage: j.stage, status: j.status, createdAt: j.createdAt, clips: j.clips.length, auto: !!j.auto })));
+    return send(res, 200, store.list().map((j) => ({ id: j.id, title: j.title, stage: j.stage, status: j.status, createdAt: j.createdAt, clips: j.clips.length, auto: !!j.auto, toPublish: j.status === 'done' && !!j.finalFile && !j.published })));
   }
   if (parts[2] === 'batch' && method === 'POST') {
     // Lote nocturno: varias ideas de golpe, en modo directo y en cola

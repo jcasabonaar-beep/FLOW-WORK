@@ -12,6 +12,7 @@
   <button class="primary wide big" id="btnNew">＋ Nuevo video</button>
   <nav class="nav">
     <button data-view="home">🏠 Hoy <span class="count" id="navWait" hidden></span></button>
+    <button data-view="publish">📅 Publicar <span class="count" id="navPub" hidden></span></button>
     <button data-view="ideas">💡 Ideas</button>
     <button data-view="library">🎬 Terminados</button>
     <button data-view="results">📈 Resultados</button>
@@ -60,6 +61,11 @@
       <div class="room-mini" id="rRoom"></div>
     </div>
     <div id="rTable"></div>
+  </section>
+  <section id="publish" hidden>
+    <header class="job-head"><div><h1>📅 Publicar</h1><div class="muted">Tus videos terminados, repartidos en las mejores horas (hora de España). Prográmalos en Instagram a esa hora y pulsa ✓ Publicado.</div></div></header>
+    <div class="notes" id="pubHours"></div>
+    <div id="pubList"></div>
   </section>
   <section id="settings" hidden>
     <header class="job-head"><div><h1>⚙️ Ajustes</h1><div class="muted">Lo que configuras una vez. Se guarda solo y no se pierde al actualizar.</div></div></header>

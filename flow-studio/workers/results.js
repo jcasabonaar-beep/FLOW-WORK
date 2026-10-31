@@ -167,9 +167,12 @@ async function autoLink(j) {
   }
   let n = 0;
   for (const r of j.reels) {
-    if (r.linked || !r.duration) continue;
+    if (r.linked) continue;
     const posted = r.postedAt ? Date.parse(r.postedAt) : Date.now();
-    const hits = mine.filter((m) => Math.abs(m.d - r.duration) < 0.25 && m.at <= posted + 3600000 && posted - m.at < 20 * 86400000);
+    // Publicado a mano a esa hora (botón ✓ Publicado): enlace casi seguro
+    const byTime = store.list().filter((x) => x.published && Math.abs(x.published.at - posted) < 3 * 3600000);
+    if (byTime.length === 1) { Object.assign(r, { jobId: byTime[0].id, version: 'A', autoLinked: true }); n++; continue; }
+    const hits = r.duration ? mine.filter((m) => Math.abs(m.d - r.duration) < 0.25 && m.at <= posted + 3600000 && posted - m.at < 20 * 86400000) : [];
     if (hits.length === 1) { Object.assign(r, { jobId: hits[0].id, version: hits[0].ver, autoLinked: true }); n++; }
   }
   if (n) store.log(j, 'results', `🔗 ${n} reels enlazados solos con su video (misma duración exacta)`);

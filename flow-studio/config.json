@@ -214,5 +214,9 @@
       "name": "Sofía, su nieta",
       "desc": "a cheerful 22-year-old young woman with long dark-brown hair in a high ponytail and brown eyes, wearing a light-gray hoodie"
     }
-  }
+  },
+  "publishHours": [
+    "14:00",
+    "20:00"
+  ]
 }

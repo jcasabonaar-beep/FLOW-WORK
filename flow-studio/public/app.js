@@ -33,7 +33,7 @@ async function api(path, body, opts = {}) {
   return j;
 }
 // Una sola pantalla visible a la vez
-const VIEWS = ['empty', 'home', 'ideas', 'library', 'results', 'settings', 'job'];
+const VIEWS = ['empty', 'home', 'publish', 'ideas', 'library', 'results', 'settings', 'job'];
 function show(view) {
   for (const v of VIEWS) $('#' + v).hidden = v !== view;
   document.querySelectorAll('.nav [data-view]').forEach((b) => b.classList.toggle('sel', b.dataset.view === view));
@@ -76,6 +76,9 @@ async function loadList() {
     (done.length ? `<details class="done-group"><summary class="side-title">✅ Terminados <span>${done.length}</span></summary>${done.map(item).join('')}</details>` : '');
   document.querySelectorAll('.job-item').forEach((el) => el.onclick = (e) => { if (!e.target.closest('.dots')) open(el.dataset.id); });
   bindDots($('#jobList'));
+  const toPub = list.filter((j) => j.toPublish).length;
+  $('#navPub').hidden = !toPub;
+  $('#navPub').textContent = toPub;
   $('#navWait').hidden = !wait.length;
   $('#navWait').textContent = wait.length;
   return list;
@@ -95,6 +98,7 @@ async function refresh() {
   if (!current) return;
   if (current === 'home') return refreshHome();
   if (current === 'ideas') return refreshIdeas();
+  if (current === 'publish') return refreshPublish();
   if (current === 'library') return refreshLibrary();
   if (current === 'results') return refreshResults();
   if (current === 'settings' || current === 'pilot') return refreshSettings();
@@ -778,3 +782,42 @@ $('#btnHealth').onclick = async () => {
   const bad = list.filter((x) => !x.ok && !x.soft).length;
   $('#healthBox').innerHTML = `<p>${bad ? `⚠️ <b>${bad} cosa(s) por arreglar</b>` : '✅ <b>Todo listo</b>'}</p><ul>${list.map((x) => `<li>${x.ok ? '✅' : x.soft ? '➖' : '❌'} <b>${esc(x.name)}</b> <span class="muted">${esc(x.info || 'no encontrado')}</span>${!x.ok && x.fix ? `<br><span style="font-size:12px">👉 ${esc(x.fix)}</span>` : ''}</li>`).join('')}</ul>`;
 };
+
+// ---------- 📅 Publicar ----------
+const when = (t) => {
+  const d = new Date(t), today = new Date();
+  const day = d.toDateString() === today.toDateString() ? 'Hoy' : d.toDateString() === new Date(Date.now() + 86400000).toDateString() ? 'Mañana' : d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric' });
+  const et = d.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' });
+  return `${day} ${d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} <span class="muted">(${et} Nueva York)</span>`;
+};
+async function refreshPublish() {
+  const q = await api('publish');
+  show('publish');
+  if (!$('#pubHours').contains(document.activeElement)) {
+    $('#pubHours').innerHTML = `<div class="row" style="align-items:end"><label>Horas de publicar (hora de España, separadas por espacios). Si lo dejas vacío, usa las que diga el Analista de resultados<input id="inPubHours" value="${esc(q.hours.join(' '))}"></label><button class="primary" id="btnPubHours" style="flex:none">Guardar</button></div>`;
+    $('#btnPubHours').onclick = async () => { await api('publish', { hours: $('#inPubHours').value }); refreshPublish(); };
+  }
+  $('#pubList').innerHTML = (q.items.length > 2 ? `<div class="btns"><button class="small" id="btnPubAll">✓ Ya tengo todos estos publicados (vaciar la lista)</button></div>` : '') + (q.items.length ? q.items.map((v, i) => `<div class="pubcard">
+      ${v.cover ? `<img src="${v.cover}">` : '<div class="ph"></div>'}
+      <div style="flex:1;min-width:0">
+        <div class="pubwhen">${i + 1}. ${v.at ? when(v.at) : ''}</div>
+        <h3>${esc(v.title)} <span class="badge">${v.videoType === 'venta' ? '💰 Venta' : '🚀 Crecimiento'}</span>${v.driveName ? ` <span class="badge done">☁️ ${esc(v.driveName)}</span>` : ''}</h3>
+        <div class="btns">
+          <a href="${rootFile(encodeURI(v.file))}" download><button class="small">⬇ Video</button></a>
+          ${v.fileB ? `<a href="${rootFile(encodeURI(v.fileB))}" download><button class="small" title="${esc(v.hookB || '')}">⬇ Versión B (súbela como reel de prueba)</button></a>` : ''}
+          ${v.kit ? `<button class="small" data-pubcopy="${i}">📋 Copiar descripción</button>` : ''}
+          ${v.kit && v.kit.comentario ? `<button class="small" data-pubcom="${i}">📌 Copiar comentario</button>` : ''}
+        </div>
+        <div class="muted" style="font-size:12px;margin-top:6px">📍 Ubicación: <b>${esc((v.kit && v.kit.ubicacion) || 'Miami')}</b> · 🤖 Activa <b>"Hecho con IA"</b> · Responde los primeros comentarios en la primera hora</div>
+      </div>
+      <button class="good" data-pubdone="${v.id}" data-at="${v.at || ''}" style="align-self:center">✓ Publicado</button>
+    </div>`).join('') : '<p class="muted">No hay videos pendientes de publicar. 👌</p>') +
+    (q.published.length ? `<h2 class="sec">Ya publicados</h2>${q.published.map((p) => `<div class="hrow"><div><b>${esc(p.title)}</b><small>${new Date(p.at).toLocaleString('es-ES')}</small></div><button class="small" data-pubundo="${p.id}" style="margin-left:auto">↩ Deshacer</button></div>`).join('')}` : '');
+  document.querySelectorAll('[data-pubcopy]').forEach((b) => b.onclick = () => { navigator.clipboard.writeText(kitText(q.items[b.dataset.pubcopy].kit)); b.textContent = '✓ Copiado'; });
+  document.querySelectorAll('[data-pubcom]').forEach((b) => b.onclick = () => { navigator.clipboard.writeText(q.items[b.dataset.pubcom].kit.comentario); b.textContent = '✓ Copiado'; });
+  document.querySelectorAll('[data-pubdone]').forEach((b) => b.onclick = async () => { await api('publish/' + b.dataset.pubdone, { published: true, at: b.dataset.at || Date.now() }); refreshPublish(); loadList(); });
+  document.querySelectorAll('[data-pubundo]').forEach((b) => b.onclick = async () => { await api('publish/' + b.dataset.pubundo, { published: false }); refreshPublish(); });
+  if ($('#btnPubAll')) $('#btnPubAll').onclick = async () => { if (confirm('¿Marcar TODOS los videos de esta lista como ya publicados?')) { await api('publish/all', {}); refreshPublish(); loadList(); } };
+  $('#navPub').hidden = !q.items.length;
+  $('#navPub').textContent = q.items.length;
+}
