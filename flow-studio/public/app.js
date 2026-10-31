@@ -577,7 +577,8 @@ async function refreshLibrary() {
 }
 
 // ---------- Kit para publicar ----------
-const kitText = (k) => [k.caption || '', '', k.hashtags || '', k.disclosure ? '\n' + k.disclosure : ''].join('\n').trim();
+// Igual que lib/kit.js: descripción, 7 puntos en líneas separadas (esconden los hashtags) y los hashtags
+const kitText = (k) => [k.caption || '', k.disclosure ? '\n' + k.disclosure : '', ...Array(7).fill('.'), k.hashtags || ''].join('\n').replace(/\n{3,}\./, '\n\n.').trim();
 const kitPlace = (k) => `<div style="font-size:12px;margin-top:6px;color:#fcd34d">🤖 Al publicar: activa <b>"Hecho con IA"</b> (junto a Reels de prueba). Siempre.</div>` + (k && k.comentario ? `<div class="muted" style="font-size:12px;margin-top:6px">📌 Comentario para fijar: <b>${esc(k.comentario)}</b> <button class="small" onclick="navigator.clipboard.writeText(${esc(JSON.stringify(k.comentario))});this.textContent='✓'">📋</button></div>` : '') +
   (k && k.ubicacion ? `<div class="muted" style="font-size:12px;margin-top:6px">📍 Pon de ubicación: <b>${esc(k.ubicacion)}</b> (ayuda a que salga en EE. UU.)</div>` : '');
 function kitHtml() {

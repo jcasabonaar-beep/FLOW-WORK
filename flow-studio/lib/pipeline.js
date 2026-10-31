@@ -28,7 +28,7 @@ function finalize(job) {
   if (job.outputB && fs.existsSync(path.join(store.jobDir(job.id), job.outputB))) fs.copyFileSync(path.join(store.jobDir(job.id), job.outputB), path.join(outDir, name.replace(/\.mp4$/, '-B.mp4')));
   const k = job.kit || {};
   if (k.cover && fs.existsSync(path.join(store.jobDir(job.id), k.cover))) fs.copyFileSync(path.join(store.jobDir(job.id), k.cover), path.join(outDir, name.replace(/\.mp4$/, '-portada.jpg')));
-  if (k.caption) fs.writeFileSync(path.join(outDir, name.replace(/\.mp4$/, '-texto.txt')), [k.caption, '', k.hashtags || '', k.disclosure ? '\n' + k.disclosure : '', k.comentario ? '\n📌 Comentario para fijar: ' + k.comentario : '', k.ubicacion ? '📍 Ubicación: ' + k.ubicacion : '', '🤖 Al publicar: activa "Hecho con IA"'].join('\n'));
+  if (k.caption) fs.writeFileSync(path.join(outDir, name.replace(/\.mp4$/, '-texto.txt')), require('./kit').driveText(k));
   job.stage = 'done';
   job.status = 'done';
   job.finalFile = `${outName}/${name}`;
