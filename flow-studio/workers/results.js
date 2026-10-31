@@ -76,11 +76,12 @@ async function run() {
     store.log(j, 'results', `📊 ${j.reels.length} reels leídos · media de la cuenta ${med} vistas`);
     if (!j.reels.length) throw new Error('No he encontrado reels publicados en @' + ACCOUNT);
 
+    await autoLink(j);
     setW({ action: 'Cruzando las visitas con cómo se hizo cada video…' });
     const now = Date.now();
     const reels = j.reels.map((r) => {
       const age = r.postedAt ? Math.round((now - Date.parse(r.postedAt)) / 3600000) : null;
-      const linked = r.linked && r.jobId ? ` · LINKED BY THE PRODUCER to job id ${r.jobId}, version ${r.version || 'A'} (certain)` : '';
+      const linked = r.linked && r.jobId ? ` · LINKED BY THE PRODUCER to job id ${r.jobId}, version ${r.version || 'A'} (certain)` : r.autoLinked && r.jobId ? ` · MATCHED BY EXACT VIDEO LENGTH to job id ${r.jobId}, version ${r.version || 'A'} (almost certain)` : '';
       const when = r.postedAt ? ` · publicado ${new Date(r.postedAt).toLocaleString('es-ES', { timeZone: 'Europe/Madrid', weekday: 'short', hour: '2-digit', minute: '2-digit' })} hora España / ${new Date(r.postedAt).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric' })} ET` : '';
       return `- ${r.url}${linked}${when} · ${r.views || '?'} vistas (${med ? (r.views / med).toFixed(1) : '?'}× la media) · ${r.likes ?? '?'} likes · ${r.comments ?? '?'} comentarios · ${age != null ? `hace ${age} h` : 'fecha ?'}\n  caption: ${r.caption || '-'}`;
     }).join('\n');
@@ -90,7 +91,7 @@ async function run() {
       prompt: fill(P('results_ideas.md'), { ACCOUNT, REELS: reels, JOBS: jobsSummary(), OUT: rep }) });
     const report = fs.existsSync(rep) ? JSON.parse(fs.readFileSync(rep, 'utf8')) : claude.extractJson(text);
     j.report = { ...report, median: med, at: now };
-    for (const r of j.reels) if (!r.linked) r.jobId = (report.matches || {})[r.url] || r.jobId || null;
+    for (const r of j.reels) if (!r.linked && !r.autoLinked) r.jobId = (report.matches || {})[r.url] || r.jobId || null;
     // Se reescribe entero cada vez (no crece sin fin): el director siempre lee lo último
     fs.mkdirSync(path.dirname(MEMORY), { recursive: true });
     fs.writeFileSync(MEMORY, `Results of OUR published videos on @${ACCOUNT} (updated ${new Date(now).toISOString().slice(0, 10)}, account median ${med} views). Apply these when planning:\n` +
@@ -119,15 +120,37 @@ function schedule() {
   }, 30 * 60000);
 }
 
+// 🔗 Enlace automático: la duración exacta del reel coincide con la de un video nuestro (A o B)
+async function autoLink(j) {
+  const { duration } = require('../lib/ff');
+  const mine = [];
+  for (const x of store.list().filter((x) => x.finalFile)) {
+    const full = store.load(x.id);
+    for (const [ver, f] of [['A', full.finalFile], ['B', full.finalFile.replace(/\.mp4$/, '-B.mp4')]]) {
+      const key = ver === 'A' ? 'finalDuration' : 'finalDurationB';
+      if (full[key] == null && fs.existsSync(path.join(store.ROOT, f))) { try { full[key] = await duration(path.join(store.ROOT, f)); store.save(full); } catch {} }
+      if (full[key]) mine.push({ id: x.id, ver, d: full[key], at: x.createdAt });
+    }
+  }
+  let n = 0;
+  for (const r of j.reels) {
+    if (r.linked || !r.duration) continue;
+    const posted = r.postedAt ? Date.parse(r.postedAt) : Date.now();
+    const hits = mine.filter((m) => Math.abs(m.d - r.duration) < 0.25 && m.at <= posted + 3600000 && posted - m.at < 20 * 86400000);
+    if (hits.length === 1) { Object.assign(r, { jobId: hits[0].id, version: hits[0].ver, autoLinked: true }); n++; }
+  }
+  if (n) store.log(j, 'results', `🔗 ${n} reels enlazados solos con su video (misma duración exacta)`);
+}
+
 // Tú dices qué video es cada reel (los captions de Instagram suelen ser iguales y no se pueden emparejar solos)
 function link(url, jobId) {
   const j = rjob();
   const r = (j.reels || []).find((x) => x.url === url);
   if (!r) return null;
   const [id, version] = String(jobId || '').split('#');
-  Object.assign(r, { jobId: id || null, version: version === 'B' ? 'B' : 'A', linked: !!id });
+  Object.assign(r, { jobId: id || null, version: version === 'B' ? 'B' : 'A', linked: !!id, autoLinked: false });
   store.save(j);
   return r;
 }
 
-module.exports = { RID, rjob, run, schedule, memory, link, isRunning: () => running };
+module.exports = { RID, rjob, run, schedule, memory, link, autoLink, isRunning: () => running };
