@@ -126,6 +126,13 @@ function buildAss(job, words, total, segs) {
     '', '[Events]', 'Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text',
   ];
   const hookEnd = job.plan && job.plan.hook ? C.hookSeconds : 0;
+  // Marca "Synthetic Performer": pequeña y discreta arriba a la izquierda, todo el video
+  const W = config.watermark;
+  if (W && W.text) {
+    const a = Math.round(255 * (1 - (W.opacity ?? 0.85))).toString(16).padStart(2, '0').toUpperCase();
+    lines.splice(lines.indexOf('[Events]'), 0, `Style: Mark,${C.font},${W.size || 30},&H${a}FFFFFF,&H${a}FFFFFF,&H00000000,&H64000000,0,0,0,0,100,100,0.5,0,1,0,1.5,7,0,0,0,1`, '');
+    lines.push(`Dialogue: 4,${assTime(0)},${assTime(total + 1)},Mark,,0,0,0,,{\\pos(${W.x ?? 46},${W.y ?? 70})}${esc(W.text)}`);
+  }
   const ov = versusLayout(job, segs || []);
   if (ov) {
     lines.splice(lines.indexOf('[Events]'), 0,

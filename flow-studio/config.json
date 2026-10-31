@@ -158,5 +158,12 @@
   "fixedTags": [
     "#syntheticperformer",
     "#ad"
-  ]
+  ],
+  "watermark": {
+    "text": "Synthetic Performer",
+    "size": 30,
+    "x": 46,
+    "y": 70,
+    "opacity": 0.85
+  }
 }
