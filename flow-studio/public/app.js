@@ -450,7 +450,10 @@ async function refreshIdeas() {
   const sig = JSON.stringify([r.lastRun, (r.suggestions || []).length]);
   if (sig === ideasSig) return;
   ideasSig = sig;
-  $('#ideaCards').innerHTML = (r.suggestions || []).map((s, i) => `<div class="card">
+  const sc = (s) => (s.ratio || 0) * (s.encaje || 6) / 10;
+  const top = new Set([...(r.suggestions || [])].filter((s) => s.guion && (s.encaje == null || s.encaje >= 6)).sort((a, b) => sc(b) - sc(a)).slice(0, 4).map((s) => s.url));
+  $('#ideaCards').innerHTML = (r.suggestions || []).map((s, i) => `<div class="card" ${top.has(s.url) ? 'style="border-color:#86efac"' : ''}>
+    ${top.has(s.url) ? '<div style="color:#86efac;font-weight:700;font-size:12px;margin-bottom:4px">⭐ De las 4 mejores de hoy</div>' : ''}
     <h3><span>@${esc(s.account)}</span><span class="badge ${s.older ? '' : 'done'}">${s.older ? 'esta semana' : s.ageHours != null ? 'hace ' + s.ageHours + ' h' : ''}</span></h3>
     <div class="pair"><figure>${s.thumb ? `<img src="/files/_investigador/${s.thumb}">` : '<div class="ph">sin miniatura</div>'}</figure>
       <div><div style="font-size:22px;font-weight:800">${fmt(s.views)}</div><div class="muted">vistas · <b style="color:#86efac">${s.ratio}×</b> su media (${fmt(s.median)})</div>${s.encaje ? `<div class="muted" style="font-size:12px">👵 Encaje con tu público: <b style="color:${s.encaje >= 7 ? '#86efac' : s.encaje >= 5 ? '#fcd34d' : '#fca5a5'}">${s.encaje}/10</b></div>` : ''}
