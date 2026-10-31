@@ -497,12 +497,15 @@ async function render(job, v) {
   return T;
 }
 
-// Hashtags: Instagram deja 5. Primero los fijos del productor (⚙️ Ajustes) y luego los que elige el kit
-const fixedTags = () => (require('../lib/settings').get().fixedTags || []).slice(0, 5);
+// Hashtags: Instagram deja 5. Los que elige el kit primero y, al final, los fijos del productor (⚙️ Ajustes)
+const fixedTags = () => (require('../lib/settings').get().fixedTags || config.fixedTags || []).slice(0, 5);
 function fiveTags(text) {
   const norm = (t) => '#' + t.replace(/^#+/, '').trim();
-  const all = [...fixedTags(), ...String(text || '').split(/[\s,]+/).filter((t) => t.replace(/#/g, ''))].map(norm);
-  return [...new Map(all.map((t) => [t.toLowerCase(), t])).values()].slice(0, 5).join(' ');
+  const fixed = fixedTags().map(norm);
+  const taken = new Set(fixed.map((t) => t.toLowerCase()));
+  const free = [...new Map(String(text || '').split(/[\s,]+/).filter((t) => t.replace(/#/g, '')).map(norm)
+    .filter((t) => !taken.has(t.toLowerCase())).map((t) => [t.toLowerCase(), t])).values()].slice(0, 5 - fixed.length);
+  return [...free, ...fixed].join(' ');
 }
 
 // Kit para publicar: portada, descripción, hashtags y aviso de afiliado

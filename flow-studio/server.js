@@ -138,7 +138,7 @@ async function api(req, res, url) {
     }
     const p = autopilot.pjob();
     const runs = (p.runs || []).slice(0, 5).map((r) => ({ ...r, jobs: r.jobs.map((id) => { const x = store.load(id); return x ? { id, title: x.title, status: x.status, stage: x.stage, driveName: x.driveName || null } : null; }).filter(Boolean) }));
-    return send(res, 200, { fixedTags: settings.get().fixedTags || [], speed: settings.get().speed ?? ((config.edit || {}).speed || 1), silences: settings.get().silences || 'corto', opts: autopilot.opts(), ntfyTopic: settings.get().ntfyTopic || '', running: autopilot.isRunning(), worker: p.workers.autopilot, runs, settings: Object.keys(config.settings) });
+    return send(res, 200, { fixedTags: settings.get().fixedTags || config.fixedTags || [], speed: settings.get().speed ?? ((config.edit || {}).speed || 1), silences: settings.get().silences || 'corto', opts: autopilot.opts(), ntfyTopic: settings.get().ntfyTopic || '', running: autopilot.isRunning(), worker: p.workers.autopilot, runs, settings: Object.keys(config.settings) });
   }
   if (parts[1] === 'results') {
     const r = results.rjob();
