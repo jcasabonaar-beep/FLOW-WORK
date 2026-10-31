@@ -30,6 +30,12 @@ Everything must make THIS viewer stop scrolling and feel "this is for me":
 - Clear, energetic but easy to follow: short sentences, one idea per line.
 - Calendar: {{SEASON}} If it fits naturally (never forced), tie one line to the season or the coming date (e.g. "con este frío…", "para después de Thanksgiving").
 
+## Visual format that works on OUR account (real data)
+Our two best reels (95k and 67k views) show her DOING the remedy ON ANOTHER PERSON from the first second: pouring a homemade oil on a woman's neck and hair, her hands on a pregnant woman's belly. A second person in the frame + a hands-on, slightly intimate action = curiosity, nobody scrolls. The next best (25k, 21k) show a strong food action (oranges boiling in a pot, a big chocolate cake). Our weakest ones (3-7k) are her alone, talking to the camera holding a jar.
+So, whenever the topic allows:
+- Hook frame = her applying or doing the remedy ON someone (daughter, granddaughter, husband, a neighbor: neck, back, feet, hair, hands, belly) or a strong close food/prop action. The second person is a normal everyday person, fully clothed or in normal home clothing, shown in a natural way.
+- Never a static talking head with a jar as the hook. If the reference is a talking head, keep its script and pacing but turn the hook image into a hands-on demonstration.
+
 ## What to do
 1. Read every contact sheet with the Read tool so you understand the reference: the shots, the framing, the props and the order of actions.
 2. Fix the script yourself if it is incomplete: if it contains notes, brackets or placeholders (e.g. "[Nota: …]", "completar con…"), remove them; if it promises a secret or recipe but never says which one, or lacks ingredients/measures/steps, complete it with a real, safe, well-known home recipe that fits the topic and the reference (exact US measures, clear steps). Never ask the producer and never let notes be spoken. Mention what you completed in `notes`.

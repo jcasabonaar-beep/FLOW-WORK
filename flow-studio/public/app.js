@@ -656,7 +656,7 @@ async function refreshSettings() {
   $('#sugAccounts').innerHTML = sug.length ? `<div class="muted" style="font-size:12px;margin-top:8px">Cuentas parecidas que ha encontrado el Investigador (las de 🇺🇸 inglés te adelantan lo que se hará viral en español):</div><div class="btns">${sug.map((a) => `<button class="small" data-addacc="${esc(String(a.account).replace(/^@/, ''))}">＋ ${a.lang === 'en' ? '🇺🇸' : '🇪🇸'} @${esc(String(a.account).replace(/^@/, ''))}${a.followers ? ' · ' + fmt(a.followers) : ''}</button>`).join('')}</div>` : '';
   document.querySelectorAll('[data-addacc]').forEach((b) => b.onclick = async () => { await api('research/accounts', { accounts: [...(r.accounts || []), b.dataset.addacc] }); refreshSettings(); });
   const o = p.opts;
-  const sig = JSON.stringify([o, p.ntfyTopic, p.speed, p.silences, p.fixedTags]);
+  const sig = JSON.stringify([o, p.ntfyTopic, p.speed, p.silences, p.fixedTags, p.captionStyle]);
   if (sig !== pilotFormSig) {
     pilotFormSig = sig;
     $('#pilotForm').innerHTML = `Cada noche busca ideas virales, hace los videos solo y los sube a tu Drive. Si se acaba el límite de Claude, espera y sigue cuando se renueva. ${o.enabled ? `<span class="badge done">activado · cada noche a las ${o.hour}:00</span>` : '<span class="badge">desactivado</span>'}
@@ -677,10 +677,11 @@ async function refreshSettings() {
     $('#editBox').innerHTML = `<div class="row" style="align-items:end">
         <label>⚡ Velocidad del video <select id="edSpeed">${[[1, 'Normal (x1)'], [1.05, 'Un poco más rápido (x1,05)'], [1.1, 'Más dinámico (x1,1)'], [1.15, 'Rápido (x1,15)'], [1.2, 'Muy rápido (x1,2)']].map(([v, t]) => `<option value="${v}" ${Number(p.speed) === v ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
         <label>🤫 Silencios entre frases <select id="edSil">${[['normal', 'Normales'], ['corto', 'Cortos (recomendado)'], ['muycorto', 'Muy cortos (casi sin pausas)']].map(([v, t]) => `<option value="${v}" ${p.silences === v ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+        <label>🔤 Subtítulos <select id="edCap">${[['bold', 'GRUESOS en mayúsculas, palabra clave en color'], ['elegant', 'Elegantes, palabra clave en cursiva']].map(([v, t]) => `<option value="${v}" ${p.captionStyle === v ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
         <button class="primary" id="edSave" style="flex:none">Guardar</button></div>
       <div class="row" style="align-items:end"><label># Hashtags fijos (van siempre al final; Instagram deja 5 en total, los otros los elige el sistema)<input id="edTags" value="${esc((p.fixedTags || []).join(' '))}" placeholder="#hashtag1 #hashtag2"></label></div>
       <div class="muted" style="font-size:12px">La velocidad acelera imagen y voz a la vez sin cambiar el tono de la voz. Se aplica a los videos que se monten a partir de ahora (o pulsa "↻ Rehacer edición" en uno ya hecho).</div>`;
-    $('#edSave').onclick = async () => { await api('autopilot', { speed: $('#edSpeed').value, silences: $('#edSil').value, fixedTags: $('#edTags').value }); pilotFormSig = ''; refreshSettings(); };
+    $('#edSave').onclick = async () => { await api('autopilot', { speed: $('#edSpeed').value, silences: $('#edSil').value, fixedTags: $('#edTags').value, captionStyle: $('#edCap').value }); pilotFormSig = ''; refreshSettings(); };
     $('#apSave').onclick = async () => { await api('autopilot', { autopilot: { enabled: $('#apOn').checked, hour: $('#apHour').value, videos: $('#apVideos').value, venta: $('#apVenta').value, setting: $('#apSetting').value } }); pilotFormSig = ''; refreshSettings(); };
     $('#ntfyNew').onclick = () => { $('#ntfyTopic').value = 'flowstudio-' + Math.random().toString(36).slice(2, 10); };
     $('#ntfySave').onclick = async () => { await api('autopilot', { ntfyTopic: $('#ntfyTopic').value }); pilotFormSig = ''; refreshSettings(); };

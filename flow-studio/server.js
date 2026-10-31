@@ -134,11 +134,12 @@ async function api(req, res, url) {
       if (body.autopilot) autopilot.configure(body.autopilot);
       if (body.speed !== undefined) settings.save({ speed: Math.max(1, Math.min(1.3, Number(body.speed) || 1)) });
       if (body.fixedTags !== undefined) settings.save({ fixedTags: String(body.fixedTags).split(/[\s,]+/).map((t) => t.replace(/^#+/, '').trim()).filter(Boolean).slice(0, 5).map((t) => '#' + t) });
+      if (body.captionStyle) settings.save({ captionStyle: body.captionStyle === 'elegant' ? 'elegant' : 'bold' });
       if (body.silences) settings.save({ silences: ['normal', 'corto', 'muycorto'].includes(body.silences) ? body.silences : 'corto' });
     }
     const p = autopilot.pjob();
     const runs = (p.runs || []).slice(0, 5).map((r) => ({ ...r, jobs: r.jobs.map((id) => { const x = store.load(id); return x ? { id, title: x.title, status: x.status, stage: x.stage, driveName: x.driveName || null } : null; }).filter(Boolean) }));
-    return send(res, 200, { fixedTags: settings.get().fixedTags || config.fixedTags || [], speed: settings.get().speed ?? ((config.edit || {}).speed || 1), silences: settings.get().silences || 'corto', opts: autopilot.opts(), ntfyTopic: settings.get().ntfyTopic || '', running: autopilot.isRunning(), worker: p.workers.autopilot, runs, settings: Object.keys(config.settings) });
+    return send(res, 200, { captionStyle: settings.get().captionStyle || (config.captions || {}).style || 'elegant', fixedTags: settings.get().fixedTags || config.fixedTags || [], speed: settings.get().speed ?? ((config.edit || {}).speed || 1), silences: settings.get().silences || 'corto', opts: autopilot.opts(), ntfyTopic: settings.get().ntfyTopic || '', running: autopilot.isRunning(), worker: p.workers.autopilot, runs, settings: Object.keys(config.settings) });
   }
   if (parts[1] === 'results') {
     const r = results.rjob();

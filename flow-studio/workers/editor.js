@@ -110,18 +110,26 @@ function versusLayout(job, segments) {
   return { ...ov, items, size, t0: Math.min(...items.map((i) => i.t)), lineTop: 990, lineH: 140 + rows * gap, captionY: Math.min(1840, top + rows * gap + 40) };
 }
 
+// Estilo de subtítulos: "bold" (MAYÚSCULAS gruesas con contorno y la palabra clave en color, como los reels que más funcionan)
+// o "elegant" (palabra clave en cursiva elegante). Se elige en ⚙️ Ajustes → Edición.
+const capStyle = () => require('../lib/settings').get().captionStyle || C.style || 'elegant';
+const assColor = (hex) => { const h = String(hex || '#5EC8F0').replace('#', ''); return `&H00${h.slice(4, 6)}${h.slice(2, 4)}${h.slice(0, 2)}&`.toUpperCase(); };
 function hookText(hook) {
+  if (capStyle() === 'bold') return esc(hook).toUpperCase().replace(/\*([^*]+)\*/g, `{\\c${assColor(C.accentColor)}}$1{\\c&H00FFFFFF&}`);
   return esc(hook).replace(/\*([^*]+)\*/g, `{\\fn${C.accentFont}\\i1\\fs${Math.round(C.size * 1.45)}}$1{\\fn${C.font}\\i0\\fs${Math.round(C.size * 1.05)}}`);
 }
 
 function buildAss(job, words, total, segs) {
+  const bold = capStyle() === 'bold';
   const y = Math.round(1920 * C.yPercent / 100);
   const lines = [
     '[Script Info]', 'ScriptType: v4.00+', 'PlayResX: 1080', 'PlayResY: 1920', 'WrapStyle: 0', '',
     '[V4+ Styles]',
     'Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding',
-    `Style: Cap,${C.font},${C.size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H8C000000,0,0,0,0,100,100,-1,0,1,0,3,5,60,60,0,1`,
-    `Style: Hook,${C.font},${Math.round(C.size * 1.05)},&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,0,0,0,0,100,100,0,0,1,2.5,4,5,70,70,0,1`,
+    bold ? `Style: Cap,${C.font},${Math.round(C.size * 0.92)},&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,0,0,0,0,100,100,0,0,1,5,2,5,60,60,0,1`
+      : `Style: Cap,${C.font},${C.size},&H00FFFFFF,&H00FFFFFF,&H00000000,&H8C000000,0,0,0,0,100,100,-1,0,1,0,3,5,60,60,0,1`,
+    bold ? `Style: Hook,${C.font},${Math.round(C.size * 0.95)},&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,0,0,0,0,100,100,0,0,1,5,2,5,70,70,0,1`
+      : `Style: Hook,${C.font},${Math.round(C.size * 1.05)},&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,0,0,0,0,100,100,0,0,1,2.5,4,5,70,70,0,1`,
     `Style: Cta,${C.font},${Math.round(C.size * 0.8)},&H00111111,&H00111111,&H0033D7FF,&H0033D7FF,0,0,0,0,100,100,0,0,3,18,0,8,80,80,260,1`,
     '', '[Events]', 'Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text',
   ];
@@ -148,7 +156,7 @@ function buildAss(job, words, total, segs) {
   // Subtítulos estilo "I have *healthy* alternatives": frase de 3-4 palabras en 2 líneas,
   // la palabra clave en cursiva elegante y más grande; las palabras aparecen según las dice
   const visible = words.filter((w) => w.e > hookEnd);
-  const N = C.wordsPerChunk || 4;
+  const N = bold ? 3 : C.wordsPerChunk || 4;
   for (let i = 0; i < visible.length; i += N) {
     const chunk = visible.slice(i, i + N);
     const acc = accentIndex(chunk);
@@ -162,7 +170,8 @@ function buildAss(job, words, total, segs) {
       if (end <= start) return;
       const txt = chunk.map((x, j) => {
         const hide = j > k ? '{\\alpha&HFF&}' : '{\\alpha&H00&}';
-        const word = j === acc ? `{\\fn${C.accentFont}\\i1\\fs${Math.round(C.size * 1.5)}}${esc(x.w)}{\\fn${C.font}\\i0\\fs${C.size}}` : esc(x.w);
+        const word = bold ? (j === acc ? `{\\c${assColor(C.accentColor)}}${esc(x.w).toUpperCase()}{\\c&H00FFFFFF&}` : esc(x.w).toUpperCase())
+          : j === acc ? `{\\fn${C.accentFont}\\i1\\fs${Math.round(C.size * 1.5)}}${esc(x.w)}{\\fn${C.font}\\i0\\fs${C.size}}` : esc(x.w);
         return (j === brk ? '\\N' : j ? ' ' : '') + hide + word;
       }).join('');
       const pop = k === 0 ? '\\fscx90\\fscy90\\t(0,100,\\fscx100\\fscy100)' : '';

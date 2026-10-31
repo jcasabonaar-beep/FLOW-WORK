@@ -35,7 +35,9 @@
     "yPercent": 62,
     "hookSeconds": 2.6,
     "ctaBox": false,
-    "yPercentBook": 49
+    "yPercentBook": 49,
+    "style": "bold",
+    "accentColor": "#5EC8F0"
   },
   "languages": {
     "es": {
