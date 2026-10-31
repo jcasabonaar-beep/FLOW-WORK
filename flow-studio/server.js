@@ -136,9 +136,10 @@ async function api(req, res, url) {
     }
     if (method === 'POST') {
       const body = JSON.parse((await readBody(req)).toString() || '{}');
-      require('./lib/settings').save({ publishHours: String(body.hours || '').split(/[\s,]+/).filter((h) => /^\d{1,2}(:\d{2})?$/.test(h)) });
+      if (body.hours !== undefined) require('./lib/settings').save({ publishHours: String(body.hours || '').split(/[\s,]+/).filter((h) => /^\d{1,2}(:\d{2})?$/.test(h)) });
+      if (body.reminders !== undefined) require('./lib/settings').save({ publishReminders: !!body.reminders });
     }
-    return send(res, 200, pub.queue());
+    return send(res, 200, { ...pub.queue(), reminders: require('./lib/settings').get().publishReminders !== false });
   }
   if (parts[1] === 'health') return send(res, 200, await require('./lib/health').check());
   if (parts[1] === 'autopilot') {

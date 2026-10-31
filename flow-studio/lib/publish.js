@@ -9,22 +9,20 @@ function hours() {
   const r = ((store.load('_resultados') || {}).report || {}).horas;
   const list = (Array.isArray(s) && s.length ? s : Array.isArray(r) && r.length ? r : config.publishHours || ['14:00', '20:00'])
     .map((h) => String(h).match(/^(\d{1,2})(?::(\d{2}))?/)).filter(Boolean).map((m) => [+m[1], +(m[2] || 0)]);
-  return list.sort((a, b) => a[0] * 60 + a[1] - (b[0] * 60 + b[1]));
+  // En orden de "día de publicación": de las 8:00 hasta la madrugada siguiente
+  const k = ([h, m]) => (h < 8 ? h + 24 : h) * 60 + m;
+  return list.sort((a, b) => k(a) - k(b));
 }
 
 // Próximos huecos a partir de ahora (hora de España)
 function slots(n) {
-  const out = [];
-  const hs = hours();
   const now = new Date();
-  for (let d = 0; out.length < n && d < 30; d++) {
-    for (const [h, m] of hs) {
-      const t = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d, h, m);
-      if (t - now > 20 * 60000) out.push(t);
-      if (out.length >= n) break;
-    }
+  const all = [];
+  for (let d = 0; d < 30 && all.length < n + 12; d++) for (const [h, m] of hours()) {
+    const t = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d, h, m);
+    if (t - now > 20 * 60000) all.push(t);
   }
-  return out;
+  return all.sort((a, b) => a - b).slice(0, n);
 }
 
 function queue() {
@@ -56,4 +54,23 @@ function mark(id, on, at, trial) {
   return j[k];
 }
 
-module.exports = { queue, mark, hours };
+// 🔔 Recordatorio al móvil 10 minutos antes de cada hora de publicar (solo de 8:00 a 23:59; los de madrugada van en el aviso de la noche)
+const sent = new Set();
+function remind() {
+  if (settings.get().publishReminders === false) return;
+  const q = queue();
+  const now = Date.now();
+  const awake = (t) => { const h = new Date(t).getHours(); return h >= 8; };
+  for (const [i, it] of q.items.entries()) {
+    if (!it.at || !awake(it.at) || it.at - now > 10 * 60000 || it.at - now < -5 * 60000) continue;
+    const key = `${it.id}:${it.trial ? 'B' : 'A'}:${it.at}`;
+    if (sent.has(key)) continue;
+    sent.add(key);
+    const night = q.items.slice(i + 1).filter((x) => x.at && !awake(x.at) && x.at - it.at < 8 * 3600000);
+    require('./notify').send(`📅 A las ${new Date(it.at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}: ${it.title}${it.trial ? ' (reel de prueba)' : ''}`,
+      `${it.trial ? 'Súbelo como REEL DE PRUEBA. ' : ''}Descripción y comentario en 📅 Publicar · 📍 Miami · 🤖 Hecho con IA` + (night.length ? `\n🌙 Y programa ya los de la madrugada: ${night.map((x) => `${new Date(x.at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} ${x.title}${x.trial ? ' (prueba)' : ''}`).join(' · ')}` : ''),
+      { tags: 'calendar' });
+  }
+}
+
+module.exports = { queue, mark, hours, remind };

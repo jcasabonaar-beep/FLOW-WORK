@@ -794,8 +794,17 @@ async function refreshPublish() {
   const q = await api('publish');
   show('publish');
   if (!$('#pubHours').contains(document.activeElement)) {
-    $('#pubHours').innerHTML = `<div class="row" style="align-items:end"><label>Horas de publicar (hora de España, separadas por espacios). Si lo dejas vacío, usa las que diga el Analista de resultados<input id="inPubHours" value="${esc(q.hours.join(' '))}"></label><button class="primary" id="btnPubHours" style="flex:none">Guardar</button></div>`;
+    const today = q.items.filter((v) => v.at && new Date(v.at).toDateString() === new Date().toDateString());
+    const tomorrow = q.items.filter((v) => v.at && new Date(v.at).toDateString() === new Date(Date.now() + 86400000).toDateString());
+    const line = (v) => `<li><b>${new Date(v.at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</b> <span class="muted">(${new Date(v.at).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' })} NY)</span> · ${v.trial ? '🧪 ' : ''}${esc(v.title)}${v.trial ? ' <span class="muted">(reel de prueba)</span>' : ''}</li>`;
+    $('#pubHours').innerHTML = `<b>🗓️ Tu horario</b>
+      ${today.length ? `<div style="margin-top:6px">Hoy:</div><ul>${today.map(line).join('')}</ul>` : '<p class="muted">Hoy ya no queda nada por publicar.</p>'}
+      ${tomorrow.length ? `<div>Mañana:</div><ul>${tomorrow.map(line).join('')}</ul>` : ''}
+      <div class="muted" style="font-size:12px">Los de madrugada (00:30, 03:00…) prográmalos antes de dormir desde la app de Instagram.</div>
+      <label style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="pubRem" style="width:auto" ${q.reminders ? 'checked' : ''}> 🔔 Recordármelo al móvil 10 min antes de cada hora (de 8:00 a 24:00; con el último de la noche te recuerda programar los de madrugada)</label>
+      <div class="row" style="align-items:end"><label>Horas de publicar (hora de España, separadas por espacios)<input id="inPubHours" value="${esc(q.hours.join(' '))}"></label><button class="primary" id="btnPubHours" style="flex:none">Guardar</button></div>`;
     $('#btnPubHours').onclick = async () => { await api('publish', { hours: $('#inPubHours').value }); refreshPublish(); };
+    $('#pubRem').onchange = async () => { await api('publish', { reminders: $('#pubRem').checked }); };
   }
   $('#pubList').innerHTML = (q.items.length > 2 ? `<div class="btns"><button class="small" id="btnPubAll">✓ Ya tengo todos estos publicados (vaciar la lista)</button></div>` : '') + (q.items.length ? q.items.map((v, i) => `<div class="pubcard">
       ${v.cover ? `<img src="${v.cover}">` : '<div class="ph"></div>'}

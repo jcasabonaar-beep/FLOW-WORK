@@ -226,6 +226,7 @@ function start() {
     if (o.enabled && new Date().getHours() === Number(o.hour) && j.lastDate !== today()) run();
     try { watch(); } catch {}
     try { weekly(j); } catch {}
+    try { require('./publish').remind(); } catch {}
   }, 60000);
 }
 
