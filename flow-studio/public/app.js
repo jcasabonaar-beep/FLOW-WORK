@@ -672,6 +672,7 @@ async function refreshSettings() {
   const p = await api('autopilot');
   show('settings');
   renderDrive();
+  renderBackup();
   const r = await api('research');
   if (document.activeElement !== $('#inAccounts')) $('#inAccounts').value = (r.accounts || []).join('\n');
   const sug = (r.suggestedAccounts || []).filter((a) => !(r.accounts || []).includes(String(a.account).replace(/^@/, '')));
@@ -709,6 +710,15 @@ async function refreshSettings() {
     $('#ntfySave').onclick = async () => { await api('autopilot', { ntfyTopic: $('#ntfyTopic').value }); pilotFormSig = ''; refreshSettings(); };
     $('#ntfyTest').onclick = async () => { await api('autopilot', { ntfyTopic: $('#ntfyTopic').value }); pilotFormSig = ''; await api('autopilot/test', {}); alert('Enviado. Mira tu móvil.'); refreshSettings(); };
   }
+}
+
+async function renderBackup() {
+  const b = await api('backup');
+  $('#backupBox').innerHTML = `Cada día a partir de las 5:00 se copia a tu Drive (<b>Videos IA › _memoria</b>) todo lo que el sistema ha aprendido: lecciones, lo que funciona, resultados, ideas, ajustes, avatar ideal y fotos de la familia. Se guardan los últimos 7 días.
+    <p>${b.at ? `✅ Última copia: <b>${new Date(b.at).toLocaleString('es-ES')}</b> (${b.files} archivos)` : '⚠️ Todavía no se ha hecho ninguna copia.'}</p>
+    <div class="btns"><button class="primary small" id="btnBackup">💾 Copiar ahora</button><button class="small" id="btnRestore">↩ Recuperar la última copia</button></div>`;
+  $('#btnBackup').onclick = async () => { const r = await api('backup', {}); alert(`✅ Copiados ${r.files} archivos a tu Drive`); renderBackup(); };
+  $('#btnRestore').onclick = async () => { if (!confirm('¿Recuperar la última copia de tu Drive? Sustituye la memoria actual del sistema por la de la copia (úsalo si se perdió la carpeta o cambias de PC).')) return; const r = await api('backup', { restore: true }); alert(`✅ Recuperados ${r.files} archivos de la copia del ${r.from}. Cierra y vuelve a abrir abrir.bat.`); };
 }
 
 async function renderDrive() {

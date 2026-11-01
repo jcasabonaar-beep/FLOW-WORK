@@ -240,6 +240,7 @@ function start() {
     try { weekly(j); } catch {}
     try { require('./publish').remind(); } catch {}
     try { dueReminders(); } catch {}
+    try { require('./backup').daily(); } catch {}
   }, 60000);
 }
 

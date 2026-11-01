@@ -167,6 +167,15 @@ async function api(req, res, url) {
     const L = require('./lib/avatarlab').load();
     return send(res, 200, { ranking: require('./lib/avatarlab').ranking(), versions: L.versions || [], favorite: L.favorite || null, worker: j.workers.avatar, running: av.isRunning() });
   }
+  if (parts[1] === 'backup') {
+    const bk = require('./lib/backup');
+    if (method === 'POST') {
+      const body = JSON.parse((await readBody(req)).toString() || '{}');
+      const r = body.restore ? bk.restore() : bk.run();
+      return r.error ? send(res, 400, r) : send(res, 200, r);
+    }
+    return send(res, 200, require('./lib/settings').get().lastBackup || {});
+  }
   if (parts[1] === 'health') return send(res, 200, await require('./lib/health').check());
   if (parts[1] === 'autopilot') {
     const settings = require('./lib/settings');
