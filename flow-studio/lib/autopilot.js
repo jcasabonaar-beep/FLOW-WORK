@@ -207,6 +207,15 @@ function weekly(j) {
   ].filter(Boolean).join('\n'), { tags: 'bar_chart' });
 }
 
+// 📌 Recordatorios con fecha: aviso al móvil el día que tocan (una sola vez)
+function dueReminders() {
+  const settings = require('./settings');
+  const list = settings.get().reminders || [];
+  let changed = false;
+  for (const r of list) if (r.due && !r.notified && Date.now() >= r.due) { notify.send('📌 Recordatorio', r.text, { tags: 'pushpin' }); r.notified = true; changed = true; }
+  if (changed) settings.save({ reminders: list });
+}
+
 // Que Windows no se duerma mientras el piloto automático esté activado (la pantalla sí puede apagarse)
 let awake = null;
 function keepAwake(on) {
@@ -228,6 +237,7 @@ function start() {
     try { watch(); } catch {}
     try { weekly(j); } catch {}
     try { require('./publish').remind(); } catch {}
+    try { dueReminders(); } catch {}
   }, 60000);
 }
 
