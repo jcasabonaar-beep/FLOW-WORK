@@ -36,9 +36,11 @@ Similar accounts confirm it with MILLIONS of views (same niche, AI grandma, US f
 - A BIG VISUAL EXPERIMENT in front of her: a large clear glass tank/aquarium of water where she pours the remedy and something visibly dissolves or changes color (6.1M, 2.1M); a bowl where an ingredient transforms.
 - An OVERSIZED ANATOMICAL MODEL on the table that she pours the remedy on or points at: blackened lungs, a clogged artery cut in half, a long clear intestine tube full of food, a stomach (2.2M, 191k, 75k). Realistic, clean, educational, not gory.
 - The remedy applied ON ANOTHER PERSON: oil on a woman's neck and hair (1.2M), a paste on the face of a woman lying down (424k), her husband next to her (150k, 29k).
+- UNEXPECTED COMBINATION / "watch what happens" food hacks: she sprinkles or pours one ingredient on another and the camera stays on the result (baking soda on watermelon 1.3M, black pepper on pineapple 449k, pink salt in a jar of garlic 325k, milk poured on raw chicken "si salen grumos…" 1.3M). Hook = the instruction itself ("Ponle pimienta negra a la piña y mira lo que pasa"). Close-up of the hand doing it, the food large in the foreground, her face behind.
 - Kitchen CLEANING hacks with a dramatic before/after: a burnt pan, a greasy griddle, a dirty stove top (60k, 27k): this audience loves them.
 - Her direct gesture to camera: finger on lips "shh", pointing, a raised eyebrow; or an interrupting hook text like "ESPERA, ESPERA, DETENTE".
 - Outdoor American settings also work: front porch or backyard with a big US flag, garden table.
+A plain talking head selling the book gets the fewest views (1.5k): always sell AFTER a strong hack, never as the hook.
 Composition: the prop/experiment is LARGE and centered in the foreground, she is right behind it looking into the lens.
 So, whenever the topic allows:
 - Hook frame = a big visual experiment or oversized model with her pouring/pointing, OR her applying or doing the remedy ON someone (daughter, granddaughter, husband, a neighbor: neck, back, feet, hair, hands, belly) or a strong close food/prop action. The second person is a normal everyday person, fully clothed or in normal home clothing, shown in a natural way.
