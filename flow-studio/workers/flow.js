@@ -414,4 +414,4 @@ function blocked(job, worker, why) {
   return 'wait';
 }
 
-module.exports = { shareFrames, runFrames, runClips, clipPromptFor, frameInputs, lessonsFile };
+module.exports = { shareFrames, runFrames, runClips, clipPromptFor, frameInputs, lessonsFile, operatorPrompt };

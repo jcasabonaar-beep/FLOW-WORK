@@ -860,7 +860,11 @@ async function refreshAvatar() {
   const v = a.versions[0];
   const I = v && v.ideal;
   const li = (arr) => (arr || []).map((x) => `<li>${esc(typeof x === 'string' ? x : x.titulo ? `${x.titulo} — ${x.formato || ''}` : `@${x.cuenta}: ${x.que}`)}</li>`).join('');
-  $('#avIdeal').innerHTML = `<div class="notes"><b>Estratega</b> <span class="muted">${esc(a.running ? 'trabajando…' : a.worker.action || '')}</span></div>` + (I ? `<div class="notes">
+  // 🎨 Galería: cómo se va viendo el avatar en cada versión (⭐ = la cara base que se mantiene en las siguientes)
+  const gal = a.versions.map((x, i) => (x.images || []).length ? `<div style="margin:8px 0"><b>Versión ${a.versions.length - i}</b> <span class="muted">${new Date(x.at).toLocaleDateString('es-ES')}</span><div class="avgal">${x.images.map((f) => `<figure><img src="${rootFile(f)}?v=${x.at}">${a.favorite === f ? '<button class="small good" disabled>⭐ Base</button>' : `<button class="small" data-avfav="${esc(f)}">⭐ Usar como base</button>`}</figure>`).join('')}</div></div>` : '').join('');
+  const galHtml = `<div class="notes"><b>🎨 Cómo se ve</b> <button class="small primary" id="btnAvatarImg" ${a.running || !v ? 'disabled' : ''}>🎨 Crear imágenes de esta versión</button>
+    <div class="muted" style="font-size:12px">Crea 4 fotos en Flow (retrato, en la cocina, cuerpo entero y haciendo un video). Marca con ⭐ la que más te guste: las siguientes versiones mantendrán esa cara y solo irán puliendo el resto.</div>${gal || '<p class="muted">Todavía no hay imágenes.</p>'}</div>`;
+  $('#avIdeal').innerHTML = galHtml + `<div class="notes"><b>Estratega</b> <span class="muted">${esc(a.running ? 'trabajando…' : a.worker.action || '')}</span></div>` + (I ? `<div class="notes">
     <h2 style="margin:4px 0">Versión ${a.versions.length} <span class="muted" style="font-size:13px">· ${new Date(v.at).toLocaleDateString('es-ES')} · con ${v.accounts} cuentas · evidencia: ${esc(I.evidencia || '')}</span></h2>
     <p>${esc(I.resumen || '')}</p>
     ${I.personaje ? `<b>👤 Personaje</b><ul>${Object.entries(I.personaje).map(([k, x]) => `<li><b>${esc(k)}:</b> ${esc(x)}</li>`).join('')}</ul>` : ''}
@@ -881,3 +885,8 @@ async function refreshAvatar() {
     <p class="muted" style="font-size:12px">Eficiencia = visitas típicas por video ÷ seguidores. Más de 1× = viraliza sin tener todavía comunidad: ahí está el concepto que funciona.</p>` : '';
 }
 $('#btnAvatarRun').onclick = async () => { await api('avatarlab', {}); refreshAvatar(); };
+document.addEventListener('click', async (e) => {
+  if (e.target.id === 'btnAvatarImg') { await api('avatarlab', { images: true }); refreshAvatar(); }
+  const f = e.target.dataset && e.target.dataset.avfav;
+  if (f) { await api('avatarlab', { favorite: f }); refreshAvatar(); }
+});
