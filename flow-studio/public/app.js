@@ -29,6 +29,8 @@ let panelSig = '';
 async function api(path, body, opts = {}) {
   const r = await fetch('/api/' + path, body !== undefined ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), ...opts } : opts);
   const j = await r.json();
+  // "ruta" = la página es nueva pero el servidor sigue siendo el viejo (falta cerrar y abrir abrir.bat)
+  if (!r.ok && /^(ruta|acción)$/.test(j.error || '')) { const m = 'Falta reiniciar Flow Studio para terminar de actualizar: cierra la ventana negra y abre abrir.bat (los videos en marcha siguen después con ▶ Continuar).'; showError(m); throw new Error(m); }
   if (!r.ok) { alert(j.error || 'Error'); throw new Error(j.error); }
   return j;
 }
