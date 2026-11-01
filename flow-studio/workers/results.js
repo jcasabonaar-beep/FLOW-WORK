@@ -96,6 +96,7 @@ async function run() {
     fs.mkdirSync(path.dirname(MEMORY), { recursive: true });
     fs.writeFileSync(MEMORY, `Results of OUR published videos on @${ACCOUNT} (updated ${new Date(now).toISOString().slice(0, 10)}, account median ${med} views). Apply these when planning:\n` +
       (report.lecciones || []).map((l) => '- ' + l).join('\n') + (report.probar && report.probar.length ? '\nWorth trying:\n' + report.probar.map((l) => '- ' + l).join('\n') : '') + '\n');
+    try { require('../lib/playbook').compute(); store.log(j, 'results', '🧠 Memoria de lo que funciona actualizada'); } catch (e) { store.log(j, 'results', '⚠️ ' + e.message); }
     await makePart2(j, med);
     j.lastRun = now;
     store.save(j);

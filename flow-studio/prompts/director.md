@@ -21,6 +21,9 @@ Script sent by the producer (translate or adapt it to the video language if need
 {{SCRIPT}}
 """
 
+## What we have learned so far (self-learning: follow it)
+{{PLAYBOOK}}
+
 ## Who we make it for
 {{TARGET}}
 Everything must make THIS viewer stop scrolling and feel "this is for me":
@@ -104,7 +107,9 @@ Write the file `plan.json` in the working folder with exactly this shape, and al
 {
   "hook": "Así es tu *intestino*",
   "outfit": "sweater",
-  "hookB": {"line": "¿Sabías que tu intestino trabaja así cada mañana?", "text": "¿Así trabaja tu *intestino*?"},
+  "format": "one of: maqueta_transparente, maqueta, si_tu_cuerpo, experimento, otra_persona, combinacion, limpieza, version_casera, comida, cabeza_hablando",
+  "hookType": "one of: pregunta, afirmacion, cifra, error, llamada_edad, instruccion, secreto, si_tu",
+  "hookB": {"line": "¿Sabías que tu intestino trabaja así cada mañana?", "text": "¿Así trabaja tu *intestino*?", "type": "a DIFFERENT hookType from the list"},
   "ctaWord": "{{CTA_WORD}}",
   "notes": ["Changed 'empties completely' to 'helps me feel lighter' (health claim)"],
   "overlay": null,

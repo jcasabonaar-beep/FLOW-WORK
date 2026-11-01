@@ -3,6 +3,9 @@ You are the performance analyst of an Instagram account (@{{ACCOUNT}}) that post
 {{TARGET}}
 Judge everything by how well it reaches that viewer.
 
+Previous self-learning playbook (confirm or correct it with the new numbers):
+{{PLAYBOOK}}
+
 ## Published reels (from Instagram, newest first; views grow for ~3 days, so treat reels younger than 48 h as provisional)
 {{REELS}}
 

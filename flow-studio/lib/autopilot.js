@@ -67,7 +67,8 @@ async function run(reason = 'programado') {
     const used = new Set(j.used || []);
     const rj = research.rjob();
     // Viralidad × encaje con nuestro público (señoras hispanas 60+ en EE. UU.); las que no encajan, fuera
-    const score = (s) => (s.ratio || 0) * (s.encaje || 6) / 10;
+    // …y × lo que ha aprendido: los formatos que funcionan en tu cuenta (y los que explotan fuera) pesan más
+    const score = (s) => (s.ratio || 0) * (s.encaje || 6) / 10 * require('./playbook').weight(s.formato);
     const sugs = [...(rj.suggestions || [])].filter((s) => s.guion && (s.encaje == null || s.encaje >= 5)).sort((a, b) => score(b) - score(a));
     // 🔁 Primero las partes 2 de tus reels que funcionan (de las últimas 48 h), luego las ideas virales
     const p2 = ((store.load('_resultados') || {}).part2 || []).filter((p) => !used.has('p2:' + p.key) && Date.now() - p.at < 48 * 3600000)
@@ -170,7 +171,7 @@ async function pickBest(j, pool, o, sugs) {
     const { fill } = require('../workers/director');
     const P = fs.readFileSync(require('path').join(store.ROOT, 'prompts', 'pick.md'), 'utf8');
     const text = await untilLimitOk(j, 'elegir los mejores', () => require('./claude').run({ job: j, worker: 'autopilot', tools: ['Write'], cwd: store.jobDir(PID),
-      prompt: fill(P, { ACCOUNT: (config.research || {}).instagramAccount || '', N: o.videos, VENTA: o.venta, CANDIDATES: cands, OUT: out, LESSONS: require('../workers/results').memory() || '(no data yet)' }) }));
+      prompt: fill(P, { ACCOUNT: (config.research || {}).instagramAccount || '', N: o.videos, VENTA: o.venta, CANDIDATES: cands, OUT: out, LESSONS: [require('./playbook').read(), require('../workers/results').memory()].filter(Boolean).join('\n') || '(no data yet)' }) }));
     const res = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, 'utf8')) : require('./claude').extractJson(text);
     const byKey = Object.fromEntries(pool.map((p) => [p.key, p]));
     const picked = (res.pick || []).map((x) => byKey[x.key] && { ...byKey[x.key], venta: x.venta, porque: x.porque }).filter(Boolean).slice(0, o.videos);

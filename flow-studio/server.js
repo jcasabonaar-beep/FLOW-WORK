@@ -153,6 +153,7 @@ async function api(req, res, url) {
     }
     return send(res, 200, list);
   }
+  if (parts[1] === 'playbook') { const pb = require('./lib/playbook'); return send(res, 200, { data: pb.data(), names: { formato: pb.FORMATS, hook: pb.HOOKS } }); }
   if (parts[1] === 'health') return send(res, 200, await require('./lib/health').check());
   if (parts[1] === 'autopilot') {
     const settings = require('./lib/settings');

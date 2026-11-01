@@ -9,7 +9,7 @@ const P = (f) => fs.readFileSync(path.join(store.ROOT, 'prompts', f), 'utf8');
 
 // {{TARGET}} (el público al que queremos llegar) está disponible en todos los prompts
 function fill(text, vars) {
-  const all = { TARGET: config.target || '', SEASON: require('../lib/calendar').upcoming(), ...vars };
+  const all = { TARGET: config.target || '', SEASON: require('../lib/calendar').upcoming(), PLAYBOOK: require('../lib/playbook').read() || '(still learning: no data yet)', ...vars };
   return text.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in all ? all[k] : m));
 }
 
@@ -87,10 +87,11 @@ async function run(job) {
   const plan = fs.existsSync(planFile) ? JSON.parse(fs.readFileSync(planFile, 'utf8')) : claude.extractJson(text);
 
   const j = store.load(job.id);
-  j.plan = { hook: plan.hook, outfit: (config.wardrobe || {})[plan.outfit] ? plan.outfit : 'sweater', ctaWord: plan.ctaWord || job.ctaWord, overlay: plan.overlay && plan.overlay.items && plan.overlay.items.length ? plan.overlay : null };
+  const PB = require('../lib/playbook');
+  j.plan = { hook: plan.hook, format: PB.FORMATS[plan.format] ? plan.format : null, hookType: PB.HOOKS[plan.hookType] ? plan.hookType : null, outfit: (config.wardrobe || {})[plan.outfit] ? plan.outfit : 'sweater', ctaWord: plan.ctaWord || job.ctaWord, overlay: plan.overlay && plan.overlay.items && plan.overlay.items.length ? plan.overlay : null };
   j.notes = plan.notes || [];
   // Hook B: otra versión del clip 1 (mismo frame, otra frase) para probar cuál funciona mejor
-  j.hookB = config.abHooks !== false && plan.hookB && plan.hookB.line ? { n: 91, variantOf: 1, line: plan.hookB.line, text: plan.hookB.text || '', clip: null, clipStatus: 'pending', clipNote: '' } : null;
+  j.hookB = config.abHooks !== false && plan.hookB && plan.hookB.line ? { n: 91, variantOf: 1, line: plan.hookB.line, text: plan.hookB.text || '', type: plan.hookB.type || null, clip: null, clipStatus: 'pending', clipNote: '' } : null;
   j.clips = plan.clips.map((c, i) => ({
     n: i + 1, line: c.line, refTime: c.refTime, frameMode: i === 0 ? 1 : 2,
     framePrompt: c.framePrompt, clipPrompt: c.clipPrompt, room: c.room || null, family: (Array.isArray(c.family) ? c.family : c.family ? [c.family] : []).filter((k) => (config.family || {})[k]).slice(0, 2), book: job.videoType === 'venta' ? (c.book || null) : null, broll: c.broll || null, frameFrom: job.videoType === 'venta' ? (c.frameFrom || null) : null, readyClip: job.videoType === 'venta' ? (c.readyClip || null) : null, sameFrameAs: c.sameFrameAs && c.sameFrameAs < i + 1 ? c.sameFrameAs : null,

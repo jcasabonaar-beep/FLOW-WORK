@@ -239,3 +239,6 @@ button.big { padding: 11px 12px; font-size: 15px; }
 .pubcard h3 { margin: 4px 0 8px; font-size: 15px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .pubwhen { font-weight: 700; color: #86efac; }
 @media (max-width: 700px) { .pubcard { flex-wrap: wrap; } }
+.lrow { display: grid; grid-template-columns: minmax(140px, 260px) 1fr 50px 70px; gap: 10px; align-items: center; font-size: 13px; margin: 4px 0; }
+.lbar { height: 8px; background: var(--panel2); border-radius: 99px; overflow: hidden; }
+.lbar i { display: block; height: 100%; border-radius: 99px; }

@@ -144,6 +144,7 @@ async function run() {
     }
     j.lastRun = Date.now();
     store.save(j);
+    try { require('../lib/playbook').compute(); } catch {}
     setW({ state: 'done', action: `✅ ${j.suggestions.length} ideas listas` });
     store.log(j, 'research', `✅ ${j.suggestions.length} ideas listas`);
     return { ok: true, count: j.suggestions.length };

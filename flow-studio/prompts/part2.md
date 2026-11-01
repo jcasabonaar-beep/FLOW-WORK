@@ -2,6 +2,7 @@ You write follow-up videos ("Parte 2") for an Instagram account of a warm grandm
 {{TARGET}}
 Calendar: {{SEASON}}
 
+{{PLAYBOOK}}
 These reels of OURS did much better than usual. Instagram already proved this topic and format work with our audience, so we make a PART 2 of each within 24-48 h:
 
 {{WINNERS}}

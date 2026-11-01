@@ -637,6 +637,16 @@ async function refreshResults() {
     ${(p.lecciones || []).length ? `<b>Lo que ya aplica el director en los próximos videos</b><ul>${p.lecciones.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
     ${p.horario ? `<b>🕐 Cuándo publicar</b><p>${esc(p.horario)}</p>` : ''}
     ${(p.probar || []).length ? `<b>Para probar</b><ul>${p.probar.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>` : '';
+  // 🧠 Lo que ha aprendido (se actualiza solo con cada análisis)
+  const pb = await api('playbook');
+  const D = pb.data;
+  const nm = (dim, k) => (pb.names[dim] || {})[k] || k;
+  const bar = (dim, t) => D && (D[dim] || []).length ? `<div style="margin:8px 0"><b>${t}</b>${D[dim].map((x) => `<div class="lrow"><span>${esc(nm(dim, x.k))}</span><span class="lbar"><i style="width:${Math.min(100, x.x * 40)}%;background:${x.x >= 1.3 ? '#22c55e' : x.x < 0.8 ? '#ef4444' : '#eab308'}"></i></span><b>${x.x}×</b><span class="muted">${x.n} reel${x.n > 1 ? 's' : ''}</span></div>`).join('')}</div>` : '';
+  $('#rLearn').innerHTML = D ? `<div class="notes"><b>🧠 Lo que ha aprendido el sistema</b> <span class="muted">(visitas frente a tu media; con pocos reels se fía poco y lo acerca a 1×)</span>
+    ${bar('formato', 'Formato')}${bar('hook', 'Tipo de hook')}${bar('ropa', 'Ropa')}${bar('escenario', 'Escenario')}${bar('tipo', 'Tipo de video')}${bar('familia', 'Familia')}
+    ${D.ab.length ? `<b>🅰️🅱️ Pruebas de hook</b><ul>${D.ab.map((x) => `<li>${esc(x.title)}: ganó <b>${x.win}</b> (${esc(nm('hook', x.win === 'A' ? x.a : x.b))}) por ${x.ratio.toFixed(1)}×</li>`).join('')}</ul>` : ''}
+    ${D.trend.length ? `<b>🔥 Lo que está explotando fuera ahora</b><ul>${D.trend.map((x) => `<li>${esc(nm('formato', x.k))}: ${x.n} virales (${x.x}×)</li>`).join('')}</ul>` : ''}
+    ${!D.formato.length ? '<p class="muted">Todavía no hay reels enlazados con sus videos: en cuanto los haya, aquí verás qué formato, hook y ropa funcionan mejor.</p>' : ''}</div>` : '';
   const med = p && p.median;
   const reels = [...(r.reels || [])].sort((a, b) => (b.views || 0) - (a.views || 0));
   $('#rTable').innerHTML = reels.length ? `<table class="rtable"><tr><th>Vistas</th><th>vs media</th><th>Likes</th><th>Coment.</th><th>Publicado</th><th>Reel</th><th>Video de Flow Studio</th></tr>${reels.map((x) => `<tr>
