@@ -15,8 +15,13 @@ function save(patch) {
   return s;
 }
 
-// Recordatorios que me pediste apuntar (se añaden una sola vez)
-const SEED = [{ id: 1, text: 'Obsidian: conectar Flow Studio (biblioteca de lo que funciona + tu banco de ideas y hooks + lecciones a la vista). Cero créditos.', due: new Date(2026, 10, 18, 11, 0).getTime() }];
-if (!get().remindersSeeded) save({ reminders: [...(get().reminders || []), ...SEED], remindersSeeded: true });
+// Recordatorios que me pediste apuntar: cada uno se añade una sola vez (si lo marcas como hecho, no vuelve)
+const SEED = [
+  { id: 1, text: 'Obsidian: conectar Flow Studio (biblioteca de lo que funciona + tu banco de ideas y hooks + lecciones a la vista). Cero créditos.', due: new Date(2026, 10, 18, 11, 0).getTime() },
+  { id: 2, text: '¿Lanzar la segunda cuenta? Revisa: 1) Emma hace sus 4 videos diarios sin atascos una semana seguida, 2) 2-3 videos con los formatos nuevos superan 2× tu media (📈 Resultados), 3) te llega el límite de Claude y Flow para el doble o subes de plan. Si se cumplen, dime "vamos con la segunda cuenta".', due: new Date(2026, 10, 16, 11, 0).getTime() },
+];
+const seeded = new Set(get().remindersSeededIds || (get().remindersSeeded ? [1] : []));
+const add = SEED.filter((r) => !seeded.has(r.id));
+if (add.length) save({ reminders: [...(get().reminders || []), ...add], remindersSeededIds: [...seeded, ...add.map((r) => r.id)] });
 
 module.exports = { get, save };
