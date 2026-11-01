@@ -154,6 +154,12 @@ async function api(req, res, url) {
     return send(res, 200, list);
   }
   if (parts[1] === 'playbook') { const pb = require('./lib/playbook'); return send(res, 200, { data: pb.data(), names: { formato: pb.FORMATS, hook: pb.HOOKS } }); }
+  if (parts[1] === 'avatarlab') {
+    const av = require('./workers/avatarideal');
+    if (method === 'POST') { av.run(); return send(res, 200, { ok: true }); }
+    const j = av.ajob();
+    return send(res, 200, { ranking: require('./lib/avatarlab').ranking(), versions: require('./lib/avatarlab').load().versions || [], worker: j.workers.avatar, running: av.isRunning() });
+  }
   if (parts[1] === 'health') return send(res, 200, await require('./lib/health').check());
   if (parts[1] === 'autopilot') {
     const settings = require('./lib/settings');

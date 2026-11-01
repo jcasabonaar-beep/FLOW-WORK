@@ -146,6 +146,10 @@
     "autopilot": {
       "model": "sonnet",
       "effort": "low"
+    },
+    "avatar": {
+      "model": "sonnet",
+      "effort": "low"
     }
   },
   "layoutPass": false,

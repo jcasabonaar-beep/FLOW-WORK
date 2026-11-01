@@ -98,7 +98,8 @@ async function run() {
       if (fs.existsSync(out)) fs.unlinkSync(out);
       setW({ action: `Revisando ${j.accounts.length} cuentas en Instagram…` });
       store.log(j, 'research', `🔎 Reviso ${j.accounts.join(', ')}`);
-      const prompt = fill(P('research.md'), { ACCOUNTS: j.accounts.map((a) => '- ' + a).join('\n'), OUT: out, PER_ACCOUNT: R.perAccount || 18, MIN_RATIO: 2 });
+      const need = require('../lib/avatarlab').needProfile(j.accounts);
+      const prompt = fill(P('research.md'), { ACCOUNTS: j.accounts.map((a) => '- ' + a).join('\n'), OUT: out, PER_ACCOUNT: R.perAccount || 18, MIN_RATIO: 2, PROFILE_NEEDED: need.length ? need.join(', ') : '(none)' });
       await claude.run({ job: j, worker: 'research', prompt, browser: true, cwd: store.ROOT, tools: ['Read', 'Write'] });
     } finally {
       lock.release();
@@ -107,6 +108,7 @@ async function run() {
     // Cuentas que recomienda Instagram en el mismo nicho (para añadirlas con un clic en Ajustes)
     const have = new Set(j.accounts.map((a) => a.toLowerCase()));
     if (Array.isArray(data.suggested)) j.suggestedAccounts = data.suggested.filter((a) => a && a.account && !have.has(String(a.account).toLowerCase().replace(/^@/, ''))).slice(0, 8);
+    try { require('../lib/avatarlab').record(data); } catch {}
     if (data.blocked) throw new Error('Instagram pide algo: ' + data.blocked + ' — resuélvelo en el Chrome de Flow Studio y vuelve a pulsar Sugerir');
     const seen = new Set(j.seen || []);
     const viral = findViral(data).filter((v) => !seen.has(v.url));

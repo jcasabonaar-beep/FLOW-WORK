@@ -195,6 +195,7 @@ function weekly(j) {
   j.lastWeekly = now.toDateString();
   store.save(j);
   require('./health').updateYtdlp(); // de paso, yt-dlp al día (Instagram cambia a menudo)
+  require('../workers/avatarideal').run(); // 🧬 y el perfil ideal, con lo aprendido en la semana
   const week = store.list().filter((x) => x.status === 'done' && Date.now() - x.createdAt < 7 * 86400000);
   const r = store.load('_resultados') || {};
   const top = [...(r.reels || [])].filter((x) => x.postedAt && Date.now() - Date.parse(x.postedAt) < 7 * 86400000).sort((a, b) => (b.views || 0) - (a.views || 0))[0];

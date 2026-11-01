@@ -33,7 +33,7 @@ async function api(path, body, opts = {}) {
   return j;
 }
 // Una sola pantalla visible a la vez
-const VIEWS = ['empty', 'home', 'publish', 'ideas', 'library', 'results', 'settings', 'job'];
+const VIEWS = ['empty', 'home', 'publish', 'ideas', 'library', 'results', 'avatar', 'settings', 'job'];
 function show(view) {
   for (const v of VIEWS) $('#' + v).hidden = v !== view;
   document.querySelectorAll('.nav [data-view]').forEach((b) => b.classList.toggle('sel', b.dataset.view === view));
@@ -99,6 +99,7 @@ async function refresh() {
   if (current === 'home') return refreshHome();
   if (current === 'ideas') return refreshIdeas();
   if (current === 'publish') return refreshPublish();
+  if (current === 'avatar') return refreshAvatar();
   if (current === 'library') return refreshLibrary();
   if (current === 'results') return refreshResults();
   if (current === 'settings' || current === 'pilot') return refreshSettings();
@@ -421,6 +422,7 @@ const es = new EventSource('/api/events');
 es.onmessage = (e) => {
   if (e.data === '_investigador') { if (current === 'ideas') refreshIdeas(); return; }
   if (e.data === '_resultados') { if (current === 'results') refreshResults(); return; }
+  if (e.data === '_avatar') { if (current === 'avatar') refreshAvatar(); return; }
   if (e.data === '_piloto') { if (current === 'settings') refreshSettings(); if (current === 'home') homeSoon(); return; }
   if (current === 'home') { homeSoon(); return; }
   if (e.data !== current) { loadList(); return; }
@@ -847,3 +849,33 @@ async function refreshPublish() {
   $('#navPub').hidden = !q.items.length;
   $('#navPub').textContent = q.items.length;
 }
+
+// ---------- 🧬 Avatar ideal ----------
+async function refreshAvatar() {
+  const a = await api('avatarlab');
+  show('avatar');
+  $('#btnAvatarRun').disabled = a.running;
+  const v = a.versions[0];
+  const I = v && v.ideal;
+  const li = (arr) => (arr || []).map((x) => `<li>${esc(typeof x === 'string' ? x : x.titulo ? `${x.titulo} — ${x.formato || ''}` : `@${x.cuenta}: ${x.que}`)}</li>`).join('');
+  $('#avIdeal').innerHTML = `<div class="notes"><b>Estratega</b> <span class="muted">${esc(a.running ? 'trabajando…' : a.worker.action || '')}</span></div>` + (I ? `<div class="notes">
+    <h2 style="margin:4px 0">Versión ${a.versions.length} <span class="muted" style="font-size:13px">· ${new Date(v.at).toLocaleDateString('es-ES')} · con ${v.accounts} cuentas · evidencia: ${esc(I.evidencia || '')}</span></h2>
+    <p>${esc(I.resumen || '')}</p>
+    ${I.personaje ? `<b>👤 Personaje</b><ul>${Object.entries(I.personaje).map(([k, x]) => `<li><b>${esc(k)}:</b> ${esc(x)}</li>`).join('')}</ul>` : ''}
+    <p><b>💡 Concepto:</b> ${esc(I.concepto || '')}</p>
+    <p><b>@ Nombres:</b> ${esc((I.nombres || []).join(' · '))}<br><b>Bio:</b> ${esc(I.bio || '')}</p>
+    <b>🎬 Formatos</b><ul>${li(I.formatos)}</ul>
+    ${I.reparto ? `<p><b>👨‍👩‍👧 Reparto:</b> ${esc(I.reparto)}</p>` : ''}
+    <b>📋 Qué copiar de cada cuenta</b><ul>${li(I.copiar)}</ul>
+    <b>🚫 Evitar</b><ul>${li(I.evitar)}</ul>
+    <b>🚀 Lanzamiento: primeros 10 videos</b><ol>${li(I.lanzamiento)}</ol>
+    <b>✅ Lo que Emma puede adoptar ya</b><ul>${li(I.para_emma_ya)}</ul>
+    ${I.cambios ? `<p class="muted">Cambios frente a la versión anterior: ${esc(I.cambios)}</p>` : ''}
+  </div>` : '<p class="muted">Todavía no hay perfil ideal. Cuando el Investigador haya revisado al menos 3 cuentas, pulsa 🧬 Actualizar ahora (o espera al domingo).</p>');
+  $('#avRank').innerHTML = a.ranking.length ? `<h2 class="sec">📊 Cuentas estudiadas (las que más viralizan con menos seguidores, arriba)</h2>
+    <table class="rtable"><tr><th>Cuenta</th><th>Seguidores</th><th>Publ.</th><th>Visitas típicas</th><th>Eficiencia</th><th>Cómo es</th></tr>
+    ${a.ranking.map((x) => `<tr><td><a href="https://www.instagram.com/${esc(x.account)}/" target="_blank" style="color:#93c5fd">@${esc(x.account)}</a></td><td>${x.followers ? fmt(x.followers) : '?'}</td><td>${x.posts ?? '?'}</td><td>${fmt(x.medianViews || 0)}</td>
+      <td style="color:${(x.efficiency || 0) >= 1 ? '#86efac' : 'inherit'}">${x.efficiency != null ? x.efficiency + '×' : '?'}</td><td style="font-size:12px">${esc(x.look || '')}${x.concept ? `<br><span class="muted">${esc(x.concept)}</span>` : ''}</td></tr>`).join('')}</table>
+    <p class="muted" style="font-size:12px">Eficiencia = visitas típicas por video ÷ seguidores. Más de 1× = viraliza sin tener todavía comunidad: ahí está el concepto que funciona.</p>` : '';
+}
+$('#btnAvatarRun').onclick = async () => { await api('avatarlab', {}); refreshAvatar(); };
