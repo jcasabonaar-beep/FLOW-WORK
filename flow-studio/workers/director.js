@@ -61,6 +61,8 @@ async function run(job) {
     MAX_WORDS: config.maxWordsPerClip,
     ANCHORS: config.avatar.anchors,
     HOUSE: config.house ? `${config.house.style}.\nRooms:\n${Object.entries(config.house.rooms).map(([k, v]) => `- ${k}: ${v}`).join('\n')}` : '',
+    // Hooks recientes, para que no se repitan (ni el "Nadie en Estados Unidos te dice esto")
+    RECENT_HOOKS: store.list().filter((x) => x.id !== job.id && x.plan && x.plan.hook).slice(0, 12).map((x) => `- ${x.plan.hook.replace(/\*/g, '')}${x.hookB && x.hookB.text ? ` / B: ${x.hookB.text.replace(/\*/g, '')}` : ''}`).join('\n') || '(none yet)',
     FAMILY: Object.entries(config.family || {}).filter(([k]) => !k.startsWith('_')).map(([k, v]) => `- ${k}: ${v.name} — ${v.desc}`).join('\n'),
     FACE_ANCHORS: config.avatar.faceAnchors || config.avatar.anchors,
     WARDROBE: Object.entries(config.wardrobe || {}).filter(([k]) => !k.startsWith('_')).map(([k, v]) => `- ${k}: ${v}`).join('\n'),

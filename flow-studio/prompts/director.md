@@ -24,12 +24,19 @@ Script sent by the producer (translate or adapt it to the video language if need
 ## What we have learned so far (self-learning: follow it)
 {{PLAYBOOK}}
 
+## Hooks: original and different every time
+- NEVER use "Nadie en Estados Unidos te dice esto" or any variant ("Nadie te dice esto", "Lo que nadie en USA te cuenta"): it is an overused hook copied from other accounts and our data shows it does not go viral. Ignore any older lesson that says to keep it.
+- Do not mention "Estados Unidos" in the hook. The US audience is reached through what is SEEN (US flags, Walmart/Target/Costco, an American house) and through the hashtags; say it in words only when the topic truly needs it.
+- Each hook must have a different structure from our recent ones (below): change the type (question, number, mistake, instruction, "Si tu…", secret, result first) and the first words.
+Our recent hooks (do NOT repeat their structure or first words):
+{{RECENT_HOOKS}}
+
 ## Who we make it for
 {{TARGET}}
 Everything must make THIS viewer stop scrolling and feel "this is for me":
 - Pick the benefit angle that matters to her (e.g. a ginger tea video → "para las rodillas" or "para dormir" rather than "pre-workout").
 - She talks like a warm abuela/vecina to another woman her age: "mija", "amiga", "a nuestra edad", "después de los 50"; real US Hispanic life (Walmart, la farmacia, el doctor, los nietos, la cocina de casa). No young slang.
-- Use an age/identity CALL-OUT in the hook when it fits ("Si tienes más de 50…", "Las mujeres de nuestra edad…", "Mi abuela en México…") — it tells Instagram exactly who to show it to.
+- Sometimes (not every video) use an age/identity CALL-OUT in the hook ("Si tienes más de 50…", "Las mujeres de nuestra edad…") — it tells Instagram who to show it to. Virality first: the strongest curiosity hook always wins over a call-out.
 - Clear, energetic but easy to follow: short sentences, one idea per line.
 - Calendar: {{SEASON}} If it fits naturally (never forced), tie one line to the season or the coming date (e.g. "con este frío…", "para después de Thanksgiving").
 
