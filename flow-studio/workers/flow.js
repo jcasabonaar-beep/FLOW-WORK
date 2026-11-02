@@ -307,8 +307,12 @@ async function runHookB(job) {
   const hb = job.hookB;
   const c1 = job.clips[0];
   if (!hb || hb.clipStatus === 'done' || !c1 || c1.clipStatus !== 'done' || !c1.frame || c1.readyClip || config.flowMode !== 'auto') return;
-  // En el piloto, solo los 2 más fuertes llevan versión B (reel de prueba): 6 publicaciones al día en total
-  if (job.autopilot && (job.priority ?? 0) >= (config.abTop ?? 2)) { store.log(job, 'clips', '🅰️🅱️ Sin versión B: hoy solo la llevan los 2 videos más fuertes'); return; }
+  // Versión B solo en 2 videos al día (los 2 más fuertes del piloto, o los 2 primeros que hagas tú): 6 publicaciones al día en total
+  const MAX_B = config.abTop ?? 2;
+  if (job.autopilot && (job.priority ?? 0) >= MAX_B) { store.log(job, 'clips', '🅰️🅱️ Sin versión B: hoy solo la llevan los 2 videos más fuertes'); return; }
+  const today = new Date().toDateString();
+  const madeToday = store.list().filter((x) => x.id !== job.id && x.hookB && x.hookB.clipStatus === 'done' && x.hookB.v && new Date(x.hookB.v).toDateString() === today).length;
+  if (!job.autopilot && madeToday >= MAX_B) { store.log(job, 'clips', `🅰️🅱️ Sin versión B: hoy ya hay ${madeToday} videos con hook B (máximo ${MAX_B} al día)`); return; }
   const item = { ...c1, n: hb.n, line: hb.line, clipStatus: 'pending', clipRetried: true };
   const dest = `clips/clip_${pad(hb.n)}.mp4`;
   if (!fs.existsSync(abs(job, dest.replace('.mp4', '_a.mp4')))) {
