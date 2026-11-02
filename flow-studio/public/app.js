@@ -645,11 +645,12 @@ async function refreshResults() {
   const pb = await api('playbook');
   const D = pb.data;
   const nm = (dim, k) => (pb.names[dim] || {})[k] || k;
-  const bar = (dim, t) => D && (D[dim] || []).length ? `<div style="margin:8px 0"><b>${t}</b>${D[dim].map((x) => `<div class="lrow"><span>${esc(nm(dim, x.k))}</span><span class="lbar"><i style="width:${Math.min(100, x.x * 40)}%;background:${x.x >= 1.3 ? '#22c55e' : x.x < 0.8 ? '#ef4444' : '#eab308'}"></i></span><b>${x.x}×</b><span class="muted">${x.n} reel${x.n > 1 ? 's' : ''}</span></div>`).join('')}</div>` : '';
-  $('#rLearn').innerHTML = D ? `<div class="notes"><b>🧠 Lo que ha aprendido el sistema</b> <span class="muted">(visitas frente a tu media; con pocos reels se fía poco y lo acerca a 1×)</span>
+  const bar = (dim, t) => D && (D[dim] || []).length ? `<div style="margin:8px 0"><b>${t}</b>${D[dim].map((x) => `<div class="lrow"><span>${esc(nm(dim, x.k))}</span><span class="lbar"><i style="width:${Math.min(100, x.rate)}%;background:${x.hits ? '#22c55e' : x.n >= 3 ? '#ef4444' : '#eab308'}"></i></span><b>${x.hits}/${x.n}</b><span class="muted">virales · mejor ${fmt(x.best)}</span></div>`).join('')}</div>` : '';
+  $('#rLearn').innerHTML = D ? `<div class="notes"><b>🧠 Lo que ha aprendido el sistema</b> <span class="muted">(solo aprende de los virales: ${fmt(D.viral)}+ visitas; ahora lo son el ${D.base}% de tus reels)</span>
+    ${D.virals.length ? `<div style="margin:8px 0"><b>🔥 Tus virales</b><ul>${D.virals.map((v) => `<li>${esc(v.title)}: <b>${fmt(v.views)}</b> · ${esc(nm('formato', v.format))} · hook ${esc(nm('hook', v.hook))}</li>`).join('')}</ul></div>` : `<p class="muted">Todavía ningún video de Flow Studio enlazado ha llegado a ${fmt(D.viral)}: mientras tanto se guía por lo que es viral en las cuentas que vigila.</p>`}
     ${bar('formato', 'Formato')}${bar('hook', 'Tipo de hook')}${bar('ropa', 'Ropa')}${bar('escenario', 'Escenario')}${bar('tipo', 'Tipo de video')}${bar('familia', 'Familia')}
     ${D.ab.length ? `<b>🅰️🅱️ Pruebas de hook</b><ul>${D.ab.map((x) => `<li>${esc(x.title)}: ganó <b>${x.win}</b> (${esc(nm('hook', x.win === 'A' ? x.a : x.b))}) por ${x.ratio.toFixed(1)}×</li>`).join('')}</ul>` : ''}
-    ${D.trend.length ? `<b>🔥 Lo que está explotando fuera ahora</b><ul>${D.trend.map((x) => `<li>${esc(nm('formato', x.k))}: ${x.n} virales (${x.x}×)</li>`).join('')}</ul>` : ''}
+    ${D.trend.length ? `<b>🌍 Lo que está siendo viral fuera ahora (${fmt(D.viral)}+)</b><ul>${D.trend.map((x) => `<li>${esc(nm('formato', x.k))}: ${x.n} virales (típico ${fmt(x.x)})</li>`).join('')}</ul>` : ''}
     ${!D.formato.length ? '<p class="muted">Todavía no hay reels enlazados con sus videos: en cuanto los haya, aquí verás qué formato, hook y ropa funcionan mejor.</p>' : ''}</div>` : '';
   const med = p && p.median;
   const reels = [...(r.reels || [])].sort((a, b) => (b.views || 0) - (a.views || 0));

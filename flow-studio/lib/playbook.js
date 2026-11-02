@@ -14,43 +14,52 @@ const FORMATS = {
 const HOOKS = { pregunta: 'pregunta', afirmacion: 'afirmación', cifra: 'cifra o dato', error: 'error ("lo haces mal")', llamada_edad: 'llamada a su edad ("Si tienes más de 50")', instruccion: 'instrucción ("ponle…")', secreto: 'secreto de abuela', si_tu: '"Si tu…"' };
 const median = (a) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : 0; };
 
-// Media "prudente": con pocos videos se acerca a 1× (no se fía de un solo dato)
-const shrink = (vals, k = 2) => (vals.reduce((a, b) => a + b, 0) + k) / (vals.length + k);
+// Solo aprende de lo VIRAL: un reel cuenta como éxito si llega a 50.000 visitas o más (config.viralViews).
+// Que uno de 7.000 haga algo mejor que otro de 5.000 es ruido: no enseña nada.
+const VIRAL = () => require('../config.json').viralViews || 50000;
+// % de virales "prudente": con pocos reels se acerca a la tasa general de la cuenta (no se fía de un solo dato)
+const prudent = (hits, n, base, k = 3) => (hits + base * k) / (n + k);
 
 function compute() {
+  const V = VIRAL();
   const res = store.load('_resultados') || {};
-  const reels = (res.reels || []).filter((r) => r.views && r.jobId);
-  const med = median((res.reels || []).map((r) => r.views).filter(Boolean)) || 1;
+  const all = (res.reels || []).filter((r) => r.views);
+  const reels = all.filter((r) => r.jobId);
+  const base = all.length ? all.filter((r) => r.views >= V).length / all.length : 0.1;
   const by = {};
-  const add = (dim, key, v) => { if (!key) return; ((by[dim] ||= {})[key] ||= []).push(v); };
+  const add = (dim, key, views) => { if (!key) return; ((by[dim] ||= {})[key] ||= []).push(views); };
   const ab = [];
   for (const r of reels) {
     const j = store.load(r.jobId);
     if (!j) continue;
-    const ratio = r.views / med;
     const B = r.version === 'B';
-    add('formato', (j.plan || {}).format, ratio);
-    add('hook', B ? (j.hookB || {}).type : (j.plan || {}).hookType, ratio);
-    add('ropa', (j.plan || {}).outfit, ratio);
-    add('escenario', j.setting, ratio);
-    add('tipo', j.videoType, ratio);
-    add('familia', (j.clips || []).some((c) => (c.family || []).length) ? 'con familia' : 'sin familia', ratio);
+    add('formato', (j.plan || {}).format, r.views);
+    add('hook', B ? (j.hookB || {}).type : (j.plan || {}).hookType, r.views);
+    add('ropa', (j.plan || {}).outfit, r.views);
+    add('escenario', j.setting, r.views);
+    add('tipo', j.videoType, r.views);
+    add('familia', (j.clips || []).some((c) => (c.family || []).length) ? 'con familia' : 'sin familia', r.views);
   }
-  // A/B: el mismo video con dos hooks
+  // A/B: solo cuenta si al menos una de las dos versiones fue viral
   const pairs = {};
   for (const r of reels) (pairs[r.jobId] ||= {})[r.version || 'A'] = r.views;
   for (const [id, p] of Object.entries(pairs)) {
-    if (!p.A || !p.B) continue;
+    if (!p.A || !p.B || Math.max(p.A, p.B) < V) continue;
     const j = store.load(id);
     ab.push({ title: j.title, a: (j.plan || {}).hookType, b: (j.hookB || {}).type, win: p.B > p.A ? 'B' : 'A', ratio: Math.max(p.A, p.B) / Math.max(1, Math.min(p.A, p.B)) });
   }
-  // Lo que está explotando fuera (Investigador, últimos 7 días)
+  // Lo que está explotando fuera (Investigador, últimos 7 días): solo reels de 50.000+
   const sug = (store.load('_investigador') || {}).suggestions || [];
   const trend = {};
-  for (const s of sug) if (s.formato && (!s.postedAt || Date.now() - Date.parse(s.postedAt) < 7 * 86400000)) (trend[s.formato] ||= []).push(s.ratio || 1);
-  const table = (dim) => Object.entries(by[dim] || {}).map(([k, v]) => ({ k, n: v.length, x: Math.round(shrink(v) * 10) / 10 })).sort((a, b) => b.x - a.x);
-  const out = { at: Date.now(), median: med, formato: table('formato'), hook: table('hook'), ropa: table('ropa'), escenario: table('escenario'), tipo: table('tipo'), familia: table('familia'), ab,
-    trend: Object.entries(trend).map(([k, v]) => ({ k, n: v.length, x: Math.round(median(v) * 10) / 10 })).sort((a, b) => b.n - a.n) };
+  for (const s2 of sug) if (s2.formato && s2.views >= V && (!s2.postedAt || Date.now() - Date.parse(s2.postedAt) < 7 * 86400000)) (trend[s2.formato] ||= []).push(s2.views);
+  const table = (dim) => Object.entries(by[dim] || {}).map(([k, v]) => {
+    const hits = v.filter((x) => x >= V).length;
+    const rate = prudent(hits, v.length, base);
+    return { k, n: v.length, hits, best: Math.max(...v), rate: Math.round(rate * 100), x: Math.round((rate / Math.max(base, 0.02)) * 10) / 10 };
+  }).sort((a, b) => b.rate - a.rate || b.best - a.best);
+  const virals = reels.filter((r) => r.views >= V).map((r) => { const j = store.load(r.jobId) || {}; return { title: j.title, views: r.views, format: (j.plan || {}).format, hook: r.version === 'B' ? (j.hookB || {}).type : (j.plan || {}).hookType }; });
+  const out = { at: Date.now(), viral: V, base: Math.round(base * 100), total: all.length, virals, formato: table('formato'), hook: table('hook'), ropa: table('ropa'), escenario: table('escenario'), tipo: table('tipo'), familia: table('familia'), ab,
+    trend: Object.entries(trend).map(([k, v]) => ({ k, n: v.length, x: median(v) })).sort((a, b) => b.n - a.n) };
   fs.mkdirSync(path.dirname(FILE), { recursive: true });
   fs.writeFileSync(JSONF, JSON.stringify(out, null, 2));
   fs.writeFileSync(FILE, text(out));
@@ -59,11 +68,13 @@ function compute() {
 
 const name = (dim, k) => (dim === 'formato' ? FORMATS[k] : dim === 'hook' ? HOOKS[k] : null) || k;
 function text(p) {
-  const line = (dim, t) => (p[dim] || []).length ? `${t}: ` + p[dim].map((r) => `${name(dim, r.k)} ${r.x}× (${r.n} reel${r.n > 1 ? 's' : ''})`).join(' · ') : '';
-  const abWins = p.ab.length ? `A/B tests (same video, two hooks): ` + p.ab.map((r) => `"${r.title}": ganó ${r.win} (${r.win === 'A' ? name('hook', r.a) : name('hook', r.b)} sobre ${r.win === 'A' ? name('hook', r.b) : name('hook', r.a)}, ${r.ratio.toFixed(1)}×)`).join(' · ') : '';
-  const tr = p.trend.length ? `Exploding right now in similar accounts (last 7 days, number of virals and typical jump): ` + p.trend.map((r) => `${name('formato', r.k)} ${r.n} virales (${r.x}×)`).join(' · ') : '';
-  const rows = [line('formato', 'FORMAT on OUR account (views vs our median, prudent average)'), line('hook', 'HOOK type'), line('ropa', 'Outfit'), line('escenario', 'Setting'), line('tipo', 'Video type'), line('familia', 'Family in the video'), abWins, tr].filter(Boolean);
-  return rows.length ? `SELF-LEARNING PLAYBOOK (real data, updated ${new Date(p.at).toISOString().slice(0, 10)}). Favor what is above 1×, avoid what is clearly below, and keep testing formats with few reels:\n- ` + rows.join('\n- ') + '\n' : '';
+  const k = (n) => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1000) + 'k';
+  const line = (dim, t) => (p[dim] || []).length ? `${t}: ` + p[dim].map((r) => `${name(dim, r.k)} ${r.hits}/${r.n} virales (${r.rate}%, mejor ${k(r.best)})`).join(' · ') : '';
+  const vir = p.virals.length ? `OUR VIRAL REELS (${p.viral / 1000}k+): ` + p.virals.map((v) => `"${v.title}" ${k(v.views)} [${name('formato', v.format)}, hook ${name('hook', v.hook)}]`).join(' · ') : `None of our reels has reached ${p.viral / 1000}k yet: copy what goes viral in other accounts.`;
+  const abWins = p.ab.length ? `A/B tests with a viral version: ` + p.ab.map((r) => `"${r.title}": ganó ${r.win} (${r.win === 'A' ? name('hook', r.a) : name('hook', r.b)})`).join(' · ') : '';
+  const tr = p.trend.length ? `Going viral (${p.viral / 1000}k+) right now in similar accounts, last 7 days: ` + p.trend.map((r) => `${name('formato', r.k)} ${r.n} virales`).join(' · ') : '';
+  const rows = [vir, line('formato', 'FORMAT on our account (how many reached ' + p.viral / 1000 + 'k)'), line('hook', 'HOOK type'), line('ropa', 'Outfit'), line('escenario', 'Setting'), line('tipo', 'Video type'), line('familia', 'Family'), abWins, tr].filter(Boolean);
+  return `SELF-LEARNING PLAYBOOK (real data, ${new Date(p.at).toISOString().slice(0, 10)}). A reel only counts as a success if it reached ${p.viral / 1000}k views; ${p.base}% of our reels do. Repeat what produced virals, drop what never does, keep testing what has few reels:\n- ` + rows.join('\n- ') + '\n';
 }
 
 function read() { try { return fs.readFileSync(FILE, 'utf8'); } catch { return ''; } }
@@ -75,7 +86,7 @@ function weight(formato) {
   if (!p || !formato) return 1;
   const mine = (p.formato || []).find((r) => r.k === formato);
   const tr = (p.trend || []).find((r) => r.k === formato);
-  return Math.max(0.5, Math.min(2, (mine ? mine.x : 1) * (tr && tr.n >= 2 ? 1.15 : 1)));
+  return Math.max(0.5, Math.min(2.5, (mine ? mine.x : 1) * (tr && tr.n >= 2 ? 1.2 : 1)));
 }
 
 module.exports = { compute, read, data, weight, FORMATS, HOOKS };

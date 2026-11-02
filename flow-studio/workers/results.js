@@ -88,7 +88,7 @@ async function run() {
     const rep = path.join(dir(), 'report.json');
     if (fs.existsSync(rep)) fs.unlinkSync(rep);
     const text = await claude.run({ job: j, worker: 'results', cwd: dir(), tools: ['Write'],
-      prompt: fill(P('results_ideas.md'), { ACCOUNT, REELS: reels, JOBS: jobsSummary(), OUT: rep }) });
+      prompt: fill(P('results_ideas.md'), { ACCOUNT, REELS: reels, JOBS: jobsSummary(), OUT: rep, VIRAL: require('../config.json').viralViews || 50000 }) });
     const report = fs.existsSync(rep) ? JSON.parse(fs.readFileSync(rep, 'utf8')) : claude.extractJson(text);
     j.report = { ...report, median: med, at: now };
     for (const r of j.reels) if (!r.linked && !r.autoLinked) r.jobId = (report.matches || {})[r.url] || r.jobId || null;
@@ -125,7 +125,8 @@ function schedule() {
 // 🔁 Parte 2: los reels que superan 2× la media (y son de los últimos 5 días) tienen continuación en 24-48 h
 async function makePart2(j, med) {
   const done = new Set(j.part2Done || []);
-  const wins = (j.reels || []).filter((r) => med && r.views >= 2 * med && r.postedAt && Date.now() - Date.parse(r.postedAt) < 5 * 86400000 && !done.has(r.url));
+  // Solo de los virales de verdad (50.000+), no de los que van "algo mejor que la media"
+  const wins = (j.reels || []).filter((r) => med && r.views >= Math.max(2 * med, require('../config.json').viralViews || 50000) && r.postedAt && Date.now() - Date.parse(r.postedAt) < 5 * 86400000 && !done.has(r.url));
   if (!wins.length) return;
   store.setWorker(j, 'results', { action: `🔁 Preparando la parte 2 de ${wins.length} reel(s) que funcionan…` });
   const items = wins.map((r) => {
