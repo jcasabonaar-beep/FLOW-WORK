@@ -59,3 +59,31 @@ En `config.json` cambia `"flowMode": "auto"` por `"manual"`. El panel te da en c
 - Automatizar Flow va contra sus condiciones. Usa tu cuenta a ritmo normal y el riesgo es bajo, pero no es cero.
 - El plan **Pro de Claude** tiene límites: manejar Chrome gasta bastante. Si a mitad del día se acaba, el trabajador se para con un error; espera a que se renueve y pulsa **Continuar**. Si se queda corto a menudo, pasa a Max.
 - Prueba del editor sin gastar nada: `npm run test-editor`.
+
+---
+
+## 🎥 Vídeos Higgsfield de Diane (@diane.glows)
+
+Pegas el link de un reel (Instagram o TikTok) y Flow Studio lo imita con Diane: análisis → keyframes con Nano Banana Pro → vídeo con Seedance → entrega (hook, overlays para CapCut y descripción). Botón **🎥 Nuevo vídeo Higgsfield**. El piloto automático **no** usa este pipeline.
+
+| Etapa | Qué hace | Estado |
+|---|---|---|
+| 🎞️ Referencia | Descarga con yt-dlp (con las cookies del Chrome de Flow Studio si hace falta), guarda la descripción original, frames a 2 fps + cambios de escena y hojas de contactos con el segundo en cada miniatura | ✅ |
+| 🧠 Análisis | Claude (visión) hace el plan: formato, acciones por tramos, ropa, sitio, cámara, textos, duración (máx. 15 s) y estrategia de keyframes | ✅ |
+| ✋ Tu OK análisis | Lo revisas. Escribe una corrección y Claude lo rehace (tus correcciones mandan), o edita el JSON a mano | ✅ |
+| 🖼️ Keyframes | Nano Banana Pro (Unlimited) en Higgsfield + QA | paso 2-3 |
+| 🎥 Vídeo | Seedance (Unlimited) en Higgsfield + QA | paso 4-5 |
+| 📦 Entrega | Hook, overlays, descripción en Google Doc | paso 6 |
+
+- Kit de Diane: `avatar/diane/` (`diane_principal.jpg` es siempre Image 1).
+- Reglas de dirección, plantillas y ejemplos aprobados: `prompts/hf_rules.md`, `prompts/hf_templates.md`, `prompts/hf_examples.md`.
+- Ajustes: sección `higgsfield` de `config.json` (bloque de identidad, duraciones, intentos, paradas por defecto). Las paradas se pueden cambiar en cada vídeo desde su ficha.
+- Archivos de cada vídeo en `jobs/<id>/`: `ref/` (video, descripción, `f2/` frames, `scene/` cortes, `sheet/` hojas, `kf_start.jpg`/`kf_end.jpg`), `analysis.json` y `analysis_vN.json` (cada versión).
+
+### Probar una etapa suelta (sin el panel)
+```
+node tools/hf-test.js capture https://www.instagram.com/reel/XXXX/
+node tools/hf-test.js analysis <id que te da el paso anterior>
+node tools/hf-test.js correct <id> "en el segundo ejercicio abre piernas y brazos a la vez"
+```
+También acepta un .mp4 en lugar del link. Los trabajos de prueba salen en el panel, en "Te esperan".

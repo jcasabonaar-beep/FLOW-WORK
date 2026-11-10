@@ -10,6 +10,7 @@
 <aside id="side">
   <div class="brand">Flow <b>Studio</b></div>
   <button class="primary wide big" id="btnNew">＋ Nuevo video</button>
+  <button class="wide big hf-new" id="btnHfNew">🎥 Nuevo vídeo Higgsfield</button>
   <nav class="nav">
     <button data-view="home">🏠 Hoy <span class="count" id="navWait" hidden></span></button>
     <button data-view="publish">📅 Publicar <span class="count" id="navPub" hidden></span></button>
@@ -92,6 +93,7 @@
     <h2 class="sec">🔎 Cuentas que vigila el Investigador</h2>
     <div class="notes"><label style="margin-top:0">Una por línea, sin @ (se guarda al salir de la casilla)<textarea id="inAccounts" rows="5" placeholder="wellnesseverydayh&#10;otra_cuenta"></textarea></label><div id="sugAccounts"></div></div>
   </section>
+  <section id="hfjob" hidden><div id="hfTop"></div><div id="hfPanel"></div></section>
   <section id="job" hidden>
     <header class="job-head">
       <div>
@@ -153,11 +155,28 @@
   <div id="ideasBody"></div>
 </dialog>
 
+<dialog id="dlgHf">
+  <form method="dialog" id="formHf">
+    <h2>🎥 Nuevo vídeo Higgsfield · Diane</h2>
+    <div class="muted" style="font-size:13px;margin-bottom:8px">Pega el reel que quieres imitar. Diane copia la ropa, el sitio, la pose y la cámara de la referencia, salvo lo que cambies abajo. Nunca la cara ni el pelo.</div>
+    <label>Link del reel (Instagram o TikTok) <input name="url" required placeholder="https://www.instagram.com/reel/…"></label>
+    <label>Nombre (opcional) <input name="title" placeholder="Cardio en silla"></label>
+    <label>Ropa (opcional) <input name="outfit" placeholder="Como la referencia"></label>
+    <label>Sitio (opcional) <input name="place" placeholder="Como la referencia"></label>
+    <label>Notas de coreografía (opcional) <textarea name="notes" rows="3" placeholder="p. ej. en el segundo ejercicio abre piernas y brazos a la vez"></textarea></label>
+    <div class="row end">
+      <button value="cancel" formnovalidate>Cancelar</button>
+      <button class="primary" value="ok">Empezar</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="dlgOffice">
   <div class="dlg-head"><h2 id="oTitle"></h2><button onclick="this.closest('dialog').close()">Cerrar</button></div>
   <pre id="oLog" class="log big"></pre>
 </dialog>
 
 <script src="app.js"></script>
+<script src="hf.js"></script>
 </body>
 </html>

@@ -19,6 +19,19 @@ const STAGES = [
   ['capture', 'Captura'], ['director', 'Plan'], ['frames', 'Frames'], ['review_frames', '✋ Tu OK frames', true],
   ['clips', 'Clips'], ['editor', 'Edición'], ['review_final', '✋ Tu OK final', true], ['done', 'Listo'],
 ];
+// 🎥 Pipeline Higgsfield (Diane): sus trabajadores y etapas (la ficha se pinta en hf.js)
+const HF_WORKERS = [
+  ['hf_capture', '🎞️', 'Referencia', 'Descarga el reel, frames a 2 fps y hoja de contactos'],
+  ['hf_analyst', '🧠', 'Análisis', 'Claude mira la referencia y hace el plan'],
+  ['hf_keyframes', '🖼️', 'Keyframes', 'Nano Banana Pro (Unlimited) en Higgsfield'],
+  ['hf_video', '🎥', 'Vídeo', 'Seedance (Unlimited) en Higgsfield'],
+  ['hf_post', '📦', 'Entrega', 'Overlays, hook y descripción'],
+];
+const HF_STAGES = [
+  ['capture', 'Referencia'], ['analysis', 'Análisis'], ['review_analysis', '✋ Tu OK análisis', true], ['keyframes', 'Keyframes'],
+  ['review_keyframes', '✋ Tu OK keyframes', true], ['video', 'Vídeo'], ['review_video', '✋ Tu OK vídeo', true], ['post', 'Entrega'],
+  ['review_final', '✋ Te espera', true], ['done', 'Listo'],
+];
 const ITEM_ES = { pending: 'pendiente', done: 'listo', doubt: 'dudoso', regen: 'a rehacer', manual: 'te toca a ti' };
 const STATE_ES = { idle: 'en espera', working: 'trabajando', done: 'hecho', waiting_you: 'te espera', error: 'error', paused: 'en pausa' };
 
@@ -35,7 +48,7 @@ async function api(path, body, opts = {}) {
   return j;
 }
 // Una sola pantalla visible a la vez
-const VIEWS = ['empty', 'home', 'publish', 'ideas', 'library', 'results', 'avatar', 'settings', 'job'];
+const VIEWS = ['empty', 'home', 'publish', 'ideas', 'library', 'results', 'avatar', 'settings', 'job', 'hfjob'];
 function show(view) {
   for (const v of VIEWS) $('#' + v).hidden = v !== view;
   document.querySelectorAll('.nav [data-view]').forEach((b) => b.classList.toggle('sel', b.dataset.view === view));
@@ -68,7 +81,7 @@ async function loadList() {
     <div class="job-item ${j.id === current ? 'sel' : ''}" data-id="${j.id}">
       <span class="dot ${j.status}"></span>
       ${dotsMenu(j.id)}
-      <div><div>${esc(j.title)}</div><small>${j.status === 'error' ? 'Se atascó' : ['paused', 'stopped'].includes(j.status) ? '⏸ Parado' : j.status === 'waiting_limit' ? '💤 Esperando límite de Claude' : esc(stageName(j.stage))} · ${j.clips} clips</small></div>
+      <div><div>${esc(j.title)}</div><small>${j.status === 'error' ? 'Se atascó' : ['paused', 'stopped'].includes(j.status) ? '⏸ Parado' : j.status === 'waiting_limit' ? '💤 Esperando límite de Claude' : esc(stageName(j.stage))} · ${j.kind === 'higgsfield' ? '🎥 Higgsfield' : j.clips + ' clips'}</small></div>
     </div>`;
   const wait = list.filter(needsYou);
   const done = list.filter((j) => j.status === 'done');
@@ -85,7 +98,7 @@ async function loadList() {
   $('#navWait').textContent = wait.length;
   return list;
 }
-const stageName = (s) => (STAGES.find((x) => x[0] === s) || [, s])[1];
+const stageName = (s) => (STAGES.find((x) => x[0] === s) || HF_STAGES.find((x) => x[0] === s) || [, s])[1];
 
 async function open(id) {
   $('#analysis').innerHTML = '';
@@ -106,6 +119,7 @@ async function refresh() {
   if (current === 'results') return refreshResults();
   if (current === 'settings' || current === 'pilot') return refreshSettings();
   job = await api('jobs/' + current);
+  if (job.kind === 'higgsfield') { show('hfjob'); return renderHf(job); }
   show('job');
   $('.more').open = false;
   $('#jTitle').textContent = job.title;
@@ -234,7 +248,7 @@ function waitingText() {
 function viewOffice(k, silent) {
   const d = $('#dlgOffice');
   d.dataset.w = k;
-  $('#oTitle').textContent = WORKERS.find((w) => w[0] === k).slice(1, 3).join(' ') + ' — todo lo que ha hecho';
+  $('#oTitle').textContent = [...WORKERS, ...HF_WORKERS].find((w) => w[0] === k).slice(1, 3).join(' ') + ' — todo lo que ha hecho';
   const pre = $('#oLog');
   const atBottom = pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 20;
   pre.textContent = job.workers[k].log.join('\n') || 'Todavía nada.';

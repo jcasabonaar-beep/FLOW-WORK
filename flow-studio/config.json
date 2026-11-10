@@ -150,6 +150,18 @@
     "avatar": {
       "model": "sonnet",
       "effort": "low"
+    },
+    "hf_analyst": {
+      "model": "",
+      "effort": "medium"
+    },
+    "hf_qa": {
+      "model": "",
+      "effort": "medium"
+    },
+    "hf_writer": {
+      "model": "",
+      "effort": "medium"
     }
   },
   "layoutPass": false,
@@ -239,5 +251,37 @@
   "dailyMax": 6,
   "dailyMain": 4,
   "abTop": 2,
-  "viralViews": 50000
+  "viralViews": 50000,
+  "higgsfield": {
+    "_nota": "Pipeline Higgsfield de Diane (diane.glows). Las paradas (gates) se pueden apagar cuando el pipeline sea fiable. El piloto automático NO lo usa.",
+    "account": "diane.glows",
+    "avatar": {
+      "name": "Diane Brooks",
+      "age": 63,
+      "looks": 45,
+      "city": "Los Angeles",
+      "main": "avatar/diane/diane_principal.jpg",
+      "body": "avatar/diane/diane_cuerpo_entero.jpg",
+      "extra": [
+        "avatar/diane/diane_frente_2.jpg",
+        "avatar/diane/diane_tres_cuartos.jpg"
+      ]
+    },
+    "identity": "A fit 63-year-old woman who easily looks 45, fair glowing skin with light freckles, visible natural pores and laugh lines, blue-green eyes, long silver-grey hair with soft waves and a middle part, small gold hoop earrings.",
+    "provider": "web",
+    "imageModel": "Nano Banana Pro",
+    "videoModel": "Seedance 2.5",
+    "minSeconds": 4,
+    "maxSeconds": 15,
+    "keyframeTries": 4,
+    "videoRegens": 2,
+    "gates": {
+      "analysis": true,
+      "keyframes": true,
+      "video": true
+    },
+    "framesPerSecond": 2,
+    "sceneThreshold": 0.3,
+    "driveSubfolder": "Diane Glows"
+  }
 }

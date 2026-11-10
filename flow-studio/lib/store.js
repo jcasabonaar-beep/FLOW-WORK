@@ -6,6 +6,8 @@ const { EventEmitter } = require('events');
 const ROOT = path.join(__dirname, '..');
 const JOBS = path.join(ROOT, 'jobs');
 const WORKERS = ['capture', 'director', 'frames', 'clips', 'editor'];
+// Trabajadores del pipeline Higgsfield (Diane)
+const HF_WORKERS = ['hf_capture', 'hf_analyst', 'hf_keyframes', 'hf_video', 'hf_post'];
 
 const bus = new EventEmitter();
 bus.setMaxListeners(100);
@@ -23,7 +25,8 @@ function blankWorker() {
   return { state: 'idle', action: '', log: [], paused: false, startedAt: null, endedAt: null };
 }
 
-function create({ title, url, script, setting, ctaWord, language, videoType, mode }) {
+function create({ title, url, script, setting, ctaWord, language, videoType, mode, kind, outfit, place, notes }) {
+  if (kind === 'higgsfield') return createHf({ title, url, outfit, place, notes });
   const id = newId();
   fs.mkdirSync(path.join(jobDir(id), 'ref'), { recursive: true });
   for (const d of ['frames', 'clips', 'edit', 'logs']) fs.mkdirSync(path.join(jobDir(id), d), { recursive: true });
@@ -34,6 +37,24 @@ function create({ title, url, script, setting, ctaWord, language, videoType, mod
     status: 'running', // running | paused | waiting_you | done | error
     workers: Object.fromEntries(WORKERS.map((w) => [w, blankWorker()])),
     plan: null, clips: [], notes: [], output: null, error: null, timings: {},
+  };
+  save(job);
+  return job;
+}
+
+// 🎥 Video Higgsfield de Diane: link de referencia + ajustes opcionales (ropa, sitio, notas de coreografía)
+function createHf({ title, url, outfit, place, notes }) {
+  const id = newId();
+  for (const d of ['ref', 'keyframes', 'video', 'post', 'debug', 'logs']) fs.mkdirSync(path.join(jobDir(id), d), { recursive: true });
+  const clean = (x) => String(x || '').trim().slice(0, 2000);
+  const job = {
+    id, kind: 'higgsfield', title: clean(title) || 'Diane ' + id, url: clean(url), createdAt: Date.now(),
+    stage: 'capture', // capture → analysis → review_analysis → keyframes → review_keyframes → video → review_video → post → review_final → done
+    status: 'running',
+    // Todos los trabajadores (los de Flow también) para que el resto del panel no falle con estos trabajos
+    workers: Object.fromEntries([...WORKERS, ...HF_WORKERS].map((w) => [w, blankWorker()])),
+    clips: [], notes: [], output: null, error: null, timings: {},
+    hf: { overrides: { outfit: clean(outfit), place: clean(place), notes: clean(notes) }, corrections: [], analysis: null, analysisV: 0, warnings: [] },
   };
   save(job);
   return job;
@@ -82,4 +103,4 @@ function remove(id) {
   fs.rmSync(jobDir(id), { recursive: true, force: true });
 }
 
-module.exports = { ROOT, JOBS, WORKERS, bus, jobDir, create, load, save, list, log, setWorker, remove };
+module.exports = { ROOT, JOBS, WORKERS, HF_WORKERS, bus, jobDir, create, load, save, list, log, setWorker, remove };

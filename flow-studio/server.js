@@ -67,9 +67,9 @@ async function handleUpload(job, kind, n, name, buf) {
   const dir = store.jobDir(job.id);
   const ext = (path.extname(name || '') || '.bin').toLowerCase();
   if (kind === 'ref') {
-    for (const f of fs.readdirSync(path.join(dir, 'ref'))) if (/^(upload\.|video\.mp4|sheet_)/.test(f)) fs.unlinkSync(path.join(dir, 'ref', f));
+    for (const f of fs.readdirSync(path.join(dir, 'ref'))) if (/^(upload\.|video\.mp4|video\.info\.json|sheet_)/.test(f)) fs.unlinkSync(path.join(dir, 'ref', f));
     fs.writeFileSync(path.join(dir, 'ref', 'upload' + ext), buf);
-    store.log(job, 'capture', '📥 Recibido tu video de referencia');
+    store.log(job, job.kind === 'higgsfield' ? 'hf_capture' : 'capture', '📥 Recibido tu video de referencia');
     return;
   }
   const c = job.clips.find((x) => x.n === n);
@@ -232,10 +232,12 @@ async function api(req, res, url) {
     if (parts[2] === 'stop') return send(res, 200, { ok: claude.stop(research.RID, 'research') });
     return send(res, 404, { error: 'ruta' });
   }
+  // 🎥 Videos Higgsfield de Diane
+  if (parts[1] === 'hf') return require('./lib/hf/api').handle(req, res, parts, { send, readBody, pipeline });
   if (parts[1] !== 'jobs') return send(res, 404, { error: 'ruta' });
 
   if (parts.length === 2 && method === 'GET') {
-    return send(res, 200, store.list().map((j) => ({ id: j.id, title: j.title, stage: j.stage, status: j.status, createdAt: j.createdAt, clips: j.clips.length, auto: !!j.auto, toPublish: j.status === 'done' && !!j.finalFile && !j.published })));
+    return send(res, 200, store.list().map((j) => ({ id: j.id, kind: j.kind || 'flow', title: j.title, stage: j.stage, status: j.status, createdAt: j.createdAt, clips: j.clips.length, auto: !!j.auto, toPublish: j.status === 'done' && !!j.finalFile && !j.published })));
   }
   if (parts[2] === 'batch' && method === 'POST') {
     // Lote nocturno: varias ideas de golpe, en modo directo y en cola
@@ -289,7 +291,7 @@ async function api(req, res, url) {
       return send(res, 200, { ok: true });
     case 'resume':
       if (body.worker) job.workers[body.worker].paused = false; else job.paused = false;
-      for (const w of store.WORKERS) if (job.workers[w].state === 'paused' && !job.workers[w].paused && !job.paused) job.workers[w].state = 'idle';
+      for (const w of Object.keys(job.workers)) if (job.workers[w].state === 'paused' && !job.workers[w].paused && !job.paused) job.workers[w].state = 'idle';
       store.save(job);
       if (!pipeline.active.has(job.id) && !['review_frames', 'review_final', 'done'].includes(job.stage)) pipeline.drive(job.id);
       return send(res, 200, { ok: true });
@@ -323,7 +325,7 @@ async function api(req, res, url) {
       // Parar ya: pausa el video y corta al trabajador que esté en marcha
       job.paused = true;
       store.save(job);
-      for (const w of store.WORKERS) claude.stop(job.id, w);
+      for (const w of Object.keys(job.workers)) claude.stop(job.id, w);
       return send(res, 200, { ok: true });
     case 'stop-worker':
       return send(res, 200, { ok: claude.stop(job.id, body.worker) });

@@ -113,6 +113,9 @@ async function step(job) {
 }
 
 async function drive(id) {
+  const j0 = store.load(id);
+  // 🎥 Los videos Higgsfield de Diane tienen su propio jefe de etapas
+  if (j0 && j0.kind === 'higgsfield') return require('./hf/pipeline').drive(id, active);
   if (active.has(id)) return;
   active.add(id);
   const job = store.load(id);
