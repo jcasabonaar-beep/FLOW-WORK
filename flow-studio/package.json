@@ -1,0 +1,14 @@
+{
+  "name": "flow-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Oficinas de producción de videos con trabajadores Claude + Google Flow",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test-editor": "node tools/test-editor.js"
+  },
+  "dependencies": {
+    "@playwright/mcp": "0.0.83"
+  }
+}
