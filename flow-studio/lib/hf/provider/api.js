@@ -4,4 +4,4 @@ const { HfStop } = require('../locate');
 
 const todo = () => { throw new HfStop('El proveedor "api" de Higgsfield todavía no está configurado. En config.json deja higgsfield.provider = "web".'); };
 
-module.exports = { generateImage: todo, generateVideo: todo, check: todo };
+module.exports = { generateImage: todo, generateVideo: todo, check: todo, preflightImage: async () => {} };

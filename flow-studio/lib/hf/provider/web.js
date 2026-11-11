@@ -266,6 +266,26 @@ async function generateImage(o) {
   }
 }
 
+// Antes de escribir prompts: ¿la pantalla de imagen está lista y sé subir imágenes? (sin generar, sin Claude)
+async function preflightImage({ debugDir } = {}) {
+  const map = loadMap().image;
+  if (!map) throw new HfStop('Todavía no he aprendido la pantalla de imagen de Higgsfield. Pulsa 🎓 Aprender Higgsfield.');
+  const { browser, ctx } = await connect();
+  try {
+    const page = await hfPage(ctx, map.url);
+    await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+    await page.waitForTimeout(2500);
+    await blockers(page, map, debugDir);
+    const opts = { debugDir };
+    if (map.upload && map.upload.input) await one(page, map.upload, 'input', { ...opts, visible: false });
+    else if (map.upload && map.upload.button) await one(page, map.upload, 'button', opts);
+    await one(page, map, 'prompt', opts);
+    await one(page, map, 'generate', opts);
+  } finally {
+    await browser.close().catch(() => {});
+  }
+}
+
 // Comprueba el mapa sin generar nada: abre cada pantalla y busca cada control
 async function check() {
   const full = loadMap();
@@ -276,6 +296,8 @@ async function check() {
       const map = full[kind];
       if (!map) { report.push({ kind, key: '(pantalla)', ok: false, msg: 'sin aprender' }); continue; }
       const page = await hfPage(ctx, map.url);
+      await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {}); // paneles cerrados, como al generar
+      await page.waitForTimeout(2500);
       try { await blockers(page, map); } catch (e) { report.push({ kind, key: 'avisos', ok: false, msg: e.message }); continue; }
       const specs = [];
       for (const s of map.settings || []) specs.push([`ajuste ${s.name}`, s.button]);
@@ -299,4 +321,4 @@ async function check() {
   return report;
 }
 
-module.exports = { generateImage, check, blockers, connect, hfPage, ensureSetting, ensureUnlimited, ensureOff, uploadInOrder, setPrompt, checkCost, resultIds, waitNew, download };
+module.exports = { generateImage, preflightImage, check, blockers, connect, hfPage, ensureSetting, ensureUnlimited, ensureOff, uploadInOrder, setPrompt, checkCost, resultIds, waitNew, download };

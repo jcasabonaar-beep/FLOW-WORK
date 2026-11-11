@@ -68,10 +68,21 @@ async function attempt(job, item) {
   const p = plan(job, item);
   for (const im of p.images) if (!im.file || !fs.existsSync(im.file)) throw new Error('Falta una imagen para el prompt: ' + im.file);
   const refImages = p.images.map((im, i) => (im.other ? i + 1 : 0)).filter(Boolean);
+  // Primero, sin gastar nada: ¿Higgsfield está listo y sé subir imágenes?
+  store.setWorker(job, W, { action: 'Comprobando la pantalla de Higgsfield…' });
+  await provider.get().preflightImage({ debugDir: path.join(dir, 'debug') });
+  const sig = JSON.stringify([p.kind, p.images.map((im) => im.file), item.note || '']);
+  let w, lint;
+  if (item.draft && item.draft.sig === sig) {
+    // El prompt ya se escribió en un intento que falló en la web: se reutiliza (no se gasta Claude otra vez)
+    w = { text: item.draft.prompt, notes: '' };
+    lint = lintNano(w.text, { kind: p.kind, nImages: p.images.length, refImages });
+    store.log(job, W, '♻️ Reutilizo el prompt que ya estaba escrito');
+  } else {
   // El prompt: lo escribe Claude y el código lo revisa (2 rondas como mucho)
   store.setWorker(job, W, { action: `Escribiendo el prompt del ${item.role} frame…` });
-  let w = await writePrompt(job, item, p);
-  let lint = lintNano(w.text, { kind: p.kind, nImages: p.images.length, refImages });
+  w = await writePrompt(job, item, p);
+  lint = lintNano(w.text, { kind: p.kind, nImages: p.images.length, refImages });
   if (lint.errors.length) {
     store.log(job, W, '✋ Prompt rechazado por la revisión: ' + lint.errors.join('; '));
     w = await writePrompt(job, item, p, lint.errors);
@@ -84,6 +95,9 @@ async function attempt(job, item) {
   }
   for (const f of lint.fixes) store.log(job, W, '🔧 ' + f);
   if (w.notes) store.log(job, W, '💬 ' + w.notes);
+  item.draft = { sig, prompt: lint.prompt, at: Date.now() };
+  store.save(job);
+  }
   const n = (item.tries.reduce((m, t) => Math.max(m, t.n), 0)) + 1;
   const rel = `keyframes/kf_${item.role}_${n}.png`;
   const t = { n, kind: p.kind, prompt: lint.prompt, images: p.images.map((im) => path.relative(store.ROOT, im.file).replace(/\\/g, '/')), note: item.note || '', at: Date.now() };
@@ -101,6 +115,7 @@ async function attempt(job, item) {
   item.tries.push(t);
   item.chosen = n;
   item.pending = null;
+  item.draft = null;
   item.status = 'generated';
   item.mode = null;
   item.note = '';
