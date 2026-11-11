@@ -20,7 +20,19 @@ async function handle(req, res, parts, { send, readBody, pipeline }) {
         return send(res, 200, { format: validate(loadMap()), report });
       } catch (e) { return send(res, 400, { error: e.message }); }
     }
-    if (method === 'POST') { learn.run(); return send(res, 200, { ok: true }); }
+    if (method === 'POST') {
+      // Con thenJob: si aprende bien, ese vídeo sigue solo
+      const then = body.thenJob && store.load(body.thenJob);
+      if (then) { store.log(then, 'hf_keyframes', '🎓 Volviendo a aprender Higgsfield; después sigo solo'); Object.assign(then, { error: 'Aprendiendo Higgsfield otra vez… al terminar sigo solo (mira el recuadro de Keyframes).' }); store.save(then); }
+      learn.run().then((r) => {
+        if (!then) return;
+        const ok = r && !r.error && !(r.errors || []).length;
+        const j2 = store.load(then.id);
+        if (ok) pipeline.drive(then.id);
+        else { j2.error = 'El aprendizaje no terminó bien: ' + ((r && (r.error || (r.errors || []).join(' · '))) || '¿?') + '. Mira el recuadro de Keyframes y mándame una captura.'; store.save(j2); }
+      });
+      return send(res, 200, { ok: true });
+    }
     const fs = require('fs');
     const test = require('path').join(store.ROOT, 'memory', 'higgsfield-learn', 'test.png');
     return send(res, 200, { ...learn.status(), testImage: fs.existsSync(test) ? 'memory/higgsfield-learn/test.png?v=' + fs.statSync(test).mtimeMs : null });

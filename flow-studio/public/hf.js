@@ -25,7 +25,7 @@ function renderHfTop(j) {
   const paused = j.paused || j.status === 'paused';
   const mins = Math.round(Object.values(j.timings || {}).reduce((a, b) => a + b, 0) / 60000);
   let alert = '';
-  if (j.error) alert = `<div class="alert ${j.status === 'waiting_limit' ? 'info' : ''}">${j.status === 'waiting_limit' ? '⏳' : '⚠️'} ${esc(j.error)}${j.hf.debug && j.status === 'error' ? ` · <a href="${hfFile(j.hf.debug)}" target="_blank" style="color:#93c5fd">ver captura de Higgsfield</a>` : ''}</div>`;
+  if (j.error) alert = `<div class="alert ${j.status === 'waiting_limit' ? 'info' : ''}">${j.status === 'waiting_limit' ? '⏳' : '⚠️'} ${esc(j.error)}${j.hf.debug && j.status === 'error' ? ` · <a href="${hfFile(j.hf.debug)}" target="_blank" style="color:#93c5fd">ver captura de Higgsfield</a>` : ''}${/Aprender Higgsfield/.test(j.error) && !j.running ? `<div style="margin-top:10px"><button class="primary big" id="hfLearnFix">🎓 Volver a aprender Higgsfield y seguir</button> <span class="muted" style="font-size:13px">Unos minutos. No toques el Chrome de Flow Studio mientras tanto; al terminar, este vídeo sigue solo.</span></div>` : ''}</div>`;
   else if (j.status === 'waiting_you') {
     const w = HF_WORKERS.find(([k]) => j.workers[k].state === 'waiting_you');
     alert = `<div class="alert info">✋ ${esc(HF_WAIT[j.stage] || (w && j.workers[w[0]].action) || 'Necesita que lo mires')}</div>`;
@@ -55,6 +55,11 @@ function renderHfTop(j) {
     }).join('')}</div>`;
   const b = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   b('hfContinue', () => api('jobs/' + j.id + '/continue', {}).then(refresh));
+  b('hfLearnFix', async () => {
+    await api('hf/learn', { thenJob: j.id });
+    const el = document.getElementById('hfLearnFix');
+    if (el) { el.disabled = true; el.textContent = '🎓 Aprendiendo… (mira el recuadro de Keyframes, más abajo)'; }
+  });
   b('hfPause', () => {
     if (paused) return api('jobs/' + j.id + '/resume', {}).then(refresh);
     if (confirm('¿Parar ahora? Lo ya hecho se guarda y luego puedes Reanudar.')) api('jobs/' + j.id + '/stop-all', {}).then(refresh);
