@@ -28,6 +28,13 @@ function ensureState(job) {
   return kf;
 }
 const current = (item) => item.tries.find((t) => t.n === item.chosen) || item.tries[item.tries.length - 1];
+// El mejor intento: menos fallos graves, luego menos detalles menores, y a igualdad el primero
+function score(t) {
+  if (!t.qa) return 50;
+  const blocking = t.qa.blocking_es || (t.qa.pass ? [] : t.qa.problems_es || ['?']);
+  return blocking.length * 100 + (t.qa.minor_es || []).length;
+}
+const bestTry = (item) => item.tries.reduce((b, t) => (score(t) < score(b) ? t : b), item.tries[0]);
 
 // Qué imágenes se suben y en qué orden (Image 1, Image 2…)
 function plan(job, item) {
@@ -52,7 +59,9 @@ function plan(job, item) {
 }
 
 async function writePrompt(job, item, p, lintErrors) {
-  const hist = item.tries.map((t) => `- Attempt ${t.n} (${t.kind}): ${t.verdict ? 'producer said: ' + t.verdict : 'not reviewed'}${t.note ? ` · note: ${t.note}` : ''}\n  Prompt: ${t.prompt}`).join('\n') || '(none)';
+  const best = item.tries.length ? item.tries.find((t) => t.n === item.chosen) : null;
+  const hist = (item.tries.map((t) => `- Attempt ${t.n} (${t.kind})${best && t.n === best.n ? ' ← BEST SO FAR' : ''}: ${t.verdict ? 'verdict: ' + t.verdict : 'not reviewed'}${t.note ? ` · note: ${t.note}` : ''}\n  Prompt: ${t.prompt}`).join('\n') || '(none)')
+    + (best ? `\n\nThis is a RETRY: start from the prompt of attempt ${best.n} (the best so far) and change ONLY what the note asks. Keep the same room, outfit, framing, camera and light word for word. Never invent a new scene.` : '');
   const prompt = fill(P('hf_keyframe_writer.md'), {
     AVATAR_NAME: HF.avatar.name, ACCOUNT: HF.account, ROLE: item.role, ROLE_DESC: p.desc,
     IMAGES: p.images.map((im, i) => `- Image ${i + 1} = ${im.file} — ${im.what}`).join('\n'),
@@ -148,12 +157,14 @@ async function qa(job, item, t) {
     PROMPT: t.prompt, METRICS: metrics,
     HAIR_EXTRA: start ? ' and EXACTLY the same hairstyle as the start frame' : '',
     END_CHECK: start ? '9. end_matches_start: same face, hair, outfit, jewelry, nails, room, light and framing as the start frame (only the final state changes).' : '',
-    END_KEY: start ? ', "end_matches_start": "ok"' : '',
+    END_BLOCK: start ? '; a different face, hairstyle, outfit or room than the start frame' : '',
   });
   const out = await claude.run({ job, worker: W, prompt, tools: ['Read'], cwd: dir, workerModel: 'hf_qa' });
   const r = claude.extractJson(out);
-  t.qa = { pass: !!r.pass, checks: r.checks || {}, problems_es: r.problems_es || [], fix: r.fix || null, at: Date.now() };
-  store.log(job, W, t.qa.pass ? `🔎 QA del ${item.role} frame ${t.n}: ✅ todo bien` : `🔎 QA del ${item.role} frame ${t.n}: ❌ ${t.qa.problems_es.join(' · ').slice(0, 300)}`);
+  const blocking = Array.isArray(r.blocking_es) ? r.blocking_es.filter(Boolean) : (r.pass ? [] : (r.problems_es || []));
+  const minor = Array.isArray(r.minor_es) ? r.minor_es.filter(Boolean) : [];
+  t.qa = { pass: !blocking.length, blocking_es: blocking, minor_es: minor, problems_es: [...blocking, ...minor.map((m) => '(menor) ' + m)], fix: blocking.length ? r.fix || null : null, at: Date.now() };
+  store.log(job, W, t.qa.pass ? `🔎 QA del ${item.role} frame ${t.n}: ✅ vale${minor.length ? ' (detalles menores: ' + minor.join(' · ').slice(0, 200) + ')' : ''}` : `🔎 QA del ${item.role} frame ${t.n}: ❌ ${blocking.join(' · ').slice(0, 300)}`);
   store.save(job);
   return t.qa;
 }
@@ -169,12 +180,15 @@ async function run(job) {
       const t = await attempt(job, item);
       const r = await qa(job, item, t);
       if (r.pass) break;
+      // Los reintentos parten siempre del MEJOR intento hasta ahora (no del último)
+      const best = bestTry(item);
+      item.chosen = best.n;
       if (k >= max) {
-        store.log(job, W, `✋ El ${item.role} frame no pasa el QA en ${max} intentos: te lo dejo con los candidatos y el informe`);
+        store.log(job, W, `✋ El ${item.role} frame no pasa el QA en ${max} intentos: te dejo elegido el mejor (intento ${best.n}) con los demás candidatos`);
         item.qaFailed = true;
         break;
       }
-      const fix = r.fix || { kind: 'regen', instruction_en: r.problems_es.join('; ') };
+      const fix = (best.qa && best.qa.fix) || r.fix || { kind: 'edit', instruction_en: ((best.qa || r).blocking_es || []).join('; ') };
       Object.assign(item, { status: 'regen', mode: fix.kind === 'edit' ? 'edit' : null, note: `[QA] ${fix.instruction_en}` });
       t.verdict = 'QA: ' + r.problems_es.join('; ');
       store.log(job, W, `↻ Intento ${k + 1}/${max}: ${fix.kind === 'edit' ? 'edito la imagen' : 'prompt nuevo'} para corregir: ${fix.instruction_en.slice(0, 200)}`);
@@ -197,4 +211,4 @@ async function run(job) {
   return 'ok';
 }
 
-module.exports = { run, ensureState, current, qa };
+module.exports = { run, ensureState, current, qa, bestTry };

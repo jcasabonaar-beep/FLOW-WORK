@@ -27,15 +27,19 @@ Check, one by one:
 8. hairstyle: hairstyle as the plan says{{HAIR_EXTRA}}.
 {{END_CHECK}}
 
+Classify every problem you find:
+- BLOCKING (the image cannot be used): not Diane's face; hair color wrong (blonde, red or dark tips/streaks); any visible text, letters, logos, watermarks or storyboard panels; deformed hands (extra, missing or fused fingers); broken anatomy that would break the video (impossible limbs, stretched legs, twisted neck); her face covered; a completely different scene, room or outfit from the plan; not a vertical 9:16 photo{{END_BLOCK}}.
+- MINOR (do NOT block, the producer can live with it): small pose differences (how wide the legs or arms are, exact hand height), expression, small outfit or prop details, light nuances, framing a bit tighter or wider.
+An image with only MINOR problems PASSES. Be practical: one good usable frame is all we need.
+
 Reply ONLY with a ```json block:
 ```json
 {
   "pass": true,
-  "checks": { "identity": "ok", "hair_color": "ok", "no_text": "ok", "hands": "ok", "anatomy": "ok", "objects": "ok", "outfit_setting": "ok", "hairstyle": "ok"{{END_KEY}} },
-  "problems_es": ["each concrete problem in Spanish, short"],
-  "fix": { "kind": "edit | regen", "instruction_en": "the exact correction for the next attempt, in English" }
+  "blocking_es": ["each BLOCKING problem in Spanish, short (empty if none)"],
+  "minor_es": ["each minor problem in Spanish, short"],
+  "fix": { "kind": "edit | regen", "instruction_en": "only if there are blocking problems: the exact correction, in English" }
 }
 ```
-- "checks" values: "ok" or a short description of the problem.
-- pass = true only if every check is ok (tiny invisible imperfections are fine).
-- fix.kind "edit" when one local thing is wrong and the rest is good (wrong hair tips, a finger, a bit of text, an object): the next attempt edits this image changing only that. "regen" when identity, pose, framing or the whole composition is wrong. Omit "fix" when pass is true.
+- pass = true when blocking_es is empty.
+- fix.kind "edit" when the blocking problem is local (hair tips, a finger, some text, an object) and the rest is good: the next attempt edits this image changing only that. "regen" only when identity or the whole scene is wrong. Omit "fix" when pass is true.

@@ -31,7 +31,8 @@ function frames(job) {
 }
 
 async function writePrompt(job, v, fr, seconds, lintErrors) {
-  const hist = v.tries.map((t) => `- Attempt ${t.n}: ${t.verdict || (t.qa ? (t.qa.pass ? 'QA ok' : 'QA: ' + (t.qa.fix_en || '')) : 'not reviewed')}${t.qa && t.qa.worked_en ? ` · came out well: ${t.qa.worked_en}` : ''}\n  Prompt: ${t.prompt}`).join('\n') || '(none)';
+  const bestV = v.tries.find((t) => t.n === v.chosen);
+  const hist = (bestV ? `RETRY: start from the prompt of attempt ${bestV.n} (the best so far) and change only what the note asks; keep what worked.\n` : '') + v.tries.map((t) => `- Attempt ${t.n}: ${t.verdict || (t.qa ? (t.qa.pass ? 'QA ok' : 'QA: ' + (t.qa.fix_en || '')) : 'not reviewed')}${t.qa && t.qa.worked_en ? ` · came out well: ${t.qa.worked_en}` : ''}\n  Prompt: ${t.prompt}`).join('\n') || '(none)';
   const prompt = fill(P('hf_video_writer.md'), {
     VIDEO_MODEL: HF.videoModel, AVATAR_NAME: HF.avatar.name, ACCOUNT: HF.account, SECONDS: seconds,
     KIND: fr.loop ? 'loop' : 'narrative', KIND_DESC: fr.loop ? 'the same image is start and end frame: it must loop seamlessly' : 'start and end frames are different: one continuous real-time take from one to the other',
@@ -175,8 +176,17 @@ async function run(job) {
     const t = await attempt(job, v, fr, seconds);
     const r = await qa(job, t, fr);
     if (r.pass) break;
-    if (k >= max) { store.log(job, W, `✋ El vídeo no pasa el QA tras ${max - 1} regeneraciones: te lo dejo con el informe`); v.qaFailed = true; break; }
+    if (k >= max) {
+      const vs = (x) => (x.qa ? x.qa.beats.filter((b) => !b.ok).length + x.qa.deformations_es.length * 2 : 99);
+      v.chosen = v.tries.reduce((b, x) => (vs(x) < vs(b) ? x : b), v.tries[0]).n;
+      store.log(job, W, `✋ El vídeo no pasa el QA tras ${max - 1} regeneraciones: te dejo elegido el mejor (intento ${v.chosen}) con el informe`);
+      v.qaFailed = true;
+      break;
+    }
     t.verdict = 'QA: ' + (r.fix_en || 'falló');
+    // Se queda elegido el mejor vídeo hasta ahora (menos tramos fallidos y deformaciones)
+    const vs = (x) => (x.qa ? x.qa.beats.filter((b) => !b.ok).length + x.qa.deformations_es.length * 2 : 99);
+    v.chosen = v.tries.reduce((b, x) => (vs(x) < vs(b) ? x : b), v.tries[0]).n;
     v.note = `[QA] ${r.fix_en}${r.worked_en ? ` Keep what worked: ${r.worked_en}` : ''}`;
     store.log(job, W, `↻ Regenero (${k}/${max - 1}) corrigiendo: ${r.fix_en.slice(0, 200)}`);
     store.save(job);

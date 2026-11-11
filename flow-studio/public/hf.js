@@ -153,7 +153,8 @@ function analysisHtml(j, a) {
 function qaKf(t) {
   if (!t || !t.qa) return '';
   const q = t.qa;
-  return `<div class="hf-qa ${q.pass ? 'ok' : 'bad'}">🔎 QA: ${q.pass ? '✅ todo bien' : '❌ ' + esc((q.problems_es || []).join(' · '))}${t.overlay ? ` <span class="muted">(fondo ${t.overlay.background_diff} · torso ${t.overlay.torso_diff})</span>` : ''}</div>`;
+  const minor = q.minor_es && q.minor_es.length ? `<div class="muted">Detalles menores: ${esc(q.minor_es.join(' · '))}</div>` : '';
+  return `<div class="hf-qa ${q.pass ? 'ok' : 'bad'}">🔎 QA: ${q.pass ? '✅ vale' : '❌ ' + esc((q.blocking_es || q.problems_es || []).join(' · '))}${minor}${t.overlay ? ` <span class="muted">(fondo ${t.overlay.background_diff} · torso ${t.overlay.torso_diff})</span>` : ''}</div>`;
 }
 
 function videoHtml(j) {
