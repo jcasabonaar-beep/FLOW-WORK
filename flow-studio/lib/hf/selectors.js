@@ -18,6 +18,7 @@ function validate(map) {
     if (s.css || s.xpath || s.selector) errors.push(`${where}: usa CSS/XPath (no permitido)`);
     if (!KINDS.some((k) => s[k])) errors.push(`${where}: sin rol ni texto`);
     if (s.within) isSpec(s.within, where + '.within');
+    if (s.reveal) isSpec(s.reveal, where + '.reveal');
   };
   for (const kind of ['image', 'video']) {
     const m = map[kind];

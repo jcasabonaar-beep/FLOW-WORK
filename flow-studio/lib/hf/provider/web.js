@@ -131,12 +131,15 @@ async function countLoc(page, spec) { return spec ? build(page, spec).count() : 
 // Sube las imágenes en el orden exacto (Image 1, Image 2…). Primero quita las que hubiera de antes.
 async function uploadInOrder(page, up, files, opts) {
   if (!up || (!up.input && !up.button) || !up.thumb) throw new HfStop('El mapa no sabe subir imágenes o contarlas. Pulsa 🎓 Aprender Higgsfield.');
+  if (up.input) await one(page, up, 'input', { ...opts, visible: false }); // abre el panel si está cerrado
   for (let i = 0; i < 12 && (await countLoc(page, up.thumb)) > 0; i++) {
     if (!up.remove) throw new HfStop('Hay imágenes subidas de antes y el mapa no sabe quitarlas.', { debug: await dump(page, opts.debugDir, 'quitar') });
     await build(page, up.remove).first().click();
     await page.waitForTimeout(600);
   }
   if ((await countLoc(page, up.thumb)) > 0) throw new HfStop('No consigo quitar las imágenes de antes', { debug: await dump(page, opts.debugDir, 'quitar') });
+  // Abre el panel de subir (si hace falta) antes de contar
+  if (up.input) await one(page, up, 'input', { ...opts, visible: false });
   for (let i = 0; i < files.length; i++) {
     if (up.input) {
       await (await one(page, up, 'input', { ...opts, visible: false })).setInputFiles(files[i]);
@@ -283,7 +286,8 @@ async function check() {
       specs.push(['prompt', map.prompt], ['generar', map.generate]);
       for (const [key, spec] of specs) {
         try {
-          const n = await build(page, spec).count();
+          let n = await build(page, spec).count();
+          if (!n && spec && spec.reveal) { try { await (await one(page, { r: spec.reveal }, 'r', { timeout: 8000 })).click(); await page.waitForTimeout(1200); n = await build(page, spec).count(); } catch {} }
           report.push({ kind, key, ok: n >= 1, msg: n >= 1 ? (n > 1 ? `${n} coincidencias` : 'ok') : 'no aparece' });
         } catch (e) { report.push({ kind, key, ok: false, msg: e.message }); }
       }

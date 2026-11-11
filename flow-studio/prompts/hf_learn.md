@@ -12,6 +12,7 @@ HARD RULES (breaking one is a failure):
 - Selectors use ONLY what a person sees: ARIA role + accessible name, visible text, label, placeholder, or a data-testid. NEVER CSS classes, ids, XPath or nth-child chains. The only exception is file inputs: {"file": true} (optionally "nth" or "within").
 - Every selector must match exactly ONE visible element on the page (use "within" to scope it to a panel, or "exact": true). For the results item, it matches every result.
 - Names can be exact strings or a regex written as a string "/.../i".
+- If a control only exists after clicking something (a panel such as "References", a tab, an "Advanced" section, a menu), add to that control "reveal": <selector of what to click to show it>. The script clicks "reveal" only when the control is not on the page. Check the selectors with the panels CLOSED too (reload the page before the final check).
 - Do not leave the screens you are mapping. Close any dropdown you opened (Escape) before moving on.
 
 HOW TO WORK:
@@ -65,5 +66,10 @@ HOW TO WORK:
    If it fails, fix the map (read the error and the screenshot it names) and try once more. Never click Generate yourself.
 10. Finish with a short summary in Spanish: what you mapped, what the check and the test said, and anything the producer must know (for example if Unlimited was not available for a model).
 
-Lessons from earlier runs (if any):
+Lessons and errors from earlier runs (fix these first):
 {{LESSONS}}
+
+Current map (start from it: keep what works, fix what the errors above say, and re-check everything):
+```json
+{{PREVIOUS}}
+```

@@ -46,9 +46,17 @@ async function one(page, map, key, { debugDir, timeout = 15000, visible = true }
   if (!spec) throw new HfStop(`El mapa de Higgsfield no tiene "${key}". Pulsa 🎓 Aprender Higgsfield.`);
   const loc = build(page, spec);
   const t0 = Date.now();
-  let n = 0;
+  let n = 0, revealed = false;
   while (Date.now() - t0 < timeout) {
     n = await loc.count();
+    // Controles que solo aparecen al abrir un panel o pestaña: se pulsa "reveal" una vez, y solo si no están
+    if (!n && spec.reveal && !revealed && Date.now() - t0 > 1500) {
+      revealed = true;
+      const r = await one(page, { reveal: spec.reveal }, 'reveal', { debugDir, timeout: 10000 });
+      await r.click();
+      await page.waitForTimeout(1200);
+      continue;
+    }
     if (n >= 1) {
       if (!visible || spec.file) return n === 1 || Number.isInteger(spec.nth) ? loc : loc.first();
       const vis = [];

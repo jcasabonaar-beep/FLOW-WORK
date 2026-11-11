@@ -40,9 +40,12 @@ async function run() {
       await require('../lib/chrome').ensure(j, W);
       if (fs.existsSync(FILE)) fs.copyFileSync(FILE, FILE.replace(/\.json$/, `.${Date.now()}.bak.json`));
       const lf = path.join(store.ROOT, 'memory', 'lecciones-higgsfield.md');
+      // Errores actuales de los vídeos Higgsfield parados (por ejemplo, un control que no encontró)
+      const stuck = store.list().filter((x) => x.kind === 'higgsfield' && x.status === 'error' && x.error).map((x) => `- [${x.stage}] ${x.error}`).join('\n');
       const prompt = fs.readFileSync(path.join(store.ROOT, 'prompts', 'hf_learn.md'), 'utf8').replace(/\{\{(\w+)\}\}/g, (m, k) => ({
         IMAGE_MODEL: config.higgsfield.imageModel, VIDEO_MODEL: config.higgsfield.videoModel, OUT: FILE,
-        CHECK: path.join(store.ROOT, 'tools', 'hf-check.js'), LESSONS: fs.existsSync(lf) ? fs.readFileSync(lf, 'utf8') : '(none)',
+        CHECK: path.join(store.ROOT, 'tools', 'hf-check.js'), LESSONS: [(fs.existsSync(lf) ? fs.readFileSync(lf, 'utf8').slice(-4000) : ''), stuck].filter(Boolean).join('\n') || '(none)',
+        PREVIOUS: fs.existsSync(FILE) ? fs.readFileSync(FILE, 'utf8') : '(none: first time)',
       })[k] ?? m);
       const summary = await claude.run({ job: j, worker: W, prompt, browser: true, cwd: store.ROOT, tools: ['Read', 'Write', 'Edit', `Bash(node ${path.join(store.ROOT, 'tools', 'hf-check.js')}:*)`, 'Bash(node tools/hf-check.js:*)'] });
       const map = loadMap();

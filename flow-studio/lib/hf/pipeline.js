@@ -138,6 +138,14 @@ async function drive(id, active) {
     }
     job.status = 'error';
     job.error = e.message;
+    // Los fallos de la web de Higgsfield se apuntan para el próximo aprendizaje
+    if (e.noRetry && /Higgsfield|mapa|no clico|no encuentro/i.test(e.message)) {
+      try {
+        const f = require('path').join(store.ROOT, 'memory', 'lecciones-higgsfield.md');
+        require('fs').mkdirSync(require('path').dirname(f), { recursive: true });
+        require('fs').appendFileSync(f, `- ${new Date().toISOString().slice(0, 16)} [${job.stage}] ${e.message}\n`);
+      } catch {}
+    }
     // Captura de lo que se veía en Higgsfield cuando paró
     job.hf.debug = e.debug ? require('path').relative(store.jobDir(job.id), e.debug).replace(/\\/g, '/') + '.png' : null;
     notify.send(`❌ Se atascó: ${job.title}`, e.message.slice(0, 200), { priority: 4, tags: 'x' });
