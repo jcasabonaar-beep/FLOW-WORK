@@ -10,3 +10,5 @@ Videos completos/
 cache/
 __pycache__/
 avatar_lab/
+tmp/
+chk*.png
