@@ -160,4 +160,6 @@ function approve(job, stage) {
   store.save(job);
 }
 
-module.exports = { STAGES, NAMES, WORKER, GATE, gates, drive, approve };
+const ready = (stage) => !!RUNNERS[stage];
+
+module.exports = { STAGES, NAMES, WORKER, GATE, gates, drive, approve, ready };

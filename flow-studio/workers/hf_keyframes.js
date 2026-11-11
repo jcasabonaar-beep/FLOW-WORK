@@ -109,6 +109,16 @@ async function attempt(job, item) {
 }
 
 async function run(job) {
+  // Sin mapa de Higgsfield no se gasta nada en escribir prompts: primero hay que aprender la web
+  if ((HF.provider || 'web') === 'web') {
+    const { loadMap, validate } = require('../lib/hf/selectors');
+    const errs = validate(loadMap());
+    if (errs.length) {
+      const e = new Error('Antes de generar tengo que aprender la web de Higgsfield: pulsa 🎓 Aprender Higgsfield (más abajo, en Keyframes) y, cuando termine, ▶ Continuar.' + (errs[0] === 'image: sin aprender' ? '' : ' Falta: ' + errs.join(' · ')));
+      e.noRetry = true;
+      throw e;
+    }
+  }
   const kf = ensureState(job);
   for (const item of kf.items) {
     if (['generated', 'approved'].includes(item.status)) continue;

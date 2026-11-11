@@ -193,6 +193,15 @@ function tidyOutput() {
 function resumeAll() {
   tidyOutput();
   for (const j of store.list()) {
+    // Videos Higgsfield parados en una etapa que antes no existía y ahora sí: aviso nuevo
+    if (j.kind === 'higgsfield' && /todavía no está programada/.test(j.error || '') && require('./hf/pipeline').ready(j.stage)) {
+      const full = store.load(j.id);
+      const w = require('./hf/pipeline').WORKER[full.stage];
+      Object.assign(full, { status: 'stopped', error: full.stage === 'keyframes' ? 'La etapa Keyframes ya está lista. Antes de nada pulsa 🎓 Aprender Higgsfield (más abajo, en Keyframes); cuando termine, pulsa ▶ Continuar.' : 'Esta etapa ya está lista: pulsa ▶ Continuar.' });
+      if (w) Object.assign(full.workers[w], { state: 'idle', action: '' });
+      store.save(full);
+      continue;
+    }
     if (!['running', 'waiting_limit'].includes(j.status)) continue;
     // Los de "Todo directo" (y el piloto automático) siguen solos al volver a abrir Flow Studio
     if (j.auto) { setTimeout(() => drive(j.id), 5000); continue; }
