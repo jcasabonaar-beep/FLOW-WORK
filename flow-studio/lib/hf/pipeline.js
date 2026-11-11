@@ -14,8 +14,8 @@ const NAMES = {
 const WORKER = { capture: 'hf_capture', analysis: 'hf_analyst', keyframes: 'hf_keyframes', video: 'hf_video', post: 'hf_post' };
 // Paradas: qué interruptor las controla (null = siempre para)
 const GATE = { review_analysis: 'analysis', review_keyframes: 'keyframes', review_video: 'video', review_final: null };
-// Mientras no esté el QA automático (paso 3 y 5), estas paradas te esperan siempre aunque el interruptor esté apagado
-const FORCED = new Set(['review_keyframes', 'review_video']);
+// Con el QA automático, las paradas apagadas solo se saltan si el QA pasa (si no, el trabajador te espera igual)
+const FORCED = new Set();
 const GATE_TEXT = {
   review_analysis: 'El análisis de la referencia está listo: revísalo, corrígelo si hace falta y apruébalo',
   review_keyframes: 'Los keyframes están listos para que los revises',
@@ -23,11 +23,13 @@ const GATE_TEXT = {
   review_final: 'Todo listo: vídeo, hook, overlays y descripción',
 };
 // Etapas que usan el Chrome (una sola generación a la vez, compartido con Flow)
-const BROWSER = new Set(['keyframes', 'video']);
+const BROWSER = new Set(['keyframes', 'video', 'post']);
 const RUNNERS = {
   capture: () => require('../../workers/hf_capture').run,
   analysis: () => require('../../workers/hf_analyst').run,
   keyframes: () => require('../../workers/hf_keyframes').run,
+  video: () => require('../../workers/hf_video').run,
+  post: () => require('../../workers/hf_post').run,
 };
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));

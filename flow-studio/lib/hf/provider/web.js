@@ -83,7 +83,7 @@ async function ensureSetting(page, s, vars, opts) {
     }
   }
   txt = await textOf(await one(page, m, 'button', opts));
-  if (!want.test(txt)) throw new HfStop(`No consigo poner "${s.name}" en ${want} (se ve "${txt.slice(0, 60)}"). Paro antes de generar.`, { debug: await dump(page, opts.debugDir, 'ajuste-' + s.name) });
+  if (!want.test(txt)) throw new HfStop(`No consigo poner "${s.name}" en ${want} (se ve "${txt.slice(0, 60)}"). Paro antes de generar.`, { debug: await dump(page, opts.debugDir, 'ajuste-' + s.name), heal: true });
   return txt;
 }
 
@@ -98,12 +98,12 @@ async function isOn(loc) {
 
 // Unlimited activado y comprobado. Si no se puede comprobar, NO se genera.
 async function ensureUnlimited(page, u, opts, wantOn = true) {
-  if (!u || !u.switch) throw new HfStop('El mapa no sabe dónde está el interruptor Unlimited: no genero sin comprobarlo. Pulsa 🎓 Aprender Higgsfield.');
+  if (!u || !u.switch) throw new HfStop('El mapa no sabe dónde está el interruptor Unlimited: no genero sin comprobarlo. Pulsa 🎓 Aprender Higgsfield.', { heal: true });
   const sw = await one(page, u, 'switch', opts);
   let on = await isOn(sw);
-  if (on === null) throw new HfStop('No sé leer si Unlimited está activado: paro para no gastar créditos.', { debug: await dump(page, opts.debugDir, 'unlimited') });
+  if (on === null) throw new HfStop('No sé leer si Unlimited está activado: paro para no gastar créditos.', { debug: await dump(page, opts.debugDir, 'unlimited'), heal: true });
   if (on !== wantOn) { await sw.click(); await page.waitForTimeout(800); on = await isOn(await one(page, u, 'switch', opts)); }
-  if (on !== wantOn) throw new HfStop('No consigo activar Unlimited: paro para no gastar créditos.', { debug: await dump(page, opts.debugDir, 'unlimited') });
+  if (on !== wantOn) throw new HfStop('No consigo activar Unlimited: paro para no gastar créditos.', { debug: await dump(page, opts.debugDir, 'unlimited'), heal: true });
 }
 
 async function ensureOff(page, spec, name, opts) {
@@ -111,7 +111,7 @@ async function ensureOff(page, spec, name, opts) {
   const sw = await one(page, { s: spec }, 's', opts);
   let on = await isOn(sw);
   if (on) { await sw.click(); await page.waitForTimeout(600); on = await isOn(await one(page, { s: spec }, 's', opts)); }
-  if (on) throw new HfStop(`No consigo desactivar ${name}`, { debug: await dump(page, opts.debugDir, name) });
+  if (on) throw new HfStop(`No consigo desactivar ${name}`, { debug: await dump(page, opts.debugDir, name), heal: true });
 }
 
 // El coste que muestra junto a Generar: si dice créditos y no Unlimited, no se genera
@@ -130,14 +130,14 @@ async function countLoc(page, spec) { return spec ? build(page, spec).count() : 
 
 // Sube las imágenes en el orden exacto (Image 1, Image 2…). Primero quita las que hubiera de antes.
 async function uploadInOrder(page, up, files, opts) {
-  if (!up || (!up.input && !up.button) || !up.thumb) throw new HfStop('El mapa no sabe subir imágenes o contarlas. Pulsa 🎓 Aprender Higgsfield.');
+  if (!up || (!up.input && !up.button) || !up.thumb) throw new HfStop('El mapa no sabe subir imágenes o contarlas. Pulsa 🎓 Aprender Higgsfield.', { heal: true });
   if (up.input) await one(page, up, 'input', { ...opts, visible: false }); // abre el panel si está cerrado
   for (let i = 0; i < 12 && (await countLoc(page, up.thumb)) > 0; i++) {
-    if (!up.remove) throw new HfStop('Hay imágenes subidas de antes y el mapa no sabe quitarlas.', { debug: await dump(page, opts.debugDir, 'quitar') });
+    if (!up.remove) throw new HfStop('Hay imágenes subidas de antes y el mapa no sabe quitarlas.', { debug: await dump(page, opts.debugDir, 'quitar'), heal: true });
     await build(page, up.remove).first().click();
     await page.waitForTimeout(600);
   }
-  if ((await countLoc(page, up.thumb)) > 0) throw new HfStop('No consigo quitar las imágenes de antes', { debug: await dump(page, opts.debugDir, 'quitar') });
+  if ((await countLoc(page, up.thumb)) > 0) throw new HfStop('No consigo quitar las imágenes de antes', { debug: await dump(page, opts.debugDir, 'quitar'), heal: true });
   // Abre el panel de subir (si hace falta) antes de contar
   if (up.input) await one(page, up, 'input', { ...opts, visible: false });
   for (let i = 0; i < files.length; i++) {
@@ -149,12 +149,12 @@ async function uploadInOrder(page, up, files, opts) {
     }
     const t0 = Date.now();
     while ((await countLoc(page, up.thumb)) < i + 1) {
-      if (Date.now() - t0 > 90000) throw new HfStop(`La imagen ${i + 1} no termina de subir`, { debug: await dump(page, opts.debugDir, 'subida') });
+      if (Date.now() - t0 > 90000) throw new HfStop(`La imagen ${i + 1} no termina de subir (o el mapa no sabe contarlas)`, { debug: await dump(page, opts.debugDir, 'subida'), heal: true });
       await page.waitForTimeout(1000);
     }
     opts.log && opts.log(`📤 Image ${i + 1} subida: ${path.basename(files[i])}`);
   }
-  if ((await countLoc(page, up.thumb)) !== files.length) throw new HfStop('El número de imágenes subidas no cuadra con el prompt', { debug: await dump(page, opts.debugDir, 'subida') });
+  if ((await countLoc(page, up.thumb)) !== files.length) throw new HfStop('El número de imágenes subidas no cuadra con el prompt', { debug: await dump(page, opts.debugDir, 'subida'), heal: true });
 }
 
 async function setPrompt(page, map, text, opts) {
@@ -163,12 +163,12 @@ async function setPrompt(page, map, text, opts) {
   await box.fill('').catch(() => {});
   await box.fill(text).catch(async () => { await page.keyboard.press('Control+A'); await page.keyboard.insertText(text); });
   const got = await textOf(box);
-  if (!got.replace(/\s+/g, ' ').includes(text.replace(/\s+/g, ' ').slice(0, 60))) throw new HfStop('El prompt no se ha pegado bien', { debug: await dump(page, opts.debugDir, 'prompt') });
+  if (!got.replace(/\s+/g, ' ').includes(text.replace(/\s+/g, ' ').slice(0, 60))) throw new HfStop('El prompt no se ha pegado bien', { debug: await dump(page, opts.debugDir, 'prompt'), heal: true });
 }
 
 // Lo que identifica cada resultado (la dirección de su imagen o vídeo)
 async function resultIds(page, res) {
-  if (!res || !res.item) throw new HfStop('El mapa no sabe dónde salen los resultados. Pulsa 🎓 Aprender Higgsfield.');
+  if (!res || !res.item) throw new HfStop('El mapa no sabe dónde salen los resultados. Pulsa 🎓 Aprender Higgsfield.', { heal: true });
   return build(page, res.item).evaluateAll((els) => els.map((e) => {
     const m = e.matches('img,video') ? e : e.querySelector('video,img');
     return m ? (m.currentSrc || m.src || m.getAttribute('src') || '') : '';
@@ -205,6 +205,19 @@ async function waitNew(page, map, before, { timeoutMs, kind, opts }) {
 async function download(page, map, item, out, opts) {
   const res = map.results;
   if (res.download) {
+    try { return await downloadButton(page, res, item, out); } catch (e) {
+      opts.log && opts.log('⚠️ El botón de descarga no funcionó (' + e.message.slice(0, 80) + '): bajo el archivo original');
+      await page.keyboard.press('Escape').catch(() => {});
+    }
+  }
+  const r = await page.context().request.get(item.id, { timeout: 300000 });
+  if (!r.ok()) throw new HfStop(`No pude descargar el resultado (${r.status()})`, { heal: true });
+  fs.writeFileSync(out, await r.body());
+  return { via: 'dirección del archivo' };
+}
+
+async function downloadButton(page, res, item, out) {
+  {
     const itemLoc = build(page, res.item).nth(item.i);
     await itemLoc.scrollIntoViewIfNeeded().catch(() => {});
     await itemLoc.hover().catch(() => {});
@@ -213,18 +226,15 @@ async function download(page, map, item, out, opts) {
     const dl = build(scope, res.download);
     const n = await dl.count();
     if (n >= 1) {
-      const [d] = await Promise.all([page.waitForEvent('download', { timeout: 120000 }), dl.first().click()]);
+      const [d] = await Promise.all([page.waitForEvent('download', { timeout: 90000 }), dl.first().click()]);
       await d.saveAs(out);
       if (res.close) await build(page, res.close).first().click().catch(() => {});
       else if (res.open) await page.keyboard.press('Escape').catch(() => {});
       return { via: 'botón de descarga' };
     }
     if (res.open) await page.keyboard.press('Escape').catch(() => {});
+    throw new Error('no aparece el botón de descarga');
   }
-  const r = await page.context().request.get(item.id, { timeout: 300000 });
-  if (!r.ok()) throw new HfStop(`No pude descargar el resultado (${r.status()})`);
-  fs.writeFileSync(out, await r.body());
-  return { via: 'dirección del archivo' };
 }
 
 /**
@@ -233,7 +243,7 @@ async function download(page, map, item, out, opts) {
  */
 async function generateImage(o) {
   const map = loadMap().image;
-  if (!map) throw new HfStop('Todavía no he aprendido la pantalla de imagen de Higgsfield. Pulsa 🎓 Aprender Higgsfield.');
+  if (!map) throw new HfStop('Todavía no he aprendido la pantalla de imagen de Higgsfield. Pulsa 🎓 Aprender Higgsfield.', { heal: true });
   const { browser, ctx } = await connect();
   const opts = { debugDir: o.debugDir, log: o.log, progress: o.progress };
   try {
@@ -259,6 +269,9 @@ async function generateImage(o) {
     }
     const item = await waitNew(page, map, before, { timeoutMs: (config.higgsfield.imageTimeoutMin || 20) * 60000, kind: 'image', opts });
     const how = await download(page, map, item, o.out, opts);
+    // ¿Se ha bajado una de las imágenes subidas en vez del resultado? (pasa si el mapa apunta al sitio equivocado)
+    const h = (f) => require('crypto').createHash('md5').update(fs.readFileSync(f)).digest('hex');
+    if (o.images.some((f) => h(f) === h(o.out))) throw new HfStop('Lo que descargué es una de las imágenes que subí, no el resultado: el mapa apunta a otro sitio.', { heal: true, debug: await dump(page, o.debugDir, 'descarga') });
     o.log && o.log(`⬇️ Descargada (${how.via})`);
     return { out: o.out, source: item.id };
   } finally {
@@ -266,10 +279,80 @@ async function generateImage(o) {
   }
 }
 
+// Sube start frame y end frame cada uno en su hueco (quita antes los que hubiera)
+async function uploadSlots(page, up, start, end, opts) {
+  if (!up || !up.startInput || !up.endInput) throw new HfStop('El mapa no sabe dónde van el start frame y el end frame. Pulsa 🎓 Aprender Higgsfield.', { heal: true });
+  const has = async (k) => (up[k] ? countLoc(page, up[k]) : 0);
+  for (let i = 0; i < 6 && ((await has('startThumb')) || (await has('endThumb'))); i++) {
+    if (!up.remove) break;
+    await build(page, up.remove).first().click().catch(() => {});
+    await page.waitForTimeout(700);
+  }
+  for (const [inputKey, thumbKey, file, name] of [['startInput', 'startThumb', start, 'start frame'], ['endInput', 'endThumb', end, 'end frame']]) {
+    await (await one(page, up, inputKey, { ...opts, visible: false })).setInputFiles(file);
+    const t0 = Date.now();
+    if (up[thumbKey]) {
+      while (!(await countLoc(page, up[thumbKey]))) {
+        if (Date.now() - t0 > 90000) throw new HfStop(`El ${name} no termina de subir (o el mapa no sabe verlo)`, { debug: await dump(page, opts.debugDir, 'subida-' + inputKey), heal: true });
+        await page.waitForTimeout(1000);
+      }
+    } else await page.waitForTimeout(4000);
+    opts.log && opts.log(`📤 ${name} subido: ${path.basename(file)}`);
+  }
+}
+
+// Elige la duración que ofrece la web más cercana a la pedida (sin pasarse de 15 s)
+function pickSeconds(map, seconds) {
+  const list = (map.durations || []).map(Number).filter((x) => x >= 4 && x <= 15);
+  if (!list.length) return seconds;
+  return list.reduce((b, x) => (Math.abs(x - seconds) < Math.abs(b - seconds) || (Math.abs(x - seconds) === Math.abs(b - seconds) && x > b) ? x : b), list[0]);
+}
+
+/**
+ * Genera un vídeo con Seedance (Unlimited, 9:16, audio apagado, start + end frame).
+ * o: { prompt, start, end, seconds, out, debugDir, log, progress, onSubmitted(before), resume: { before } }
+ */
+async function generateVideo(o) {
+  const map = loadMap().video;
+  if (!map) throw new HfStop('Todavía no he aprendido la pantalla de vídeo de Higgsfield. Pulsa 🎓 Aprender Higgsfield.', { heal: true });
+  const { browser, ctx } = await connect();
+  const opts = { debugDir: o.debugDir, log: o.log, progress: o.progress };
+  try {
+    const page = await hfPage(ctx, map.url);
+    await blockers(page, map, o.debugDir);
+    let before;
+    if (o.resume && o.resume.before) {
+      before = o.resume.before;
+      o.log && o.log('↪️ Retomo el vídeo que ya había mandado: busco su resultado sin generar otra vez');
+    } else {
+      const vars = { S: String(o.seconds) };
+      for (const s of map.settings || []) o.log && o.log(`⚙️ ${s.name}: ${await ensureSetting(page, s, vars, opts)}`);
+      await ensureOff(page, map.audio, 'el audio', opts);
+      await ensureUnlimited(page, map.unlimited, opts);
+      o.log && o.log('♾️ Unlimited activado · 🔇 audio apagado');
+      await uploadSlots(page, map.upload, o.start, o.end, opts);
+      await setPrompt(page, map, o.prompt, opts);
+      await checkCost(page, map.cost, opts);
+      await ensureUnlimited(page, map.unlimited, opts);
+      await blockers(page, map, o.debugDir);
+      before = await resultIds(page, map.results);
+      await (await one(page, map, 'generate', opts)).click();
+      if (o.onSubmitted) await o.onSubmitted(before);
+      o.log && o.log('🚀 Vídeo mandado a Seedance (la cola de Unlimited puede tardar)…');
+    }
+    const item = await waitNew(page, map, before, { timeoutMs: (config.higgsfield.videoTimeoutMin || 240) * 60000, kind: 'video', opts });
+    const how = await download(page, map, item, o.out, opts);
+    o.log && o.log(`⬇️ Vídeo descargado (${how.via})`);
+    return { out: o.out, source: item.id };
+  } finally {
+    await browser.close().catch(() => {});
+  }
+}
+
 // Antes de escribir prompts: ¿la pantalla de imagen está lista y sé subir imágenes? (sin generar, sin Claude)
-async function preflightImage({ debugDir } = {}) {
-  const map = loadMap().image;
-  if (!map) throw new HfStop('Todavía no he aprendido la pantalla de imagen de Higgsfield. Pulsa 🎓 Aprender Higgsfield.');
+async function preflightImage({ debugDir, kind = 'image' } = {}) {
+  const map = loadMap()[kind];
+  if (!map) throw new HfStop(`Todavía no he aprendido la pantalla de ${kind === 'video' ? 'vídeo' : 'imagen'} de Higgsfield. Pulsa 🎓 Aprender Higgsfield.`, { heal: true });
   const { browser, ctx } = await connect();
   try {
     const page = await hfPage(ctx, map.url);
@@ -277,7 +360,10 @@ async function preflightImage({ debugDir } = {}) {
     await page.waitForTimeout(2500);
     await blockers(page, map, debugDir);
     const opts = { debugDir };
-    if (map.upload && map.upload.input) await one(page, map.upload, 'input', { ...opts, visible: false });
+    if (kind === 'video') {
+      await one(page, map.upload || {}, 'startInput', { ...opts, visible: false });
+      await one(page, map.upload || {}, 'endInput', { ...opts, visible: false });
+    } else if (map.upload && map.upload.input) await one(page, map.upload, 'input', { ...opts, visible: false });
     else if (map.upload && map.upload.button) await one(page, map.upload, 'button', opts);
     await one(page, map, 'prompt', opts);
     await one(page, map, 'generate', opts);
@@ -321,4 +407,4 @@ async function check() {
   return report;
 }
 
-module.exports = { generateImage, preflightImage, check, blockers, connect, hfPage, ensureSetting, ensureUnlimited, ensureOff, uploadInOrder, setPrompt, checkCost, resultIds, waitNew, download };
+module.exports = { generateImage, generateVideo, pickSeconds, preflightImage, check, blockers, connect, hfPage, ensureSetting, ensureUnlimited, ensureOff, uploadInOrder, setPrompt, checkCost, resultIds, waitNew, download };

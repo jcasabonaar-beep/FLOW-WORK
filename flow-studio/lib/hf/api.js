@@ -102,8 +102,39 @@ async function handle(req, res, parts, { send, readBody, pipeline }) {
       }
       return send(res, 400, { error: 'acción' });
     }
+    case 'video': {
+      // Vídeo: aprobar / elegir otro intento / regenerar con nota
+      if (busy) return send(res, 400, { error: 'Está trabajando: espera a que termine' });
+      const v = job.hf.video;
+      if (!v || !v.tries.length) return send(res, 400, { error: 'Todavía no hay vídeo' });
+      const note = String(body.note || '').trim().slice(0, 2000);
+      if (body.n) { if (!v.tries.some((t) => t.n === +body.n)) return send(res, 400, { error: 'Ese intento no existe' }); v.chosen = +body.n; }
+      const cur = v.tries.find((t) => t.n === v.chosen);
+      if (body.action === 'approve') { v.status = 'approved'; cur.verdict = 'aprobado'; store.log(job, 'hf_video', `👍 Vídeo (intento ${v.chosen}) aprobado por ti`); }
+      else if (body.action === 'regen') {
+        cur.verdict = 'regenerar: ' + (note || 'sin nota');
+        Object.assign(v, { status: 'regen', note });
+        store.log(job, 'hf_video', '↻ Regenerar vídeo' + (note ? ': ' + note : ''));
+        if (['review_video', 'video'].includes(job.stage)) Object.assign(job, { stage: 'video', status: 'running', error: null });
+      } else if (body.action !== 'choose') return send(res, 400, { error: 'acción' });
+      store.save(job);
+      if (job.stage === 'video' && body.action === 'regen') pipeline.drive(job.id);
+      return send(res, 200, v);
+    }
+    case 'post': {
+      // Rehacer la entrega (descripción, hook, overlays) con una nota
+      if (busy) return send(res, 400, { error: 'Está trabajando: espera a que termine' });
+      if (!['review_final', 'post'].includes(job.stage)) return send(res, 400, { error: 'Todavía no está en la entrega' });
+      job.hf.post = { ...(job.hf.post || {}), note: String(body.note || '').trim().slice(0, 2000) };
+      store.log(job, 'hf_post', '↻ Rehacer la entrega' + (job.hf.post.note ? ': ' + job.hf.post.note : ''));
+      Object.assign(job, { stage: 'post', status: 'running', error: null });
+      store.save(job);
+      pipeline.drive(job.id);
+      return send(res, 200, { ok: true });
+    }
     case 'approve': {
       if (busy) return send(res, 400, { error: 'Está trabajando: espera a que termine' });
+      if (body.stage === 'review_video' && !(job.hf.video && job.hf.video.status === 'approved')) return send(res, 400, { error: 'Aprueba antes el vídeo' });
       if (body.stage === 'review_keyframes' && !((job.hf.kf || {}).items || []).every((x) => x.status === 'approved')) return send(res, 400, { error: 'Aprueba antes cada keyframe' });
       try { hfp.approve(job, body.stage); } catch (e) { return send(res, 400, { error: e.message }); }
       store.log(job, hfp.WORKER[hfp.STAGES[hfp.STAGES.indexOf(body.stage) - 1]] || 'hf_capture', `👍 ${hfp.NAMES[body.stage].replace('✋ ', '')}: aprobado por ti`);

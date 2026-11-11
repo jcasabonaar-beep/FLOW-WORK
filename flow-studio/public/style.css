@@ -266,3 +266,8 @@ label.inline { display: inline-flex; gap: 6px; align-items: center; margin: 0; }
 .hf-q { border-color: #fcd34d; }
 .hf-btns { display: flex; gap: 6px; flex-wrap: wrap; }
 button:disabled { opacity: .45; cursor: not-allowed; }
+.hf-qa { font-size: 12px; margin: 6px 0; padding: 6px 8px; border-radius: 6px; background: var(--panel2); }
+.hf-qa.ok { color: #86efac; }
+.hf-qa.bad { color: #fca5a5; }
+.hf-hook { font-size: 22px; font-weight: 800; margin: 6px 0 8px; line-height: 1.25; }
+.hf-desc { background: var(--panel2); padding: 10px; border-radius: 8px; font-size: 14px; max-height: 520px; overflow: auto; }

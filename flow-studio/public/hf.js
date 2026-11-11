@@ -13,7 +13,8 @@ const sec = (x) => `${Number(x).toFixed(1).replace(/\.0$/, '')}s`;
 
 function renderHf(j) {
   renderHfTop(j);
-  const kfSig = ((j.hf.kf || {}).items || []).map((x) => [x.role, x.status, x.chosen, x.tries.length]);
+  const kfSig = [((j.hf.kf || {}).items || []).map((x) => [x.role, x.status, x.chosen, x.tries.length, (x.tries[x.tries.length - 1] || {}).qa ? 1 : 0]),
+    j.hf.video ? [j.hf.video.status, j.hf.video.chosen, j.hf.video.tries.length, (j.hf.video.tries[j.hf.video.tries.length - 1] || {}).qa ? 1 : 0] : 0, j.hf.post ? j.hf.post.at : 0];
   const sig = JSON.stringify([j.stage, j.status, j.running, j.hf.analysisV, (j.hf.sheets || []).length, (j.hf.corrections || []).length, j.hf.gates, kfSig, j.hf.debug]);
   const editing = document.activeElement && document.activeElement.closest && document.activeElement.closest('#hfPanel') && document.activeElement.matches('textarea, input');
   if (sig !== hfSig && !editing) { hfSig = sig; renderHfPanel(j); }
@@ -98,7 +99,15 @@ function renderHfPanel(j) {
   const a = hf.analysis;
   const afterAnalysis = HF_STAGES.findIndex((s) => s[0] === j.stage) >= HF_STAGES.findIndex((s) => s[0] === 'keyframes');
   // Con el análisis ya aprobado, los keyframes van primero y el análisis se pliega
-  if (a && afterAnalysis) h += keyframesHtml(j) + `<details class="notes"><summary>🧠 Análisis aprobado (v${hf.analysisV})</summary>${analysisHtml(j, a)}</details>`;
+  const idx = (s) => HF_STAGES.findIndex((x) => x[0] === s);
+  if (a && afterAnalysis) {
+    // Lo más reciente arriba: entrega → vídeo → keyframes → análisis
+    if (idx(j.stage) >= idx('post') && hf.post && hf.post.description) h += postHtml(j);
+    if (idx(j.stage) >= idx('video')) h += videoHtml(j);
+    const kfFirst = idx(j.stage) < idx('video');
+    h += kfFirst ? keyframesHtml(j) : `<details class="notes"><summary>🖼️ Keyframes aprobados</summary>${keyframesHtml(j)}</details>`;
+    h += `<details class="notes"><summary>🧠 Análisis aprobado (v${hf.analysisV})</summary>${analysisHtml(j, a)}</details>`;
+  }
   else if (a) h += analysisHtml(j, a);
   else if (['analysis', 'capture'].includes(j.stage)) h += `<h2 class="sec">🧠 Análisis</h2><p class="muted">${j.stage === 'analysis' && j.running ? 'Claude está mirando la referencia…' : 'Cuando la referencia esté lista, Claude hará el análisis.'}</p>`;
   $('#hfPanel').innerHTML = h;
@@ -141,6 +150,50 @@ function analysisHtml(j, a) {
   return h;
 }
 
+function qaKf(t) {
+  if (!t || !t.qa) return '';
+  const q = t.qa;
+  return `<div class="hf-qa ${q.pass ? 'ok' : 'bad'}">🔎 QA: ${q.pass ? '✅ todo bien' : '❌ ' + esc((q.problems_es || []).join(' · '))}${t.overlay ? ` <span class="muted">(fondo ${t.overlay.background_diff} · torso ${t.overlay.torso_diff})</span>` : ''}</div>`;
+}
+
+function videoHtml(j) {
+  const v = j.hf.video;
+  let h = '<h2 class="sec">🎥 Vídeo · Seedance (Unlimited)</h2>';
+  if (!v || !v.tries.length) return h + `<p class="muted">${j.running ? esc(j.workers.hf_video.action || 'Trabajando…') : 'Todavía no hay vídeo.'}</p>`;
+  const cur = v.tries.find((t) => t.n === v.chosen) || v.tries[v.tries.length - 1];
+  const q = cur.qa;
+  const canAct = !j.running && ['review_video', 'video'].includes(j.stage);
+  h += `<div class="hf-ref"><video src="${hfFile(cur.file, cur.at)}" controls loop playsinline class="hf-video"></video><div style="flex:1;min-width:260px">
+    <div><b>Intento ${cur.n}</b> · ${cur.seconds} s ${v.status === 'approved' ? '<span class="badge done">✅ aprobado</span>' : ''} ${cur.loop ? `<span class="badge">🔁 bucle ×${(cur.loop.after || cur.loop.before).ratio}${cur.loop.after ? ' (arreglado)' : ''}</span>` : ''}</div>
+    ${v.tries.length > 1 ? `<div class="hf-btns" style="margin:6px 0">${v.tries.map((t) => `<button class="small" data-vchoose="${t.n}" ${t.n === cur.n ? 'disabled' : ''}>Intento ${t.n}${t.qa ? (t.qa.pass ? ' ✅' : ' ❌') : ''}</button>`).join('')}</div>` : ''}
+    ${q ? `<table class="hf-table"><thead><tr><th>Tramo</th><th>QA</th></tr></thead><tbody>${(q.beats || []).map((b) => `<tr><td>${sec(b.from)}–${sec(b.to)}</td><td>${b.ok ? '✅' : '❌'} ${esc(b.seen_es || '')}${b.problem_es ? `<div class="hf-en" style="color:#fca5a5">${esc(b.problem_es)}</div>` : ''}</td></tr>`).join('')}</tbody></table>
+      ${(q.deformations_es || []).length ? `<div class="hf-qa bad">Deformaciones: ${esc(q.deformations_es.join(' · '))}</div>` : ''}` : '<div class="muted">Sin QA todavía</div>'}
+    ${cur.qaSheets ? `<details><summary class="muted" style="font-size:12px">Frames cada 0,4 s</summary>${cur.qaSheets.map((s) => `<a href="${hfFile(s)}" target="_blank"><img src="${hfFile(s)}" style="max-width:100%;border-radius:6px;margin-top:6px"></a>`).join('')}</details>` : ''}
+    <details><summary class="muted" style="font-size:12px">Prompt</summary><pre class="hf-pre hf-en">${esc(cur.prompt)}</pre></details>
+    ${canAct ? `<textarea rows="2" id="hfVNote" placeholder="Nota para regenerar (p. ej. en el segundo ejercicio abre piernas y brazos a la vez)"></textarea>
+      <div class="hf-btns" style="margin-top:6px">${v.status !== 'approved' ? '<button class="small good" id="hfVApprove">✅ Aprobar vídeo</button>' : ''}<button class="small" id="hfVRegen">↻ Regenerar con la nota</button></div>` : ''}
+  </div></div>`;
+  if (j.stage === 'review_video' && !j.running) h += `<div class="bigbar"><button class="good big" id="hfVNext" ${v.status === 'approved' ? '' : 'disabled'}>✅ Vídeo aprobado: preparar la entrega</button>${v.status === 'approved' ? '' : '<span class="muted">Aprueba el vídeo para seguir.</span>'}</div>`;
+  return h;
+}
+
+function postHtml(j) {
+  const p = j.hf.post;
+  let h = '<h2 class="sec">📦 Entrega</h2><div class="hf-grid">';
+  h += `<div class="notes"><b>Hook en pantalla</b> <span class="muted">${sec(p.hook.from || 0)}–${sec(p.hook.to || 3)}</span><div class="hf-hook">${(p.hook.lines || []).map(esc).join('<br>')}</div>${p.hook.es ? `<div class="muted" style="font-size:12px">${esc(p.hook.es)}</div>` : ''}
+    ${(p.counters || []).length ? `<b>Contadores</b><ul>${p.counters.map((c) => `<li>${sec(c.from)}–${sec(c.to)}: ${esc(c.text)}</li>`).join('')}</ul>` : ''}
+    ${(p.panels || []).length ? `<b>Paneles 21:9</b><ol>${p.panels.map((x) => `<li>${sec(x.from)}–${sec(x.to)}: ${esc(x.what_es)}<details><summary class="muted" style="font-size:12px">prompt</summary><pre class="hf-pre hf-en">${esc(x.prompt_en)}</pre></details></li>`).join('')}</ol>` : ''}
+    ${p.plan ? `<details><summary><b>Plan de CapCut</b></summary><p style="white-space:pre-wrap;font-size:13px">${esc(p.plan)}</p></details>` : ''}
+    <div class="hf-btns"><a href="${hfFile(p.video)}" download><button class="small">⬇️ Vídeo limpio</button></a><a href="${hfFile('post/overlays.md')}" target="_blank"><button class="small">📝 Overlays</button></a></div></div>`;
+  h += `<div class="notes"><b>Descripción</b> <button class="small primary" id="hfCopy">📋 Copiar</button> ${p.docUrl ? `<a href="${esc(p.docUrl)}" target="_blank" style="color:#93c5fd;font-size:13px">📄 Google Doc</a>` : '<span class="muted" style="font-size:12px">(sin Google Doc)</span>'}
+    ${(p.warnings || []).length ? `<div class="hf-qa bad">⚠️ ${esc(p.warnings.join(' · '))}</div>` : ''}
+    <pre class="hf-pre hf-desc" id="hfDesc">${esc(p.description)}</pre></div>`;
+  h += `<div class="notes"><b>📌 Al publicar</b><ul><li>Activa la etiqueta de <b>contenido IA</b>.</li><li>Programa a las <b>8:00 ET</b> (son las <b>5:00</b> en el iPhone, hora de Los Ángeles).</li></ul>${p.driveDir ? `<div class="muted" style="font-size:12px">☁️ En tu Drive: ${esc(p.driveDir)}</div>` : ''}</div></div>`;
+  if (j.stage === 'review_final' && !j.running) h += `<div class="notes"><textarea rows="2" id="hfPNote" placeholder="¿Cambiar algo de la entrega? (p. ej. el hook más corto, 6 puntos en vez de 7)"></textarea><button class="small" id="hfPRegen">↻ Rehacer la entrega con la nota</button></div>
+    <div class="bigbar"><button class="good big" id="hfDone">✅ Listo: pasar a Terminados</button></div>`;
+  return h;
+}
+
 const KF_ES = { pending: 'pendiente', generated: 'para revisar', approved: '✅ aprobado', regen: 'a rehacer' };
 function keyframesHtml(j) {
   const kf = j.hf.kf || { items: [] };
@@ -157,6 +210,7 @@ function keyframesHtml(j) {
       ${it.tries.length > 1 ? `<div class="thumbs">${it.tries.map((t) => `<a href="#" data-kfchoose="${it.role}:${t.n}" title="Intento ${t.n}${t.verdict ? ' · ' + esc(t.verdict) : ''}"><img src="${hfFile(t.file, t.at)}" style="${t.n === (cur && cur.n) ? 'outline:2px solid #a78bfa' : 'opacity:.6'}"></a>`).join('')}</div>` : ''}
       ${cur ? `<div class="muted" style="font-size:12px">Intento ${cur.n} · ${cur.kind === 'edit' ? 'edición' : 'nuevo'}${cur.note ? ' · nota: ' + esc(cur.note) : ''}</div>
         <details><summary class="muted" style="font-size:12px">Prompt e imágenes</summary><div class="hf-en">${cur.images.map((f, i) => `Image ${i + 1}: ${esc(f)}`).join('<br>')}</div><pre class="hf-pre hf-en">${esc(cur.prompt)}</pre></details>` : ''}
+      ${qaKf(cur)}
       ${it.status === 'regen' && it.note ? `<div class="muted" style="font-size:12px">A rehacer: ${esc(it.note)}</div>` : ''}
       ${canAct ? `<textarea rows="2" data-kfnote="${it.role}" placeholder="Nota: qué cambiar (p. ej. el pelo suelto por delante de los hombros)"></textarea>
         <div class="hf-btns" style="margin-top:6px">
@@ -219,6 +273,18 @@ function bindHfPanel(j) {
     hfSig = ''; refresh();
   });
   b('hfKfApprove', async () => { await api(`hf/jobs/${j.id}/approve`, { stage: 'review_keyframes' }); hfSig = ''; refresh(); });
+  const again = () => { hfSig = ''; refresh(); };
+  document.querySelectorAll('[data-vchoose]').forEach((x) => x.onclick = () => api(`hf/jobs/${j.id}/video`, { action: 'choose', n: +x.dataset.vchoose }).then(again));
+  b('hfVApprove', () => api(`hf/jobs/${j.id}/video`, { action: 'approve' }).then(again));
+  b('hfVRegen', () => api(`hf/jobs/${j.id}/video`, { action: 'regen', note: ($('#hfVNote') || {}).value || '' }).then(again));
+  b('hfVNext', () => api(`hf/jobs/${j.id}/approve`, { stage: 'review_video' }).then(again));
+  b('hfPRegen', () => api(`hf/jobs/${j.id}/post`, { note: ($('#hfPNote') || {}).value || '' }).then(again));
+  b('hfDone', () => confirm('¿Pasar este vídeo a Terminados?') && api(`hf/jobs/${j.id}/approve`, { stage: 'review_final' }).then(again));
+  b('hfCopy', async () => {
+    const t = j.hf.post.description;
+    try { await navigator.clipboard.writeText(t); } catch { const r = document.createRange(); r.selectNodeContents($('#hfDesc')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('copy'); }
+    const el = document.getElementById('hfCopy'); if (el) { el.textContent = '✅ Copiada'; setTimeout(() => { el.textContent = '📋 Copiar'; }, 2000); }
+  });
   document.querySelectorAll('[data-hfgate]').forEach((x) => x.onchange = () => api(`hf/jobs/${j.id}/gates`, { [x.dataset.hfgate]: x.checked }).then(refresh));
   const rf = document.getElementById('hfRefFile');
   if (rf) rf.onchange = async () => { if (rf.files[0]) { await upload('ref', 0, rf.files[0]); await api('jobs/' + j.id + '/continue', {}); refresh(); } };

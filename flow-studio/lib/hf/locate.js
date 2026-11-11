@@ -43,7 +43,7 @@ async function dump(page, debugDir, tag) {
 // Devuelve el único elemento visible que cumple el spec (espera hasta timeout)
 async function one(page, map, key, { debugDir, timeout = 15000, visible = true } = {}) {
   const spec = map[key];
-  if (!spec) throw new HfStop(`El mapa de Higgsfield no tiene "${key}". Pulsa 🎓 Aprender Higgsfield.`);
+  if (!spec) throw new HfStop(`El mapa de Higgsfield no tiene "${key}". Pulsa 🎓 Aprender Higgsfield.`, { heal: true });
   const loc = build(page, spec);
   const t0 = Date.now();
   let n = 0, revealed = false;
@@ -64,13 +64,13 @@ async function one(page, map, key, { debugDir, timeout = 15000, visible = true }
       if (vis.length === 1) return loc.nth(vis[0]);
       if (vis.length > 1) {
         const d = await dump(page, debugDir, 'varios-' + key);
-        throw new HfStop(`Hay ${vis.length} controles que encajan con "${key}" (${spec.why || ''}): no clico a ciegas.`, { debug: d });
+        throw new HfStop(`Hay ${vis.length} controles que encajan con "${key}" (${spec.why || ''}): no clico a ciegas.`, { debug: d, heal: true });
       }
     }
     await page.waitForTimeout(500);
   }
   const d = await dump(page, debugDir, 'falta-' + key);
-  throw new HfStop(`No encuentro "${key}" (${spec.why || JSON.stringify(spec)}) en Higgsfield. Quizá cambió la web: pulsa 🎓 Aprender Higgsfield otra vez.`, { debug: d });
+  throw new HfStop(`No encuentro "${key}" (${spec.why || JSON.stringify(spec)}) en Higgsfield. Quizá cambió la web: pulsa 🎓 Aprender Higgsfield otra vez.`, { debug: d, heal: true });
 }
 
 module.exports = { HfStop, build, one, dump, toText };

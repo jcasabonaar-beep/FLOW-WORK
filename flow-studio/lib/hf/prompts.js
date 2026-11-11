@@ -38,4 +38,35 @@ function lintNano(text, { kind, nImages, refImages = [] }) {
   return { prompt: p.replace(/[ \t]{2,}/g, ' ').trim(), fixes, errors };
 }
 
-module.exports = { lintNano, BANNED, NO_TEXT };
+// Revisión de los prompts de Seedance
+function lintSeedance(text, { seconds }) {
+  let p = String(text || '').replace(/\r/g, '').trim();
+  const fixes = [], errors = [];
+  for (const w of BANNED) {
+    const re = new RegExp(`\\b${w.replace('-', '[- ]?')}\\b,?\\s*`, 'gi');
+    if (re.test(p)) { p = p.replace(re, ''); fixes.push(`quitada la palabra prohibida "${w}"`); }
+  }
+  // "swings / bounces" exagera el pelo (la coleta salía disparada): solo se vigila cuando habla del pelo
+  if (/\b(hair|ponytail|strands)\b[^.]{0,60}\b(swings?|swinging|bounces?|bouncing|flies|flying|whips?)\b/i.test(p)) errors.push('el pelo "swings/bounces": usa "only sways slightly"');
+  // Pelo: en vídeo no se describe su color (basta con "the same woman from the start frame")
+  if (/\b(silver|grey|gray|blonde|blond|red|auburn|brunette|white)[- ]?(grey |gray )?(hair|ponytail|waves|strands)\b/i.test(p)) errors.push('describe el color del pelo: en vídeo basta con "the same woman from the start frame"');
+  const beats = [...p.matchAll(/(^|\n)\s*(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)\s*s\s*[:,]/g)].map((m) => [+m[2], +m[3]]);
+  if (!beats.length) errors.push('no tiene timeline ("0-3s: …")');
+  else {
+    if (beats[0][0] !== 0) errors.push('el timeline no empieza en 0');
+    for (let i = 0; i < beats.length; i++) {
+      const [a, b] = beats[i];
+      if (b - a > 4.01 || b - a < 0.99) errors.push(`el tramo ${a}-${b}s no dura entre 1 y 3 s`);
+      else if (b - a > 3.01) fixes.push(`aviso: el tramo ${a}-${b}s dura más de 3 s`);
+      if (i && Math.abs(beats[i - 1][1] - a) > 0.01) errors.push(`hueco o solape entre ${beats[i - 1][1]}s y ${a}s`);
+    }
+    if (Math.abs(beats[beats.length - 1][1] - seconds) > 0.01) errors.push(`el timeline acaba en ${beats[beats.length - 1][1]}s y el vídeo dura ${seconds}s`);
+  }
+  if (!/five fingers/i.test(p)) { p = p.replace(/\s*(Camera:)/, ' Each hand keeps five fingers. $1'); if (!/five fingers/i.test(p)) p += ' Each hand keeps five fingers.'; fixes.push('añadido "Each hand keeps five fingers"'); }
+  if (!/exactly as in the start frame/i.test(p)) errors.push('falta la luz "exactly as in the start frame"');
+  if (!/no zoom/i.test(p)) errors.push('falta la cámara ("locked off, no zoom, no reframing" o en mano sin zoom)');
+  if (!/No text, captions/i.test(p)) { p += ' No text, captions, emojis, logos or watermarks.'; fixes.push('añadido "No text, captions…"'); }
+  return { prompt: p.replace(/[ \t]{2,}/g, ' ').trim(), fixes, errors, beats };
+}
+
+module.exports = { lintNano, lintSeedance, BANNED, NO_TEXT };

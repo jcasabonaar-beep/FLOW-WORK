@@ -71,9 +71,9 @@ Pegas el link de un reel (Instagram o TikTok) y Flow Studio lo imita con Diane: 
 | 🎞️ Referencia | Descarga con yt-dlp (con las cookies del Chrome de Flow Studio si hace falta), guarda la descripción original, frames a 2 fps + cambios de escena y hojas de contactos con el segundo en cada miniatura | ✅ |
 | 🧠 Análisis | Claude (visión) hace el plan: formato, acciones por tramos, ropa, sitio, cámara, textos, duración (máx. 15 s) y estrategia de keyframes | ✅ |
 | ✋ Tu OK análisis | Lo revisas. Escribe una corrección y Claude lo rehace (tus correcciones mandan), o edita el JSON a mano | ✅ |
-| 🖼️ Keyframes | Claude escribe el prompt con las reglas, el código lo revisa y Nano Banana Pro (Unlimited) lo genera en Higgsfield. Tú: ✅ Aprobar / ↻ Regenerar / ✏️ Editar con nota | ✅ (QA automático: paso 3) |
-| 🎥 Vídeo | Seedance (Unlimited) en Higgsfield + QA | paso 4-5 |
-| 📦 Entrega | Hook, overlays, descripción en Google Doc | paso 6 |
+| 🖼️ Keyframes | Claude escribe el prompt con las reglas, el código lo revisa y Nano Banana Pro (Unlimited) lo genera. QA (Claude visión + superposición con el start frame): hasta 4 intentos que corrigen el fallo concreto. Tú: ✅ Aprobar / ↻ Regenerar / ✏️ Editar con nota | ✅ |
+| 🎥 Vídeo | Prompt con las plantillas A4/A5 revisado en código, Seedance (Unlimited, 9:16, sin audio, start + end frame), métrica y arreglo de bucle, QA tramo a tramo (frames cada 0,4 s) y hasta 2 regeneraciones con correcciones | ✅ |
+| 📦 Entrega | Vídeo limpio, hook (siempre 63), contadores, paneles 21:9 y plan de CapCut; descripción revisada en código (keycaps, NAD, CTA, 5 hashtags, sin promesas) como Google Doc + 📋 Copiar + copia en tu Drive (`Diane Glows/<día>`) | ✅ |
 
 - Kit de Diane: `avatar/diane/` (`diane_principal.jpg` es siempre Image 1).
 - Reglas de dirección, plantillas y ejemplos aprobados: `prompts/hf_rules.md`, `prompts/hf_templates.md`, `prompts/hf_examples.md`.
@@ -85,7 +85,8 @@ Pegas el link de un reel (Instagram o TikTok) y Flow Studio lo imita con Diane: 
 - **🎓 Aprender Higgsfield** (en la ficha, sección Keyframes): Claude recorre a la vista las pantallas de imagen y vídeo, guarda el mapa de botones en `memory/higgsfield-selectors.json` (por roles y textos visibles, sin clases CSS), lo comprueba y hace **una** imagen de prueba en Unlimited. No toques ese Chrome mientras aprende.
 - Al generar, el programa comprueba modelo, 9:16, batch 1 y **Unlimited** antes de pulsar Generar; si el coste sale en créditos, para. Una sola generación a la vez (comparte el turno con Flow).
 - Si Higgsfield muestra un aviso (términos nuevos, verificación, límite, login) o un botón no está donde esperaba: **no clica a ciegas**. Guarda captura y HTML en `jobs/<id>/debug/`, el vídeo pasa a "Te esperan" y tú lo resuelves en ese Chrome y pulsas Continuar. Si ya había mandado la generación, al continuar recoge el resultado sin generar otra vez.
-- Si Higgsfield cambia su web y algo deja de encontrarse: **🎓 Volver a aprender**. **🔎 Comprobar mapa** revisa todo sin generar (también `npm run hf-check`).
+- **Se arregla solo:** si un botón cambió o está escondido, Claude mira la captura de ese momento, corrige el mapa y lo reintenta (2 veces como mucho). Si no hay mapa todavía, aprende solo antes de generar. Solo te avisa por lo que no debe hacer él: login, captcha, términos nuevos, límites o créditos.
+- Si aun así algo deja de encontrarse: **🎓 Volver a aprender**. **🔎 Comprobar mapa** revisa todo sin generar (también `npm run hf-check`).
 - Si al aprender sale "Cannot find module 'playwright-core'": cierra la ventana negra y ejecuta `npm install` una vez en la carpeta `flow-studio`.
 
 ### Probar una etapa suelta (sin el panel)

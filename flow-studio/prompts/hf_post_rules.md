@@ -1,0 +1,22 @@
+# Reglas de entrega (Higgsfield · Diane)
+
+- Vídeo limpio exportado.
+- Plan de overlays para CapCut: texto del hook (por ejemplo "I'm 63 / …"), contadores, tiempos de cambio de cada panel y prompts de los paneles (21:9, sin texto, mismo tamaño).
+- **Texto en pantalla (hook):** adaptar el de la referencia a Diane. La edad siempre es 63, aunque la referencia diga otra (por ejemplo, "I'm 67" pasa a "I'm 63").
+- **Descripción** (en inglés, para público de EE. UU.). Ver los ejemplos aprobados en el Anexo C.
+  - Si se pudo descargar la descripción de la referencia, imitar su estructura (tipo de lista, número de puntos, tono), pero reescribirla entera con la voz de Diane. Nunca copiarla.
+  - Formato habitual: `I'm 63. {N} things I do every single day to {beneficio} 👇 (SAVE THIS)`, lista numerada, frase de cierre y CTA.
+  - Cada punto: emoji keycap + emoji temático + titular corto en una línea, y debajo una sola frase corta. Lectura fácil desde el móvil.
+  - Emojis keycap 1️⃣ 2️⃣…: cada uno es la secuencia dígito + U+FE0F + U+20E3. Validarlo en código antes de guardar.
+  - **El NAD siempre está en la lista y es el punto más importante**: normalmente el número 1, como "My #1 non-negotiable", con `(The one I use is linked in my bio 🔗)`. Solo datos generales, como "NAD+ levels naturally drop as we age".
+  - Si la lista describe los pasos del vídeo (ejercicios), tiene que coincidir con lo que se ve en el vídeo final, no con la referencia.
+  - Si la lista son hábitos, uno de ellos conecta con el vídeo (por ejemplo: "Move, even if it's just on a chair… like this video").
+  - CTA final: `💬 Comment "GLOW" and I'll send you the exact NAD I take 💌` y `👉 Follow me first so it doesn't end up in your hidden requests!`.
+  - `Educational content only.` justo antes de los hashtags.
+  - 5 hashtags del nicho, por ejemplo `#womenover60 #agingbackwards #agelessbeauty #antiagingtips #nad`.
+  - **Nunca resultados personales inventados sobre el suplemento** ("noté la diferencia en mi piel en semanas") ni promesas de salud.
+  - Contenido 100 % antiedad: nada de pérdida de peso ni bienestar general.
+- Guardar la descripción como **Google Doc** en Drive, no como .txt, para que los emojis lleguen intactos al iPhone. En la ficha del trabajo, botón de copiar.
+- Recordatorios en la ficha de publicación:
+  - activar la etiqueta de contenido IA;
+  - programar a las 8:00 ET, que son las 5:00 en el iPhone (hora de Los Ángeles).

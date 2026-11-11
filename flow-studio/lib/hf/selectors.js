@@ -23,7 +23,9 @@ function validate(map) {
   for (const kind of ['image', 'video']) {
     const m = map[kind];
     if (!m) { errors.push(`${kind}: sin aprender`); continue; }
-    if (!/^https:\/\/([\w-]+\.)?higgsfield\.ai\//.test(m.url || '')) errors.push(`${kind}.url no es de higgsfield.ai`);
+    // HF_FAKE_SITE: solo para las pruebas con la página falsa en 127.0.0.1
+    const okUrl = /^https:\/\/([\w-]+\.)?higgsfield\.ai\//.test(m.url || '') || (process.env.HF_FAKE_SITE && /^http:\/\/127\.0\.0\.1:\d+\//.test(m.url || ''));
+    if (!okUrl) errors.push(`${kind}.url no es de higgsfield.ai`);
     for (const s of m.settings || []) { isSpec(s.button, `${kind}.${s.name}.button`); if (!s.want) errors.push(`${kind}.${s.name}: falta "want"`); if (s.option) isSpec(s.option, `${kind}.${s.name}.option`); }
     isSpec(m.unlimited && m.unlimited.switch, `${kind}.unlimited.switch`);
     isSpec(m.prompt, `${kind}.prompt`);
