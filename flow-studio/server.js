@@ -430,7 +430,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname.startsWith('/root/')) {
       const f = safeJoin(store.ROOT, decodeURIComponent(url.pathname.slice(6)));
-      const okDirs = ['avatar', 'avatar_lab', 'output', config.outputDir || 'output'];
+      const okDirs = ['avatar', 'avatar_lab', 'output', config.outputDir || 'output', path.join('memory', 'higgsfield-learn')];
       if (!f || !okDirs.some((d) => path.relative(store.ROOT, f).startsWith(d + path.sep))) { res.writeHead(403); return res.end(); }
       return serveFile(req, res, f);
     }

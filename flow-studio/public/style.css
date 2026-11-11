@@ -264,3 +264,5 @@ label.inline { display: inline-flex; gap: 6px; align-items: center; margin: 0; }
 .hf-kf { width: 100%; max-height: 360px; object-fit: contain; border-radius: 8px; background: #000; }
 .hf-json { width: 100%; font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
 .hf-q { border-color: #fcd34d; }
+.hf-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+button:disabled { opacity: .45; cursor: not-allowed; }

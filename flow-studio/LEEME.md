@@ -71,7 +71,7 @@ Pegas el link de un reel (Instagram o TikTok) y Flow Studio lo imita con Diane: 
 | 🎞️ Referencia | Descarga con yt-dlp (con las cookies del Chrome de Flow Studio si hace falta), guarda la descripción original, frames a 2 fps + cambios de escena y hojas de contactos con el segundo en cada miniatura | ✅ |
 | 🧠 Análisis | Claude (visión) hace el plan: formato, acciones por tramos, ropa, sitio, cámara, textos, duración (máx. 15 s) y estrategia de keyframes | ✅ |
 | ✋ Tu OK análisis | Lo revisas. Escribe una corrección y Claude lo rehace (tus correcciones mandan), o edita el JSON a mano | ✅ |
-| 🖼️ Keyframes | Nano Banana Pro (Unlimited) en Higgsfield + QA | paso 2-3 |
+| 🖼️ Keyframes | Claude escribe el prompt con las reglas, el código lo revisa y Nano Banana Pro (Unlimited) lo genera en Higgsfield. Tú: ✅ Aprobar / ↻ Regenerar / ✏️ Editar con nota | ✅ (QA automático: paso 3) |
 | 🎥 Vídeo | Seedance (Unlimited) en Higgsfield + QA | paso 4-5 |
 | 📦 Entrega | Hook, overlays, descripción en Google Doc | paso 6 |
 
@@ -79,6 +79,14 @@ Pegas el link de un reel (Instagram o TikTok) y Flow Studio lo imita con Diane: 
 - Reglas de dirección, plantillas y ejemplos aprobados: `prompts/hf_rules.md`, `prompts/hf_templates.md`, `prompts/hf_examples.md`.
 - Ajustes: sección `higgsfield` de `config.json` (bloque de identidad, duraciones, intentos, paradas por defecto). Las paradas se pueden cambiar en cada vídeo desde su ficha.
 - Archivos de cada vídeo en `jobs/<id>/`: `ref/` (video, descripción, `f2/` frames, `scene/` cortes, `sheet/` hojas, `kf_start.jpg`/`kf_end.jpg`), `analysis.json` y `analysis_vN.json` (cada versión).
+
+### Higgsfield en el Chrome de Flow Studio
+- Usa el **Chrome de Flow Studio** (el que abre `abrir`), nunca tu Chrome normal. Inicia sesión en higgsfield.ai en ese Chrome una vez, a mano.
+- **🎓 Aprender Higgsfield** (en la ficha, sección Keyframes): Claude recorre a la vista las pantallas de imagen y vídeo, guarda el mapa de botones en `memory/higgsfield-selectors.json` (por roles y textos visibles, sin clases CSS), lo comprueba y hace **una** imagen de prueba en Unlimited. No toques ese Chrome mientras aprende.
+- Al generar, el programa comprueba modelo, 9:16, batch 1 y **Unlimited** antes de pulsar Generar; si el coste sale en créditos, para. Una sola generación a la vez (comparte el turno con Flow).
+- Si Higgsfield muestra un aviso (términos nuevos, verificación, límite, login) o un botón no está donde esperaba: **no clica a ciegas**. Guarda captura y HTML en `jobs/<id>/debug/`, el vídeo pasa a "Te esperan" y tú lo resuelves en ese Chrome y pulsas Continuar. Si ya había mandado la generación, al continuar recoge el resultado sin generar otra vez.
+- Si Higgsfield cambia su web y algo deja de encontrarse: **🎓 Volver a aprender**. **🔎 Comprobar mapa** revisa todo sin generar (también `npm run hf-check`).
+- Si al aprender sale "Cannot find module 'playwright-core'": cierra la ventana negra y ejecuta `npm install` una vez en la carpeta `flow-studio`.
 
 ### Probar una etapa suelta (sin el panel)
 ```

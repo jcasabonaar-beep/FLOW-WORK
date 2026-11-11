@@ -13,7 +13,8 @@ const sec = (x) => `${Number(x).toFixed(1).replace(/\.0$/, '')}s`;
 
 function renderHf(j) {
   renderHfTop(j);
-  const sig = JSON.stringify([j.stage, j.status, j.running, j.hf.analysisV, (j.hf.sheets || []).length, (j.hf.corrections || []).length, j.hf.gates]);
+  const kfSig = ((j.hf.kf || {}).items || []).map((x) => [x.role, x.status, x.chosen, x.tries.length]);
+  const sig = JSON.stringify([j.stage, j.status, j.running, j.hf.analysisV, (j.hf.sheets || []).length, (j.hf.corrections || []).length, j.hf.gates, kfSig, j.hf.debug]);
   const editing = document.activeElement && document.activeElement.closest && document.activeElement.closest('#hfPanel') && document.activeElement.matches('textarea, input');
   if (sig !== hfSig && !editing) { hfSig = sig; renderHfPanel(j); }
 }
@@ -24,7 +25,7 @@ function renderHfTop(j) {
   const paused = j.paused || j.status === 'paused';
   const mins = Math.round(Object.values(j.timings || {}).reduce((a, b) => a + b, 0) / 60000);
   let alert = '';
-  if (j.error) alert = `<div class="alert ${j.status === 'waiting_limit' ? 'info' : ''}">${j.status === 'waiting_limit' ? '⏳' : '⚠️'} ${esc(j.error)}</div>`;
+  if (j.error) alert = `<div class="alert ${j.status === 'waiting_limit' ? 'info' : ''}">${j.status === 'waiting_limit' ? '⏳' : '⚠️'} ${esc(j.error)}${j.hf.debug && j.status === 'error' ? ` · <a href="${hfFile(j.hf.debug)}" target="_blank" style="color:#93c5fd">ver captura de Higgsfield</a>` : ''}</div>`;
   else if (j.status === 'waiting_you') {
     const w = HF_WORKERS.find(([k]) => j.workers[k].state === 'waiting_you');
     alert = `<div class="alert info">✋ ${esc(HF_WAIT[j.stage] || (w && j.workers[w[0]].action) || 'Necesita que lo mires')}</div>`;
@@ -90,7 +91,10 @@ function renderHfPanel(j) {
 
   // ---- Análisis ----
   const a = hf.analysis;
-  if (a) h += analysisHtml(j, a);
+  const afterAnalysis = HF_STAGES.findIndex((s) => s[0] === j.stage) >= HF_STAGES.findIndex((s) => s[0] === 'keyframes');
+  // Con el análisis ya aprobado, los keyframes van primero y el análisis se pliega
+  if (a && afterAnalysis) h += keyframesHtml(j) + `<details class="notes"><summary>🧠 Análisis aprobado (v${hf.analysisV})</summary>${analysisHtml(j, a)}</details>`;
+  else if (a) h += analysisHtml(j, a);
   else if (['analysis', 'capture'].includes(j.stage)) h += `<h2 class="sec">🧠 Análisis</h2><p class="muted">${j.stage === 'analysis' && j.running ? 'Claude está mirando la referencia…' : 'Cuando la referencia esté lista, Claude hará el análisis.'}</p>`;
   $('#hfPanel').innerHTML = h;
   bindHfPanel(j);
@@ -132,8 +136,84 @@ function analysisHtml(j, a) {
   return h;
 }
 
+const KF_ES = { pending: 'pendiente', generated: 'para revisar', approved: '✅ aprobado', regen: 'a rehacer' };
+function keyframesHtml(j) {
+  const kf = j.hf.kf || { items: [] };
+  const loop = j.hf.analysis.keyframes.strategy === 'loop';
+  const name = (r) => (r === 'start' ? (loop ? 'Start = end frame (bucle)' : 'Start frame') : 'End frame');
+  let h = '<h2 class="sec">🖼️ Keyframes · Nano Banana Pro (Unlimited)</h2><div id="hfLearn" class="notes"><span class="muted">Mirando el mapa de Higgsfield…</span></div>';
+  if (!kf.items.length) return h + `<p class="muted">${j.running ? 'Escribiendo el primer prompt…' : 'Todavía no hay keyframes.'}</p>`;
+  h += `<div class="cards">${kf.items.map((it) => {
+    const cur = it.tries.find((t) => t.n === it.chosen) || it.tries[it.tries.length - 1];
+    const canAct = !j.running && cur && ['review_keyframes', 'keyframes'].includes(j.stage);
+    return `<div class="card ${it.status === 'regen' ? 'regen' : ''}">
+      <h3>${name(it.role)} <span class="badge ${it.status === 'approved' ? 'done' : it.status === 'generated' ? 'waiting_you' : ''}">${KF_ES[it.status] || it.status}</span></h3>
+      ${cur ? `<a href="${hfFile(cur.file, cur.at)}" target="_blank"><img class="hf-kf" src="${hfFile(cur.file, cur.at)}"></a>` : `<div class="muted">${j.running ? 'Generando…' : 'Sin imagen todavía'}</div>`}
+      ${it.tries.length > 1 ? `<div class="thumbs">${it.tries.map((t) => `<a href="#" data-kfchoose="${it.role}:${t.n}" title="Intento ${t.n}${t.verdict ? ' · ' + esc(t.verdict) : ''}"><img src="${hfFile(t.file, t.at)}" style="${t.n === (cur && cur.n) ? 'outline:2px solid #a78bfa' : 'opacity:.6'}"></a>`).join('')}</div>` : ''}
+      ${cur ? `<div class="muted" style="font-size:12px">Intento ${cur.n} · ${cur.kind === 'edit' ? 'edición' : 'nuevo'}${cur.note ? ' · nota: ' + esc(cur.note) : ''}</div>
+        <details><summary class="muted" style="font-size:12px">Prompt e imágenes</summary><div class="hf-en">${cur.images.map((f, i) => `Image ${i + 1}: ${esc(f)}`).join('<br>')}</div><pre class="hf-pre hf-en">${esc(cur.prompt)}</pre></details>` : ''}
+      ${it.status === 'regen' && it.note ? `<div class="muted" style="font-size:12px">A rehacer: ${esc(it.note)}</div>` : ''}
+      ${canAct ? `<textarea rows="2" data-kfnote="${it.role}" placeholder="Nota: qué cambiar (p. ej. el pelo suelto por delante de los hombros)"></textarea>
+        <div class="hf-btns" style="margin-top:6px">
+          ${it.status !== 'approved' ? `<button class="small good" data-kfact="${it.role}:approve">✅ Aprobar</button>` : ''}
+          <button class="small" data-kfact="${it.role}:regen" title="Prompt nuevo desde cero (con tu nota si la escribes)">↻ Regenerar</button>
+          <button class="small" data-kfact="${it.role}:edit" title="Edita esta imagen (Image 1) cambiando solo lo de tu nota">✏️ Editar con nota</button>
+        </div>` : ''}
+    </div>`;
+  }).join('')}</div>`;
+  if (j.stage === 'review_keyframes' && !j.running) {
+    const all = kf.items.every((x) => x.status === 'approved');
+    h += `<div class="bigbar"><button class="good big" id="hfKfApprove" ${all ? '' : 'disabled title="Aprueba antes cada keyframe"'}>✅ Keyframes aprobados: pasar al vídeo</button>${all ? '' : '<span class="muted">Aprueba cada keyframe para seguir.</span>'}</div>`;
+  }
+  return h;
+}
+
+// Caja del modo aprendizaje: estado del mapa, botones y la imagen de prueba
+async function renderLearn() {
+  const box = document.getElementById('hfLearn');
+  if (!box) return;
+  const s = await api('hf/learn');
+  const w = s.worker || {};
+  const ok = !s.errors.length;
+  box.innerHTML = `<b>🎓 Mapa de Higgsfield</b> ${s.running ? '<span class="badge working">aprendiendo…</span>' : ok ? `<span class="badge done">aprendido ${new Date(s.learnedAt).toLocaleString()}</span>` : '<span class="badge waiting_you">sin aprender</span>'}
+    <div class="muted" style="font-size:12px;margin:4px 0">${s.running ? esc(w.action || '') : ok ? esc(s.notes || 'Listo para generar.') : 'Primero tengo que aprender la web: abro Higgsfield en el Chrome de Flow Studio (a la vista), apunto dónde está cada botón y hago una imagen de prueba en Unlimited. No toques ese Chrome mientras tanto.'}</div>
+    ${!ok && !s.running && s.errors[0] !== 'sin aprender' ? `<div class="muted" style="font-size:12px">Falta: ${esc(s.errors.join(' · '))}</div>` : ''}
+    ${s.testImage ? `<a href="/root/${s.testImage}" target="_blank"><img src="/root/${s.testImage}" style="height:90px;border-radius:6px;margin:4px 0"></a>` : ''}
+    <div class="hf-btns">${s.running ? '<button class="small" id="hfLearnStop">⏹ Detener</button>' : `<button class="small ${ok ? '' : 'primary'}" id="hfLearnGo">🎓 ${ok ? 'Volver a aprender' : 'Aprender Higgsfield'}</button>${ok ? '<button class="small" id="hfLearnCheck">🔎 Comprobar mapa</button>' : ''}`}
+      <button class="small" id="hfLearnLog">📜 Ver lo que hace</button></div>
+    <pre class="log" id="hfLearnPre" hidden>${esc((w.log || []).slice(-60).join('\n'))}</pre><div id="hfLearnReport"></div>`;
+  const b = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  b('hfLearnGo', async () => { if (!confirm('Voy a abrir Higgsfield en el Chrome de Flow Studio y recorrer sus pantallas (y una imagen de prueba en Unlimited). No lo toques mientras tanto. ¿Empiezo?')) return; await api('hf/learn', {}); renderLearn(); });
+  b('hfLearnStop', async () => { await api('hf/learn/stop', {}); renderLearn(); });
+  b('hfLearnLog', () => { const p = document.getElementById('hfLearnPre'); p.hidden = !p.hidden; p.scrollTop = p.scrollHeight; });
+  b('hfLearnCheck', async () => {
+    const r = document.getElementById('hfLearnReport');
+    r.innerHTML = '<span class="muted">Comprobando en el Chrome de Flow Studio (sin generar)…</span>';
+    try {
+      const x = await api('hf/learn/check', {});
+      r.innerHTML = `<ul style="font-size:12px">${[...x.format.map((e) => `<li>✗ ${esc(e)}</li>`), ...x.report.map((y) => `<li>${y.ok ? '✓' : '✗'} ${esc(y.kind)} · ${esc(y.key)}: ${esc(y.msg)}</li>`)].join('')}</ul>`;
+    } catch (e) { r.innerHTML = ''; }
+  });
+}
+setInterval(() => { if (document.getElementById('hfLearn') && !document.querySelector('#hfLearn:hover')) renderLearn().catch(() => {}); }, 5000);
+
 function bindHfPanel(j) {
   const b = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  renderLearn().catch(() => {});
+  document.querySelectorAll('[data-kfchoose]').forEach((x) => x.onclick = async (e) => {
+    e.preventDefault();
+    const [role, n] = x.dataset.kfchoose.split(':');
+    await api(`hf/jobs/${j.id}/kf`, { role, action: 'choose', n: +n });
+    hfSig = ''; refresh();
+  });
+  document.querySelectorAll('[data-kfact]').forEach((x) => x.onclick = async () => {
+    const [role, action] = x.dataset.kfact.split(':');
+    const note = (document.querySelector(`[data-kfnote="${role}"]`) || {}).value || '';
+    if (action === 'edit' && !note.trim()) return alert('Escribe en la nota qué hay que cambiar');
+    await api(`hf/jobs/${j.id}/kf`, { role, action, note });
+    hfSig = ''; refresh();
+  });
+  b('hfKfApprove', async () => { await api(`hf/jobs/${j.id}/approve`, { stage: 'review_keyframes' }); hfSig = ''; refresh(); });
   document.querySelectorAll('[data-hfgate]').forEach((x) => x.onchange = () => api(`hf/jobs/${j.id}/gates`, { [x.dataset.hfgate]: x.checked }).then(refresh));
   const rf = document.getElementById('hfRefFile');
   if (rf) rf.onchange = async () => { if (rf.files[0]) { await upload('ref', 0, rf.files[0]); await api('jobs/' + j.id + '/continue', {}); refresh(); } };

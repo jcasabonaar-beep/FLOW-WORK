@@ -6,9 +6,11 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test-editor": "node tools/test-editor.js"
+    "test-editor": "node tools/test-editor.js",
+    "hf-check": "node tools/hf-check.js"
   },
   "dependencies": {
-    "@playwright/mcp": "0.0.83"
+    "@playwright/mcp": "0.0.83",
+    "playwright-core": "1.64.0-alpha-1790635538000"
   }
 }

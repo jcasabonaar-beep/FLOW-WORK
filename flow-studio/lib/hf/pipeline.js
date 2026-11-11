@@ -14,6 +14,8 @@ const NAMES = {
 const WORKER = { capture: 'hf_capture', analysis: 'hf_analyst', keyframes: 'hf_keyframes', video: 'hf_video', post: 'hf_post' };
 // Paradas: qué interruptor las controla (null = siempre para)
 const GATE = { review_analysis: 'analysis', review_keyframes: 'keyframes', review_video: 'video', review_final: null };
+// Mientras no esté el QA automático (paso 3 y 5), estas paradas te esperan siempre aunque el interruptor esté apagado
+const FORCED = new Set(['review_keyframes', 'review_video']);
 const GATE_TEXT = {
   review_analysis: 'El análisis de la referencia está listo: revísalo, corrígelo si hace falta y apruébalo',
   review_keyframes: 'Los keyframes están listos para que los revises',
@@ -25,6 +27,7 @@ const BROWSER = new Set(['keyframes', 'video']);
 const RUNNERS = {
   capture: () => require('../../workers/hf_capture').run,
   analysis: () => require('../../workers/hf_analyst').run,
+  keyframes: () => require('../../workers/hf_keyframes').run,
 };
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -43,7 +46,7 @@ async function step(job) {
   if (stage === 'done') return 'stop';
   if (stage in GATE) {
     const g = GATE[stage];
-    if (g && !gates(job)[g]) {
+    if (g && !gates(job)[g] && !FORCED.has(stage)) {
       store.log(job, WORKER[STAGES[STAGES.indexOf(stage) - 1]] || 'hf_capture', `⏭ Parada "${NAMES[stage]}" desactivada: sigo`);
       job.stage = next(stage);
       store.save(job);
@@ -135,6 +138,8 @@ async function drive(id, active) {
     }
     job.status = 'error';
     job.error = e.message;
+    // Captura de lo que se veía en Higgsfield cuando paró
+    job.hf.debug = e.debug ? require('path').relative(store.jobDir(job.id), e.debug).replace(/\\/g, '/') + '.png' : null;
     notify.send(`❌ Se atascó: ${job.title}`, e.message.slice(0, 200), { priority: 4, tags: 'x' });
     if (w) {
       store.setWorker(job, w, { state: 'error', action: e.message.slice(0, 300) });

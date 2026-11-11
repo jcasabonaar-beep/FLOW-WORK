@@ -24,7 +24,7 @@ function summarizeTool(block) {
  * opts: { job, worker, prompt, tools: [...], browser: bool, cwd }
  * Devuelve el texto final del trabajador.
  */
-function run({ job, worker, prompt, tools = ['Read', 'Write'], browser = false, cwd }) {
+function run({ job, worker, prompt, tools = ['Read', 'Write'], browser = false, cwd, workerModel }) {
   return new Promise((resolve, reject) => {
     const args = ['-p', '--output-format', 'stream-json', '--verbose', '--permission-mode', 'acceptEdits'];
     const allowed = [...tools];
@@ -35,7 +35,7 @@ function run({ job, worker, prompt, tools = ['Read', 'Write'], browser = false, 
     }
     args.push('--allowedTools', allowed.join(','));
     // Gastar menos: modelo y esfuerzo por trabajador, y sin herramientas que no necesitan
-    const m = (config.models || {})[worker] || {};
+    const m = (config.models || {})[workerModel || worker] || {};
     if (m.model) args.push('--model', m.model);
     if (m.effort) args.push('--effort', m.effort);
     args.push('--disallowedTools', 'Skill,Task,Agent,WebSearch,WebFetch,NotebookEdit');

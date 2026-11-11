@@ -162,6 +162,10 @@
     "hf_writer": {
       "model": "",
       "effort": "medium"
+    },
+    "hf_learn": {
+      "model": "",
+      "effort": "medium"
     }
   },
   "layoutPass": false,
@@ -282,6 +286,8 @@
     },
     "framesPerSecond": 2,
     "sceneThreshold": 0.3,
-    "driveSubfolder": "Diane Glows"
+    "driveSubfolder": "Diane Glows",
+    "imageTimeoutMin": 20,
+    "videoTimeoutMin": 240
   }
 }
